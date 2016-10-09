@@ -7,9 +7,8 @@
  * This software is released under the MIT License.
  * http://www.plus-5.com/licenses/mit-license
  */
-
 /**
- * Methods for form management
+ * HTML form class
  *
  * @license  http://www.plus-5.com/licenses/mit-license  MIT License
  * @author   Taka Goto <http://www.plus-5.com/>
@@ -19,7 +18,7 @@ class P5_Html_Form
     /**
      * Current version
      */
-    const VERSION = '2.0.0';
+    const VERSION = '1.1.0';
 
     private $post = array();
     private $get = array();
