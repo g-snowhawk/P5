@@ -1,6 +1,6 @@
 <?php
 /**
- * This file is part of P5 Framework
+ * This file is part of P5 Framework.
  *
  * Copyright (c)2016 PlusFive (http://www.plus-5.com)
  *
@@ -8,7 +8,7 @@
  * http://www.plus-5.com/licenses/mit-license
  */
 /**
- * HTML form elements class
+ * HTML form elements class.
  *
  * @license  http://www.plus-5.com/licenses/mit-license  MIT License
  * @author   Taka Goto <http://www.plus-5.com/>
@@ -16,124 +16,124 @@
 class P5_Html_Form_Element extends P5_Html
 {
     /**
-     * Current version
+     * Current version.
      */
     const VERSION = '1.1.0';
 
     /**
-     * XML Parser object
+     * XML Parser object.
      *
      * @var resource
      */
     private $_parser;
 
     /**
-     * Formatted Source
+     * Formatted Source.
      *
      * @var array
      */
     private $_elements = array();
 
     /**
-     * return code
+     * return code.
      *
      * @var string
      */
     private $_lineBreak = '';
 
     /**
-     * Indent character
+     * Indent character.
      *
      * @var string
      */
     private $_tabSpace = array();
 
     /**
-     * Tab size
+     * Tab size.
      *
-     * @var integer
+     * @var int
      */
     private $_tabSize = 4;
 
     /**
-     * indent level
+     * indent level.
      *
-     * @var integer
+     * @var int
      */
     private $_level = 0;
 
     /**
-     * which whitespace
+     * which whitespace.
      *
-     * @var boolean
+     * @var bool
      */
     private $_isWrap = false;
 
     /**
-     * Preformatting 
+     * Preformatting.
      *
-     * @var number 
+     * @var number
      */
     private $_preformated = 0;
 
     /**
      * CDATA?
      *
-     * @var boolean
+     * @var bool
      */
     private $_isCdata = false;
 
     /**
-     * Current tag name or content
+     * Current tag name or content.
      *
-     * @var string 
+     * @var string
      */
     private $_currentContent = '';
 
     /**
-     * Current element type
+     * Current element type.
      *
-     * @var string 
+     * @var string
      */
     private $_currentType = '';
 
     /**
-     * XHTML Closer
+     * XHTML Closer.
      *
      * @ver string
      */
     private $_xhtmlCloser = '';
 
     /**
-     * No Decl
+     * No Decl.
      *
-     * @var string 
+     * @var string
      */
     private $_pi = null;
 
     /**
-     * No Doctype
+     * No Doctype.
      *
-     * @var boolean
+     * @var bool
      */
     private $_dtd = null;
 
     /**
-     * Always wrap Close Tags
+     * Always wrap Close Tags.
      *
      * @var array
      */
-    private $_tags = array ('input', 'textarea', 'select', 'button');
+    private $_tags = array('input', 'textarea', 'select', 'button');
 
     /**
-     * Leaving Open Tags
+     * Leaving Open Tags.
      *
      * @var array
      */
-    private $_leaveOpen = array ('input', 'a', 'br', 'hr');
+    private $_leaveOpen = array('input', 'a', 'br', 'hr');
 
     /**
-     * Object constructor
+     * Object constructor.
      *
      * @param string $source
      */
@@ -142,7 +142,7 @@ class P5_Html_Form_Element extends P5_Html
         //$this->_emptyTags = parent::$emptyTags;
 
         $this->_orgSource = self::htmlToXml($source, true);
-        $this->_pi  = $pi;
+        $this->_pi = $pi;
         $this->_dtd = $dtd;
 
         //$this->_lineBreak = $this->_getLineBreak();
@@ -176,12 +176,11 @@ class P5_Html_Form_Element extends P5_Html
     }
 
     /**
-     * XML Parsing opentag handler
+     * XML Parsing opentag handler.
      *
-     * @param  resource  $parser
-     * @param  string    $name      Tag name
-     * @param  array     $attribs   Attributes
-     * @return void
+     * @param resource $parser
+     * @param string   $name    Tag name
+     * @param array    $attribs Attributes
      */
     private function _handleStart($parser, $name, $attribs)
     {
@@ -193,30 +192,25 @@ class P5_Html_Form_Element extends P5_Html
     }
 
     /**
-     * XML Parsing closetag handler
+     * XML Parsing closetag handler.
      *
      * @param resource $parser
-     * @param string $name      Tag name
-     * @return void
+     * @param string   $name   Tag name
      */
     private function _handleEnd($parser, $name)
     {
     }
 
     /**
-     * escape HTML entities
-     *
-     * @return void
+     * escape HTML entities.
      */
-    private function _escapeEntityReference() 
+    private function _escapeEntityReference()
     {
         $this->_orgSource = parent::escapeEntityReference($this->_orgSource);
     }
 
     /**
-     * append XML Document type
-     *
-     * @return void
+     * append XML Document type.
      */
     private function _doctype()
     {
@@ -225,45 +219,45 @@ class P5_Html_Form_Element extends P5_Html
                 $this->_formatted .= $this->_lineBreak;
             }
             $this->_formatted .= '<!DOCTYPE';
-            if (!empty($this->_dtd->name)) $this->_formatted .= ' ' . $this->_dtd->name;
+            if (!empty($this->_dtd->name)) {
+                $this->_formatted .= ' '.$this->_dtd->name;
+            }
             if (!empty($this->_dtd->publicId)) {
                 $this->_formatted .= ' PUBLIC';
-                if (preg_match("/XHTML/i", $this->_dtd->publicId)) {
+                if (preg_match('/XHTML/i', $this->_dtd->publicId)) {
                     $this->_xhtmlCloser = ' /';
                 }
-                $this->_formatted .= ' "' . $this->_dtd->publicId . '"';
+                $this->_formatted .= ' "'.$this->_dtd->publicId.'"';
             }
             if (!empty($this->_dtd->systemId)) {
-                $this->_formatted .= ' "' . $this->_dtd->systemId . '"';
+                $this->_formatted .= ' "'.$this->_dtd->systemId.'"';
             }
             $this->_formatted .= '>';
         }
     }
 
     /**
-     * append XML Processing Instruction
-     *
-     * @return void
+     * append XML Processing Instruction.
      */
     private function _processingInstruction()
     {
         if (is_object($this->_pi)) {
             $this->_formatted .= '<?xml';
-            $this->_formatted .= ' version="' . $this->_pi->version . '"';
+            $this->_formatted .= ' version="'.$this->_pi->version.'"';
             if (isset($this->_pi->encoding)) {
-                $this->_formatted .= ' encoding="' . $this->_pi->encoding . '"';
+                $this->_formatted .= ' encoding="'.$this->_pi->encoding.'"';
             }
-            $this->_formatted .= ' ?' . '>';
+            $this->_formatted .= ' ?'.'>';
         }
     }
 
     /**
-     * Read only properties
+     * Read only properties.
      *
      * return array
      */
     public function elements()
     {
-        return (array)$this->_elements;
+        return (array) $this->_elements;
     }
 }

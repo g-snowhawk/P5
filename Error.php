@@ -1,6 +1,6 @@
 <?php
 /**
- * This file is part of P5 Framework
+ * This file is part of P5 Framework.
  *
  * Copyright (c)2016 PlusFive (http://www.plus-5.com)
  *
@@ -8,44 +8,43 @@
  * http://www.plus-5.com/licenses/mit-license
  */
 /**
- * Custom error handler class
+ * Custom error handler class.
  *
  * @license  http://www.plus-5.com/licenses/mit-license  MIT License
  * @author   Taka Goto <http://www.plus-5.com/>
  */
-class P5_Error 
+class P5_Error
 {
     /**
-     * Current version
+     * Current version.
      */
     const VERSION = '1.1.0';
 
     /**
-     * Error Handler
+     * Error Handler.
      *
      * @var mixed
      */
     protected $_oldErrorHandler;
 
     /**
-     * Template file path
+     * Template file path.
      *
      * @var mixed
      */
     protected $_template;
 
     /**
-     * Temporary Template file path
+     * Temporary Template file path.
      *
      * @var mixed
      */
     protected $_temporaryTemplate;
 
     /**
-     * Object Constructor
+     * Object Constructor.
      *
      * @param string $template
-     * @return void
      */
     public function __construct($template = null)
     {
@@ -59,7 +58,7 @@ class P5_Error
                     }
                 }
                 if (false === @touch(ERROR_LOG_DESTINATION)) {
-                    trigger_error(ERROR_LOG_DESTINATION . " Permission denied.", E_USER_ERROR);
+                    trigger_error(ERROR_LOG_DESTINATION.' Permission denied.', E_USER_ERROR);
                 }
             }
         }
@@ -71,14 +70,13 @@ class P5_Error
     }
 
     /**
-     * Custom error handler
+     * Custom error handler.
      *
-     * @param int $errno
+     * @param int    $errno
      * @param string $errstr
      * @param string $errfile
-     * @param int $errline
-     * @param array $errcontext
-     * @return void
+     * @param int    $errline
+     * @param array  $errcontext
      */
     public function errorHandler($errno, $errstr, $errfile, $errline, $errcontext)
     {
@@ -88,29 +86,30 @@ class P5_Error
         $msg = "$errstr in $errfile on $errline.";
         self::log($msg, $errno);
         self::displayError($msg, $errno);
+
         return false;
     }
 
     /**
-     * Custom exception handler
+     * Custom exception handler.
      *
      * @param Exception $ex
-     * @return void
      */
     public function exceptionHandler($ex)
     {
-        $msg = $ex->getMessage();
+        $errstr = $ex->getMessage();
+        $errfile = $ex->getFile();
+        $errline = $ex->getLine();
+        $msg = "$errstr in $errfile on $errline.";
         self::log($msg, $ex->getCode());
     }
 
     /**
-     * Unload action
-     *
-     * @return void
+     * Unload action.
      */
     public function unloadHandler()
     {
-        $ver = preg_replace('/\.([0-9]+)$/', "$1", PHP_VERSION, 1);
+        $ver = preg_replace('/\.([0-9]+)$/', '$1', PHP_VERSION, 1);
         $err = ($ver >= 5.20) ? error_get_last() : null;
         if (!is_null($err)) {
             $msg = "{$err['message']} in {$err['file']} on {$err['line']}.";
@@ -120,11 +119,10 @@ class P5_Error
     }
 
     /**
-     * Display Error message
+     * Display Error message.
      *
      * @param string $msg
-     * @param int $errno
-     * @return void
+     * @param int    $errno
      */
     public function displayError($msg, $errno)
     {
@@ -138,9 +136,9 @@ class P5_Error
         if (in_array($errno, array(E_NOTICE, E_USER_NOTICE, E_STRICT))) {
             return;
         }
-        $src = (is_null($this->_template)) ? self::htmlSource() 
+        $src = (is_null($this->_template)) ? self::htmlSource()
                                            : file_get_contents($this->_template);
-        if(!empty($this->_temporaryTemplate)) {
+        if (!empty($this->_temporaryTemplate)) {
             $src = file_get_contents($this->_temporaryTemplate);
             $this->__temporaryTemplate = null;
         }
@@ -148,15 +146,15 @@ class P5_Error
         $msg = htmlspecialchars($msg, ENT_COMPAT, mb_internal_encoding(), false);
         if (defined('DEBUG_MODE') && DEBUG_MODE !== 0) {
             $src = preg_replace(
-                "/<!--ERROR_DESCRIPTION-->/",
-                '<p id="P5-errormessage">' .
-                    htmlentities($msg, ENT_QUOTES, 'UTF-8', false) .
+                '/<!--ERROR_DESCRIPTION-->/',
+                '<p id="P5-errormessage">'.
+                    htmlentities($msg, ENT_QUOTES, 'UTF-8', false).
                 '</p>', $src
             );
         }
         if (defined('LINK_TO_HOMEPAGE')) {
             $src = preg_replace(
-                "/<!--LINK_TO_HOMEPAGE-->/",
+                '/<!--LINK_TO_HOMEPAGE-->/',
                 '<a href="'.LINK_TO_HOMEPAGE.'" class="P5-errorhomelink">Back</a>', $src
             );
         }
@@ -170,8 +168,7 @@ class P5_Error
      * Recoding Error log.
      *
      * @param string $msg
-     * @param int $errno
-     * @return void
+     * @param int    $errno
      */
     public function log($msg, $errno)
     {
@@ -183,9 +180,9 @@ class P5_Error
         if (defined('ERROR_LOG_DESTINATION')) {
             if (self::_isEmail(ERROR_LOG_DESTINATION)) {
                 error_log($msg, 1, ERROR_LOG_DESTINATION);
-            } else if (is_dir(dirname(ERROR_LOG_DESTINATION))) {
+            } elseif (is_dir(dirname(ERROR_LOG_DESTINATION))) {
                 $client = '['.$_SERVER['REMOTE_ADDR'].'] ';
-                error_log(date('[Y-m-d H:i:s] ') . "$client$msg\n", 3, ERROR_LOG_DESTINATION);
+                error_log(date('[Y-m-d H:i:s] ')."$client$msg\n", 3, ERROR_LOG_DESTINATION);
             } else {
                 error_log($msg, 0, ERROR_LOG_DESTINATION);
             }
@@ -196,21 +193,23 @@ class P5_Error
      * check E-mail format.
      *
      * @param string $str
+     *
      * @return bool
      */
-    static private function _isEmail($str)
+    private static function _isEmail($str)
     {
-        $pattern = '^(?:(?:(?:(?:[a-zA-Z0-9_!#\$\%&\'*+\/=?\^`{}~|\-]+)' .
-                   '(?:\.(?:[a-zA-Z0-9_!#\$\%&\'*+\/=?\^`{}~|\-]+))*)|' .
-                   '(?:"(?:\\[^\r\n]|[^\\"])*")))\@' .
-                   '(?:(?:(?:(?:[a-zA-Z0-9_!#\$\%&\'*+\/=?\^`{}~|\-]+)' .
-                   '(?:\.(?:[a-zA-Z0-9_!#\$\%&\'*+\/=?\^`{}~|\-]+))*)|' .
+        $pattern = '^(?:(?:(?:(?:[a-zA-Z0-9_!#\$\%&\'*+\/=?\^`{}~|\-]+)'.
+                   '(?:\.(?:[a-zA-Z0-9_!#\$\%&\'*+\/=?\^`{}~|\-]+))*)|'.
+                   '(?:"(?:\\[^\r\n]|[^\\"])*")))\@'.
+                   '(?:(?:(?:(?:[a-zA-Z0-9_!#\$\%&\'*+\/=?\^`{}~|\-]+)'.
+                   '(?:\.(?:[a-zA-Z0-9_!#\$\%&\'*+\/=?\^`{}~|\-]+))*)|'.
                    '(?:\[(?:\\\S|[\x21-\x5a\x5e-\x7e])*\])))$';
+
         return preg_match("/$pattern/", $str);
     }
 
     /**
-     * Default Error HTML
+     * Default Error HTML.
      *
      * @return string
      */
@@ -228,23 +227,23 @@ class P5_Error
     </body>
 </html>
 _HERE_;
-
     }
 
     /**
-     * backtrace
+     * backtrace.
      *
      * @return string
      */
-    static public function backtrace()
+    public static function backtrace()
     {
         $backtrace = debug_backtrace();
         $str = '';
-        foreach(debug_backtrace() as $trace) {
-            if(isset($trace['file'])) {
-                $str .= $trace['file'] . ' at ' . $trace['line'] . "\n";
+        foreach (debug_backtrace() as $trace) {
+            if (isset($trace['file'])) {
+                $str .= $trace['file'].' at '.$trace['line']."\n";
             }
         }
+
         return $str;
     }
 }

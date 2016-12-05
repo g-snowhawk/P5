@@ -1,6 +1,6 @@
 <?php
 /**
- * This file is part of P5 Framework
+ * This file is part of P5 Framework.
  *
  * Copyright (c)2016 PlusFive (http://www.plus-5.com)
  *
@@ -9,7 +9,7 @@
  */
 
 /**
- * XML DOM custom exception
+ * XML DOM custom exception.
  *
  * @license  http://www.plus-5.com/licenses/mit-license  MIT License
  * @author   Taka Goto <http://www.plus-5.com/>
@@ -17,17 +17,16 @@
 class P5_Xml_Dom_Exception extends ErrorException
 {
     /** 
-     * Current version
+     * Current version.
      */
     const VERSION = '1.1.0';
 
     /**
-     * object constructer
+     * object constructer.
      *
-     * @param string $message
-     * @param int $code
+     * @param string    $message
+     * @param int       $code
      * @param Exception $previous
-     * @return void
      */
     public function __construct($message, $code = 0, $previous = null)
     {

@@ -1,6 +1,6 @@
 <?php
 /**
- * This file is part of P5 Framework
+ * This file is part of P5 Framework.
  *
  * Copyright (c)2016 PlusFive (http://www.plus-5.com)
  *
@@ -9,7 +9,7 @@
  */
 
 /**
- * Benchmark class
+ * Benchmark class.
  *
  * @license  http://www.plus-5.com/licenses/mit-license  MIT License
  * @author   Taka Goto <http://www.plus-5.com/>
@@ -17,21 +17,19 @@
 class P5_Benchmark
 {
     /** 
-     * Current version
+     * Current version.
      */
     const VERSION = '1.1.0';
 
     /**
-     * Start time
+     * Start time.
      *
-     * @var double
+     * @var float
      */
     private $_start;
 
     /**
-     * Object constructor
-     *
-     * @return void
+     * Object constructor.
      */
     public function __construct()
     {
@@ -39,9 +37,7 @@ class P5_Benchmark
     }
 
     /**
-     * Object destructor
-     *
-     * @return void
+     * Object destructor.
      */
     public function __destruct()
     {

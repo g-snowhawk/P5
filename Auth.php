@@ -1,6 +1,6 @@
 <?php
 /**
- * This file is part of P5 Framework
+ * This file is part of P5 Framework.
  *
  * Copyright (c)2016 PlusFive (http://www.plus-5.com)
  *
@@ -8,7 +8,7 @@
  * http://www.plus-5.com/licenses/mit-license
  */
 /**
- * Authentication class
+ * Authentication class.
  *
  * @license  http://www.plus-5.com/licenses/mit-license  MIT License
  * @author   Taka Goto <http://www.plus-5.com/>
@@ -37,7 +37,7 @@ class P5_Auth
     /**
      * Authentication flag.
      *
-     * @var boolean
+     * @var bool
      */
     private $_auth;
 
@@ -49,11 +49,10 @@ class P5_Auth
     private $_error;
 
     /**
-     * Object constructer
+     * Object constructer.
      *
      * @param string $source
-     * @param P5_Db $db
-     * @return void
+     * @param P5_Db  $db
      */
     public function __construct($source, P5_Db $db)
     {
@@ -62,36 +61,39 @@ class P5_Auth
     }
 
     /**
-     * Check User/Password
+     * Check User/Password.
      *
-     * @param  string   $uname
-     * @param  string   $upass
-     * @return boolean
+     * @param string $uname
+     * @param string $upass
+     *
+     * @return bool
      */
     public function check($uname, $upass)
     {
-        if (empty($uname)) return false;
+        if (empty($uname)) {
+            return false;
+        }
         $this->_auth = false;
         if (file_exists($this->_source)) {
             $this->authByFile($uname, $upass);
         } else {
             $this->authByDb($uname, $upass);
         }
+
         return $this->_auth;
     }
 
     /**
      * Authorize by password file.
      *
-     * @param  string   $uname
-     * @param  string   $upass
-     * @return void
+     * @param string $uname
+     * @param string $upass
      */
     public function authByFile($uname, $upass)
     {
-        $fh  = new P5_File;
+        $fh = new P5_File();
         $inc = $fh->read($this->_source);
-        $pattern = "/(^|[\s]+)" . $uname . ":([^:\s]+)/s";
+        $pattern = "/(^|[\s]+)".$uname.":([^:\s]+)/s";
         if (preg_match($pattern, $inc, $match)) {
             $password = trim($match[2]);
             if (crypt($upass, $password) == $password) {
@@ -100,25 +102,24 @@ class P5_Auth
                 $this->_error = P5_Lang::translate('PASSWORD_MISSMATCH');
             }
         } else {
-            $this->_error = "`$uname' " . P5_Lang::translate('USER_UNDEFINED');
+            $this->_error = "`$uname' ".P5_Lang::translate('USER_UNDEFINED');
         }
     }
 
     /**
      * Authorize by password database.
      *
-     * @param  string   $uname
-     * @param  string   $upass
-     * @return void
+     * @param string $uname
+     * @param string $upass
      */
     public function authByDb($uname, $upass)
     {
-        $userColumn   = 'uname';
+        $userColumn = 'uname';
         $passwdColumn = 'upass';
 
-        $sql = "SELECT `$passwdColumn`" .
-               " FROM `" . $this->_source . "`" .
-               " WHERE `$userColumn`=" . $this->_db->quote($uname);
+        $sql = "SELECT `$passwdColumn`".
+               ' FROM `'.$this->_source.'`'.
+               " WHERE `$userColumn`=".$this->_db->quote($uname);
 
         if ($this->_db->query($sql)) {
             $check = $this->_db->fetchColumn(0);
@@ -146,40 +147,53 @@ class P5_Auth
      * @param int $figure
      * @param int $nums
      * @param int $chrs
+     *
      * @return string
      */
-    static public function createpassword($figure = 8, $nums = 0, $chrs = 0, $numonly = false)
+    public static function createpassword($figure = 8, $nums = 0, $chrs = 0, $numonly = false)
     {
         $seed['alp'] = str_split('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ');
         $seed['num'] = str_split('0123456789');
         $seed['chr'] = str_split('#$-=?@[]_');
         $password = '';
         if ($numonly) {
-            for($i = 0; $i < $figure; $i++) {
+            for ($i = 0; $i < $figure; ++$i) {
                 $n = array_rand($seed['num']);
                 $password .= $seed['num'][$n];
             }
+
             return $password;
         }
-        for($i = 0; $i < $figure; $i++) {
-            if ($nums <= 0) unset($seed['num']);
-            if ($chrs <= 0) unset($seed['chr']);
-            if ($figure - $i <= $nums + $chrs) unset($seed['alp']);
+        for ($i = 0; $i < $figure; ++$i) {
+            if ($nums <= 0) {
+                unset($seed['num']);
+            }
+            if ($chrs <= 0) {
+                unset($seed['chr']);
+            }
+            if ($figure - $i <= $nums + $chrs) {
+                unset($seed['alp']);
+            }
             $keys = array_keys($seed);
             $n = array_rand($keys);
             $key = $keys[$n];
-            if ($key == 'num') $nums--;
-            if ($key == 'chr') $chrs--;
+            if ($key == 'num') {
+                --$nums;
+            }
+            if ($key == 'chr') {
+                --$chrs;
+            }
             $n = array_rand($seed[$key]);
             $password .= $seed[$key][$n];
         }
+
         return $password;
     }
 
     /**
      * Authentication result.
      *
-     * @return boolean
+     * @return bool
      */
     public function failure()
     {
@@ -196,4 +210,3 @@ class P5_Auth
         return $this->_error;
     }
 }
-?>

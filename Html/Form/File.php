@@ -1,6 +1,6 @@
 <?php
 /**
- * This file is part of P5 Framework
+ * This file is part of P5 Framework.
  *
  * Copyright (c)2016 PlusFive (http://www.plus-5.com)
  *
@@ -8,7 +8,7 @@
  * http://www.plus-5.com/licenses/mit-license
  */
 /**
- * HTML form file class
+ * HTML form file class.
  *
  * @license  http://www.plus-5.com/licenses/mit-license  MIT License
  * @author   Taka Goto <http://www.plus-5.com/>
@@ -16,39 +16,37 @@
 class P5_Html_Form_File
 {
     /**
-     * Current version
+     * Current version.
      */
     const VERSION = '1.1.0';
 
     /**
-     * Set default value
+     * Set default value.
      *
-     * @param  object   $fmObj
-     * @param  object   $html
-     * @param  object   $element
-     * @param  string   $name
-     * @param  mixed    $value
-     * @param  mixed    $sec
-     * @return void
+     * @param object $fmObj
+     * @param object $html
+     * @param object $element
+     * @param string $name
+     * @param mixed  $value
+     * @param mixed  $sec
      */
-    static public function setValue($fmObj, $html, $element, $name, $value, $sec) 
+    public static function setValue($fmObj, $html, $element, $name, $value, $sec)
     {
     }
 
     /**
-     * Change source Input to Preview
+     * Change source Input to Preview.
      *
-     * @param  object   $fmObj
-     * @param  object   $html
-     * @param  object   $form
-     * @param  object   $element
-     * @param  string   $type
-     * @param  string   $name
-     * @param  mixed    $value
-     * @param  mixed    $sec
-     * @return void
+     * @param object $fmObj
+     * @param object $html
+     * @param object $form
+     * @param object $element
+     * @param string $type
+     * @param string $name
+     * @param mixed  $value
+     * @param mixed  $sec
      */
-    static public function preview($fmObj, $html, $form, $element, $type, $name, $value, $sec)
+    public static function preview($fmObj, $html, $form, $element, $type, $name, $value, $sec)
     {
         $name = preg_replace("/\[.*\]$/", '', $name);
         $val = '';
@@ -56,7 +54,7 @@ class P5_Html_Form_File
         if (empty($value)) {
             $value = $fmObj->FILES($name);
             if (!empty($value['name'])) {
-                $destination = dirname($value['tmp_name']) . '/' . $value['name'];
+                $destination = dirname($value['tmp_name']).'/'.$value['name'];
                 move_uploaded_file($value['tmp_name'], $destination);
                 $value['tmp_name'] = $destination;
                 $val = $value['name'];
@@ -65,9 +63,9 @@ class P5_Html_Form_File
         }
 
         $element->setAttribute('type', 'hidden');
-        $element->setAttribute('name', 's1_attachment[' . $name . ']');
+        $element->setAttribute('name', 's1_attachment['.$name.']');
         if ($type != 'hidden') {
-            $src = '<em class="textfield">' . htmlspecialchars($val) . '</em>';
+            $src = '<em class="textfield">'.htmlspecialchars($val).'</em>';
             $fmObj->insertElement($html, $element, $src, 0, 1);
         }
     }

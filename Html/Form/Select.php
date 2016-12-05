@@ -1,6 +1,6 @@
 <?php
 /**
- * This file is part of P5 Framework
+ * This file is part of P5 Framework.
  *
  * Copyright (c)2016 PlusFive (http://www.plus-5.com)
  *
@@ -8,7 +8,7 @@
  * http://www.plus-5.com/licenses/mit-license
  */
 /**
- * HTML form select element class
+ * HTML form select element class.
  *
  * @license  http://www.plus-5.com/licenses/mit-license  MIT License
  * @author   Taka Goto <http://www.plus-5.com/>
@@ -16,11 +16,11 @@
 class P5_Html_Form_Select
 {
     /**
-     * Current version
+     * Current version.
      */
     const VERSION = '1.1.0';
 
-    static public function setValue($fmObj, $html, $element, $name, $value) 
+    public static function setValue($fmObj, $html, $element, $name, $value)
     {
         if (is_array($value)) {
             if (preg_match("/.+\[([a-zA-Z0-9_\-]+)\]/", $name, $match)) {
@@ -35,7 +35,7 @@ class P5_Html_Form_Select
         // options
         $options = $element->getElementsByTagName('option');
 
-        for($j = 0, $max = $options->length; $j < $max; $j++) {
+        for ($j = 0, $max = $options->length; $j < $max; ++$j) {
             $val = $value;
             $opt = $options->item($j);
             if (false === $opt->hasAttribute('value')) {
@@ -57,18 +57,17 @@ class P5_Html_Form_Select
     }
 
     /**
-     * Change source Input to Preview
+     * Change source Input to Preview.
      *
-     * @param  object   $fmObj
-     * @param  object   $html
-     * @param  object   $form
-     * @param  object   $element
-     * @param  string   $name
-     * @param  mixed    $value
-     * @param  mixed    $sec
-     * @return void
+     * @param object $fmObj
+     * @param object $html
+     * @param object $form
+     * @param object $element
+     * @param string $name
+     * @param mixed  $value
+     * @param mixed  $sec
      */
-    static public function preview($fmObj, $html, $form, $element, $name, $value, $sec)
+    public static function preview($fmObj, $html, $form, $element, $name, $value, $sec)
     {
         if (is_array($value)) {
             $num = 0;
@@ -80,7 +79,9 @@ class P5_Html_Form_Select
                     $sec[$match[1]] = 1;
                 }
             }
-            if (preg_match("/.+\[([a-zA-Z0-9]+)\]/", $name, $match)) $num = $match[1];
+            if (preg_match("/.+\[([a-zA-Z0-9]+)\]/", $name, $match)) {
+                $num = $match[1];
+            }
             $value = $value[$num];
         }
 
@@ -95,17 +96,17 @@ class P5_Html_Form_Select
         }
         $parent = $element->parentNode;
         // replace
-        $src = '<input type="hidden" ' . 'name="' . $name . '" />';
+        $src = '<input type="hidden" '.'name="'.$name.'" />';
         $node = $fmObj->insertElement($html, $element, $src);
         if (is_array($node)) {
             $node[0]->setAttribute('value', $value);
         } else {
-            if(method_exists($node, 'setAttribute')) {
+            if (method_exists($node, 'setAttribute')) {
                 $node->setAttribute('value', $value);
             }
         }
         //$src = '<em class="textfield">' . $value . '</em>';
-        $src = '<em class="textfield">' . $label. '</em>';
+        $src = '<em class="textfield">'.$label.'</em>';
         $fmObj->insertElement($html, $element, $src);
         $parent->removeChild($element);
     }

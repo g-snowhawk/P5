@@ -1,6 +1,6 @@
 <?php
 /**
- * This file is part of P5 Framework
+ * This file is part of P5 Framework.
  *
  * Copyright (c)2016 PlusFive (http://www.plus-5.com)
  *
@@ -9,7 +9,7 @@
  */
 
 /**
- * Configuration parser class
+ * Configuration parser class.
  *
  * @license  http://www.plus-5.com/licenses/mit-license  MIT License
  * @author   Taka Goto <http://www.plus-5.com/>
@@ -17,26 +17,26 @@
 class P5_Config_Parser
 {
     /**
-     * Current version
+     * Current version.
      */
     const VERSION = '1.1.0';
 
     /**
-     * Default block name
+     * Default block name.
      */
     const DEFAULTNS = 'global';
 
     /**
-     * Configure data array
+     * Configure data array.
      *
      * @var array
      */
     private $_cnf;
 
     /**
-     * Object Constructer
+     * Object Constructer.
      *
-     * @param  string  $inifile
+     * @param string $inifile
      */
     public function __construct($inifile)
     {
@@ -45,14 +45,17 @@ class P5_Config_Parser
     }
 
     /**
-     * Configuration data
+     * Configuration data.
      *
-     * @param  string  $arg
+     * @param string $arg
+     *
      * @return mixed
      */
     public function param($arg = null, $value = null)
     {
-        if (is_null($arg)) return $this->_cnf;
+        if (is_null($arg)) {
+            return $this->_cnf;
+        }
 
         $arg = strtolower($arg);
 
@@ -66,12 +69,13 @@ class P5_Config_Parser
             $blockName = $keys[0];
         }
 
-        if ($value) $this->_cnf[$blockName][$key] = $value;
+        if ($value) {
+            $this->_cnf[$blockName][$key] = $value;
+        }
 
         return (
-            array_key_exists($blockName, $this->_cnf) 
+            array_key_exists($blockName, $this->_cnf)
             && array_key_exists($key, $this->_cnf[$blockName])
         ) ? $this->_cnf[$blockName][$key] : null;
     }
 }
-?>

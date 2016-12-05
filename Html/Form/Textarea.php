@@ -1,6 +1,6 @@
 <?php
 /**
- * This file is part of P5 Framework
+ * This file is part of P5 Framework.
  *
  * Copyright (c)2016 PlusFive (http://www.plus-5.com)
  *
@@ -8,7 +8,7 @@
  * http://www.plus-5.com/licenses/mit-license
  */
 /**
- * HTML form textarea class
+ * HTML form textarea class.
  *
  * @license  http://www.plus-5.com/licenses/mit-license  MIT License
  * @author   Taka Goto <http://www.plus-5.com/>
@@ -16,20 +16,19 @@
 class P5_Html_Form_Textarea
 {
     /**
-     * Current version
+     * Current version.
      */
     const VERSION = '1.1.0';
 
     /**
-     * Setting default value
+     * Setting default value.
      *
-     * @param  object   $fmObj
-     * @param  object   $html
-     * @param  object   $element
-     * @param  string   $value
-     * @return void
+     * @param object $fmObj
+     * @param object $html
+     * @param object $element
+     * @param string $value
      */
-    static public function setValue($fmObj, $html, $element, $value)
+    public static function setValue($fmObj, $html, $element, $value)
     {
         $value = preg_replace("/\r\n/", "\n", $value);
         $node = $element->ownerDocument->createTextNode($value);
@@ -37,29 +36,28 @@ class P5_Html_Form_Textarea
     }
 
     /**
-     * Replace preview elements
+     * Replace preview elements.
      *
-     * @param  object   $fmObj
-     * @param  object   $html
-     * @param  object   $element
-     * @param  string   $name
-     * @param  string   $value
-     * @return void
+     * @param object $fmObj
+     * @param object $html
+     * @param object $element
+     * @param string $name
+     * @param string $value
      */
-    static public function preview($fmObj, $html, $element, $name, $value) 
+    public static function preview($fmObj, $html, $element, $name, $value)
     {
         $parent = $element->parentNode;
-        $src = '<input type="hidden" name="' . $name . '" />';
+        $src = '<input type="hidden" name="'.$name.'" />';
         $node = $fmObj->insertElement($html, $element, $src);
         if (is_array($node)) {
             $node[0]->setAttribute('value', $value);
         } else {
-            if(method_exists($node, 'setAttribute')) {
+            if (method_exists($node, 'setAttribute')) {
                 $node->setAttribute('value', $value);
             }
         }
-        $value = preg_replace("/(\r\n|\r|\n)/", "<br />", htmlspecialchars($value));
-        $src = '<em class="textbox">' . $value . '</em>';
+        $value = preg_replace("/(\r\n|\r|\n)/", '<br />', htmlspecialchars($value));
+        $src = '<em class="textbox">'.$value.'</em>';
         $fmObj->insertElement($html, $element, $src);
         $parent->removeChild($element);
     }

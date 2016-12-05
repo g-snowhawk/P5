@@ -1,16 +1,16 @@
 <?php
 /**
- * This file is part of P5 Framework
+ * This file is part of P5 Framework.
  *
  * Copyright (c)2016 PlusFive (http://www.plus-5.com)
  *
  * This software is released under the MIT License.
  * http://www.plus-5.com/licenses/mit-license
  */
-include_once('PHPExcel.php');
+include_once 'PHPExcel.php';
 
 /**
- * Excel class
+ * Excel class.
  *
  * @license  http://www.plus-5.com/licenses/mit-license  MIT License
  * @author   Taka Goto <http://www.plus-5.com/>
@@ -18,40 +18,40 @@ include_once('PHPExcel.php');
 class P5_Excel extends PHPExcel
 {
     /** 
-     * Current version
+     * Current version.
      */
     const VERSION = '1.1.0';
 
     /**
-     * PHPExcel_IOFactory class instance
+     * PHPExcel_IOFactory class instance.
      *
      * var PHPExcel_IOFactory
      */
     private $_writer;
 
     /**
-     * PHPExcel_IOFactory class instance
+     * PHPExcel_IOFactory class instance.
      *
      * var PHPExcel_IOFactory
      */
     private $_reader;
 
     /**
-     * Active Sheet
+     * Active Sheet.
      *
      * var object
      */
     private $_sheet;
 
     /**
-     * book
+     * book.
      *
      * var object
      */
     private $_book;
 
     /**
-     * Object constructor
+     * Object constructor.
      *
      * return void
      */
@@ -66,9 +66,10 @@ class P5_Excel extends PHPExcel
     }
 
     /**
-     * Getter Method
+     * Getter Method.
      *
      * @param string $key
+     *
      * @return mixed
      */
     public function __get($key)
@@ -77,13 +78,15 @@ class P5_Excel extends PHPExcel
         if (true === property_exists($this, $key)) {
             return $this->$key;
         }
-        return null;
+
+        return;
     }
 
     /**
-     * Load File
+     * Load File.
      *
      * @param string $path
+     *
      * @return bool
      */
     public function load($path)
@@ -92,9 +95,10 @@ class P5_Excel extends PHPExcel
     }
 
     /**
-     * Save File
+     * Save File.
      *
      * @param string $path
+     *
      * @return bool
      */
     public function save($path)
@@ -103,10 +107,9 @@ class P5_Excel extends PHPExcel
     }
 
     /**
-     * set active sheet
+     * set active sheet.
      *
      * @param int $index
-     * @return void
      */
     public function setActiveSheetIndex($index)
     {
@@ -120,11 +123,10 @@ class P5_Excel extends PHPExcel
     }
 
     /**
-     * set value by cellname
+     * set value by cellname.
      *
-     * @param int $cell
+     * @param int   $cell
      * @param mixed $value
-     * @return void
      */
     public function setCellValue($cell, $value)
     {
@@ -132,12 +134,11 @@ class P5_Excel extends PHPExcel
     }
 
     /**
-     * set value by column and row
+     * set value by column and row.
      *
-     * @param int $col
-     * @param int $row
+     * @param int   $col
+     * @param int   $row
      * @param mixed $value
-     * @return void
      */
     public function setCellValueByColumnAndRow($col, $row, $value)
     {
@@ -145,26 +146,26 @@ class P5_Excel extends PHPExcel
     }
 
     /**
-     * cell range
+     * cell range.
      * 
      * @param int $colFrom
      * @param int $rowFrom
      * @param int $colTo
      * @param int $rowTo
+     *
      * @return 
      */
     public function getRange($colFrom, $rowFrom, $colTo, $rowTo)
     {
-        return PHPExcel_Cell::stringFromColumnIndex($colFrom) . $rowFrom . ":" . 
-               PHPExcel_Cell::stringFromColumnIndex($colTo) . $rowTo;
+        return PHPExcel_Cell::stringFromColumnIndex($colFrom).$rowFrom.':'.
+               PHPExcel_Cell::stringFromColumnIndex($colTo).$rowTo;
     }
 
     /**
-     * background color
+     * background color.
      *
      * @param object $cells
      * @param string $color
-     * @return void
      */
     public function setBackGroundColor($cells, $color)
     {
@@ -174,13 +175,12 @@ class P5_Excel extends PHPExcel
     }
 
     /**
-     * border
+     * border.
      *
      * @param string $pos
-     * @param int $type
+     * @param int    $type
      * @param string $color
      * @param object $cells
-     * @return void
      */
     public function setBorder($cells, $pos, $type, $color)
     {
@@ -190,12 +190,11 @@ class P5_Excel extends PHPExcel
     }
 
     /**
-     * alignment
+     * alignment.
      *
      * @param object $cells
      * @param string $orient
-     * @param int $style
-     * @return void
+     * @param int    $style
      */
     public function setAlign($cells, $orient = 'h', $style)
     {
@@ -208,17 +207,16 @@ class P5_Excel extends PHPExcel
     }
 
     /**
-     * font
+     * font.
      *
      * @param object $cells
-     * @param int $size
+     * @param int    $size
      * @param string $name
      * @param string $color
-     * @param bool $bold
-     * @param bool $italic
-     * @param bool $underline
-     * @param bool $strikethrough
-     * @return void
+     * @param bool   $bold
+     * @param bool   $italic
+     * @param bool   $underline
+     * @param bool   $strikethrough
      */
     public function setFont($cells, $size = 10, $name = '', $color = '', $bold = false, $italic = false, $underline = false, $strikethrough = false)
     {
@@ -227,7 +225,7 @@ class P5_Excel extends PHPExcel
             'bold' => $bold,
             'italic' => $bold,
             'underline' => $underline,
-            'strike' => $strikethrough
+            'strike' => $strikethrough,
         );
         $arr['size'] = $size;
         if (!empty($name)) {
@@ -240,9 +238,10 @@ class P5_Excel extends PHPExcel
     }
 
     /**
-     * Parse row data
+     * Parse row data.
      *
      * @param object $row
+     *
      * @return array
      */
     public function parse($row)
@@ -253,13 +252,15 @@ class P5_Excel extends PHPExcel
                 $data[] = $this->getCellValue($cell);
             }
         }
+
         return $data;
     }
 
     /**
-     * Cell test
+     * Cell test.
      *
      * @param object $cell
+     *
      * @return string
      */
     public function getCellValue($cell)
@@ -279,6 +280,7 @@ class P5_Excel extends PHPExcel
                 $value = $valueCell;
             }
         }
+
         return $value;
     }
 }

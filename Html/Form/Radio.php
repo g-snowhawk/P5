@@ -1,6 +1,6 @@
 <?php
 /**
- * This file is part of P5 Framework
+ * This file is part of P5 Framework.
  *
  * Copyright (c)2016 PlusFive (http://www.plus-5.com)
  *
@@ -8,7 +8,7 @@
  * http://www.plus-5.com/licenses/mit-license
  */
 /**
- * HTML form radio button class
+ * HTML form radio button class.
  *
  * @license  http://www.plus-5.com/licenses/mit-license  MIT License
  * @author   Taka Goto <http://www.plus-5.com/>
@@ -16,20 +16,19 @@
 class P5_Html_Form_Radio
 {
     /**
-     * Current version
+     * Current version.
      */
     const VERSION = '1.1.0';
 
     /**
-     * Set default value
+     * Set default value.
      *
-     * @param  object   $fmObj
-     * @param  object   $html
-     * @param  object   $element
-     * @param  mixed    $value
-     * @return void
+     * @param object $fmObj
+     * @param object $html
+     * @param object $element
+     * @param mixed  $value
      */
-    static public function setValue($fmObj, $html, $element, $value)
+    public static function setValue($fmObj, $html, $element, $value)
     {
         $attvalue = P5_Html::rewindEntityReference($element->getAttribute('value'));
         $entities = mb_convert_encoding($attvalue, 'HTML-ENTITIES', mb_internal_encoding());
@@ -42,16 +41,15 @@ class P5_Html_Form_Radio
     }
 
     /**
-     * Change source Input to Preview
+     * Change source Input to Preview.
      *
-     * @param  object   $fmObj
-     * @param  object   $html
-     * @param  object   $form
-     * @param  object   $element
-     * @param  mixed    $value
-     * @return void
+     * @param object $fmObj
+     * @param object $html
+     * @param object $form
+     * @param object $element
+     * @param mixed  $value
      */
-    static public function preview($fmObj, $html, $form, $element, $value)
+    public static function preview($fmObj, $html, $form, $element, $value)
     {
         $val = $element->getAttribute('value');
         $name = $element->getAttribute('name');
@@ -60,10 +58,10 @@ class P5_Html_Form_Radio
 
         $node = P5_Xml_Dom::getParentNode($element, 'label');
         $label = '';
-        if(!empty($value)) {
-            if(!is_object($node)) {
+        if (!empty($value)) {
+            if (!is_object($node)) {
                 $labels = $form->getElementsByTagName('label');
-                for($l = 0, $max = $labels->length; $l < $max; $l++) {
+                for ($l = 0, $max = $labels->length; $l < $max; ++$l) {
                     $tmp = $labels->item($l);
                     if (!empty($id) && $id === $tmp->getAttribute('for')) {
                         $node = $tmp;
@@ -71,12 +69,12 @@ class P5_Html_Form_Radio
                     }
                 }
             }
-            if(!is_object($node)) {
+            if (!is_object($node)) {
                 $label = $val;
             } else {
                 $children = $node->childNodes;
-                foreach($children as $child) {
-                    if($child->nodeType === 3) {
+                foreach ($children as $child) {
+                    if ($child->nodeType === 3) {
                         $label .= $child->nodeValue;
                     }
                 }
@@ -85,14 +83,14 @@ class P5_Html_Form_Radio
 
         if (empty($value) || $val == $value) {
             $str = $label;
-            if(!empty($value) && $str === '') {
+            if (!empty($value) && $str === '') {
                 $str = $val;
             }
-            if(!is_object($parent)) {
+            if (!is_object($parent)) {
                 return;
             }
-            $src  = '<input type="hidden" name="' . $name . '" value="' . $value . '" />' .
-                    '<em class="textfield">' . $str . '</em>';
+            $src = '<input type="hidden" name="'.$name.'" value="'.$value.'" />'.
+                    '<em class="textfield">'.$str.'</em>';
             $children = $parent->childNodes;
             while ($parent->hasChildNodes()) {
                 $parent->removeChild($parent->firstChild);

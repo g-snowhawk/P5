@@ -1,6 +1,6 @@
 <?php
 /**
- * This file is part of P5 Framework
+ * This file is part of P5 Framework.
  *
  * Copyright (c)2016 PlusFive (http://www.plus-5.com)
  *
@@ -8,7 +8,7 @@
  * http://www.plus-5.com/licenses/mit-license
  */
 /**
- * FTP class
+ * FTP class.
  *
  * @license  http://www.plus-5.com/licenses/mit-license  MIT License
  * @author   Taka Goto <http://www.plus-5.com/>
@@ -16,7 +16,7 @@
 class P5_Ftp
 {
     /** 
-     * Current version
+     * Current version.
      */
     const VERSION = '1.1.0';
 
@@ -103,30 +103,29 @@ class P5_Ftp
      * @var int
      */
     private $_timeout;
-    
+
     /**
-     * Object Constructer
+     * Object Constructer.
      *
      * @param string $host
      * @param string $user
      * @param string $passwd
      * @param string $dir
-     * @param bool $pasv
-     * @param int $timeout
-     * @return void
+     * @param bool   $pasv
+     * @param int    $timeout
      */
-    function __construct($host, $user, $passwd, $dir = '', $port = 21, $pasv = false, $timeout = 90) 
+    public function __construct($host, $user, $passwd, $dir = '', $port = 21, $pasv = false, $timeout = 90)
     {
         if (empty($port)) {
             $port = 21;
         }
-        $this->_host      = $host;
-        $this->_user      = $user;
-        $this->_passwd    = $passwd;
+        $this->_host = $host;
+        $this->_user = $user;
+        $this->_passwd = $passwd;
         $this->_directory = $dir;
-        $this->_port      = $port;
-        $this->_pasv      = $pasv;
-        $this->_timeout   = $timeout;
+        $this->_port = $port;
+        $this->_pasv = $pasv;
+        $this->_timeout = $timeout;
         // Connect FTP Server.
         if (false === $this->_connID = @ftp_connect($this->_host, $this->_port, $this->_timeout)) {
             throw new P5_Ftp_Exception(P5_Lang::translate('FAILURE_CONNECT_FTP'), E_USER_WARNING);
@@ -135,8 +134,6 @@ class P5_Ftp
 
     /**
      * Using TLS/SSL connection.
-     *
-     * @return void
      */
     public function secure()
     {
@@ -153,18 +150,19 @@ class P5_Ftp
      *
      * @return bool
      */
-    function login() 
+    public function login()
     {
-		if (false !== @ftp_login($this->_connID, $this->_user, $this->_passwd)) {
-			if (false !== ftp_pasv($this->_connID, $this->_pasv)) {
-                $this->_root = preg_replace("/\/$/", "", ftp_pwd($this->_connID));
+        if (false !== @ftp_login($this->_connID, $this->_user, $this->_passwd)) {
+            if (false !== ftp_pasv($this->_connID, $this->_pasv)) {
+                $this->_root = preg_replace("/\/$/", '', ftp_pwd($this->_connID));
                 // Change current directory.
                 if (false !== $this->cd($this->_directory)) {
                     return true;
                 }
             }
-		}
-		return false;
+        }
+
+        return false;
     }
 
     /**
@@ -172,7 +170,7 @@ class P5_Ftp
      *
      * @return bool
      */
-    function close() 
+    public function close()
     {
         return ftp_close($this->_connID);
     }
@@ -182,11 +180,12 @@ class P5_Ftp
      *
      * @param string $local_path
      * @param string $remote_path
-     * @param int $mode
-     * @param int $resumepos
+     * @param int    $mode
+     * @param int    $resumepos
+     *
      * @return bool
      */
-    public function get($local_file, $remote_file, $mode = FTP_BINARY, $resumepos = 0) 
+    public function get($local_file, $remote_file, $mode = FTP_BINARY, $resumepos = 0)
     {
         // File
         if ($this->is_file($remote_file)) {
@@ -210,8 +209,10 @@ class P5_Ftp
                         return false;
                     }
                 }
+
                 return true;
             }
+
             return false;
         }
     }
@@ -221,11 +222,12 @@ class P5_Ftp
      *
      * @param string $remote_file
      * @param string $local_file
-     * @param int $mode
-     * @param int $startpos
+     * @param int    $mode
+     * @param int    $startpos
+     *
      * @return bool
      */
-    public function put($remote_file, $local_file, $mode = FTP_BINARY, $startpos = 0) 
+    public function put($remote_file, $local_file, $mode = FTP_BINARY, $startpos = 0)
     {
         // File
         if (is_file($local_file)) {
@@ -240,7 +242,7 @@ class P5_Ftp
             }
             // Recurse
             if ($dh = opendir($local_file)) {
-                while(false !== $entry = readdir($dh)) {
+                while (false !== $entry = readdir($dh)) {
                     if ($entry == '.' || $entry == '..') {
                         continue;
                     }
@@ -248,8 +250,10 @@ class P5_Ftp
                         return false;
                     }
                 }
+
                 return true;
             }
+
             return false;
         }
     }
@@ -259,9 +263,10 @@ class P5_Ftp
      *
      * @param string $oldname
      * @param string $newname
+     *
      * @return bool
      */
-    public function rename($oldname, $newname) 
+    public function rename($oldname, $newname)
     {
         return ftp_rename($this->_connID, $oldname, $newname);
     }
@@ -270,9 +275,10 @@ class P5_Ftp
      * Remove file.
      *
      * @param string $path
+     *
      * @return bool
      */
-    public function delete($path) 
+    public function delete($path)
     {
         return ftp_delete($this->_connID, $path);
     }
@@ -281,17 +287,18 @@ class P5_Ftp
      * Remove directory.
      *
      * @param string $path
-     * @param bool $force
+     * @param bool   $force
+     *
      * @return bool
      */
-    public function rmdir($path, $force = false) 
+    public function rmdir($path, $force = false)
     {
         // Trim slash
         $path = $this->realDir($path);
         // Recursive remove.
         if ($force !== false) {
             $dirs = ftp_nlist($this->_connID, $path);
-            foreach ((array)$dirs as $dir) {
+            foreach ((array) $dirs as $dir) {
                 $entry = basename($dir);
                 if ($entry == '.' || $entry == '..') {
                     continue;
@@ -316,12 +323,13 @@ class P5_Ftp
     }
 
     /**
-     * Copy file
+     * Copy file.
      *
      * @param string $source
      * @param string $dist
-     * @param int $mode
-     * @param int $resumepos
+     * @param int    $mode
+     * @param int    $resumepos
+     *
      * @return bool
      */
     public function copy($source, $dist, $mode = FTP_BINARY, $resumepos = 0)
@@ -339,14 +347,16 @@ class P5_Ftp
                 }
             }
         }
+
         return false;
     }
 
     /**
-     * Make remote directory
+     * Make remote directory.
      *
      * @param string $path
-     * @param bool $recursive
+     * @param bool   $recursive
+     *
      * @return bool
      */
     public function mkdir($path, $recursive = false)
@@ -355,8 +365,8 @@ class P5_Ftp
             return @ftp_mkdir($this->_connID, $path);
         }
         // recursive
-        $dirs = (array)explode("/", $this->realDir($path));
-        foreach($dirs as $dir) {
+        $dirs = (array) explode('/', $this->realDir($path));
+        foreach ($dirs as $dir) {
             if (false === @ftp_chdir($this->_connID, $dir)) {
                 if (!preg_match("/^\.+$/", $dir)) {
                     if (false === ftp_mkdir($this->_connID, $dir)) {
@@ -374,20 +384,22 @@ class P5_Ftp
      * Change directory.
      *
      * @param string $path
+     *
      * @return bool
      */
-    public function cd($path) 
+    public function cd($path)
     {
         $dir = $this->realDir($path);
         // chroot
         if ($this->_chroot === true && preg_match("/^\//", $dir)) {
-            $dir = $this->_root . '/' . preg_replace("/^\//", "", $dir);
+            $dir = $this->_root.'/'.preg_replace("/^\//", '', $dir);
         }
+
         return @ftp_chdir($this->_connID, $dir);
     }
 
     /**
-     * current directory
+     * current directory.
      *
      * @return string
      */
@@ -397,31 +409,34 @@ class P5_Ftp
     }
 
     /**
-     * Check Exists
+     * Check Exists.
      *
      * @param string $path
+     *
      * @return bool
      */
-    public function file_exists($path) 
+    public function file_exists($path)
     {
         $f = basename($path);
         $d = dirname($path);
         $buff = ftp_nlist($this->_connID, $d);
-        foreach ((array)$buff as $line) {
-            if ($line == $f || preg_match("/\/" . preg_quote($f, '/') . "$/i", $line)) {
+        foreach ((array) $buff as $line) {
+            if ($line == $f || preg_match("/\/".preg_quote($f, '/').'$/i', $line)) {
                 return true;
             }
         }
+
         return false;
     }
 
     /**
-     * List
+     * List.
      *
      * @param string $path
+     *
      * @return array
      */
-    public function ls($path) 
+    public function ls($path)
     {
         $buff = ftp_rawlist($this->_connID, $path);
         // rsort($buff);
@@ -437,19 +452,20 @@ class P5_Ftp
                     continue;
                 }
                 $arr = array(
-                    'type'  => self::type($current[0]),
+                    'type' => self::type($current[0]),
                     'count' => $current[1],
-                    'user'  => $current[2],
+                    'user' => $current[2],
                     'group' => $current[3],
-                    'size'  => self::size($current[4]),
+                    'size' => self::size($current[4]),
                     'month' => $current[5],
-                    'day'   => $current[6],
-                    'year'  => $current[7],
-                    'file'  => $current[8]
+                    'day' => $current[6],
+                    'year' => $current[7],
+                    'file' => $current[8],
                 );
                 array_push($data, $arr);
             }
         }
+
         return $data;
     }
 
@@ -457,9 +473,10 @@ class P5_Ftp
      * Path is Link or not.
      *
      * @param string $path
+     *
      * @return array
      */
-    public function is_link($path) 
+    public function is_link($path)
     {
         return $this->is_file($path, 'link');
     }
@@ -468,9 +485,10 @@ class P5_Ftp
      * Path is Directory or not.
      *
      * @param string $path
+     *
      * @return array
      */
-    public function is_dir($path) 
+    public function is_dir($path)
     {
         return $this->is_file($path, 'directory');
     }
@@ -480,6 +498,7 @@ class P5_Ftp
      *
      * @param string $path
      * @param string $type
+     *
      * @return array
      */
     public function is_file($path, $type = 'file')
@@ -487,23 +506,25 @@ class P5_Ftp
         $f = basename($path);
         $d = dirname($path);
         $buff = ftp_rawlist($this->_connID, $d);
-        foreach ((array)$buff as $line) {
-            if (preg_match("/[\s]+" . preg_quote($f, '/') . "$/i", $line)) {
+        foreach ((array) $buff as $line) {
+            if (preg_match("/[\s]+".preg_quote($f, '/').'$/i', $line)) {
                 if (self::type($line) === $type) {
                     return true;
                 }
             }
         }
+
         return false;
     }
 
     /**
-     * filetype
+     * filetype.
      *
      * @param string $perms
+     *
      * @return string
      */
-    static public function type($perms) 
+    public static function type($perms)
     {
         switch (substr($perms, 0, 1)) {
             case 'd' : return 'directory';
@@ -513,40 +534,43 @@ class P5_Ftp
     }
 
     /**
-     * filesize to string
+     * filesize to string.
      *
      * @param float $size
+     *
      * @return string
      */
-    static public function size($size) 
+    public static function size($size)
     {
         if ($size < 1024) {
-            return round($size, 2) . ' Byte';
+            return round($size, 2).' Byte';
         } elseif ($size < pow(1024, 2)) {
-            return round(($size/1024), 2) . ' KB';
+            return round(($size / 1024), 2).' KB';
         } elseif ($size < pow(1024, 3)) {
-            return round((($size/1024)/1024),2) . ' MB';
+            return round((($size / 1024) / 1024), 2).' MB';
         } elseif ($size < pow(1024, 4)) {
-            return round(((($size/1024)/1024)/1024),2) . ' GB';
+            return round(((($size / 1024) / 1024) / 1024), 2).' GB';
         }
     }
 
     /**
-     * Real path
+     * Real path.
      * 
      * @param string $path
+     *
      * @return string
      */
-    static public function realDir($path)
+    public static function realDir($path)
     {
         if (preg_match("/[^\/]$/", $path)) {
             $path .= '/';
         }
-        return dirname($path . '.');
+
+        return dirname($path.'.');
     }
 
     /**
-     * Error Message
+     * Error Message.
      *
      * @return string
      */

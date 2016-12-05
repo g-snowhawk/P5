@@ -1,6 +1,6 @@
 <?php
 /**
- * This file is part of P5 Framework
+ * This file is part of P5 Framework.
  *
  * Copyright (c)2016 PlusFive (http://www.plus-5.com)
  *
@@ -8,30 +8,29 @@
  * http://www.plus-5.com/licenses/mit-license
  */
 /**
- * HTML form checkbox class
+ * HTML form checkbox class.
  *
  * @license  http://www.plus-5.com/licenses/mit-license  MIT License
  * @author   Taka Goto <http://www.plus-5.com/>
  */
-class P5_Html_Form_Checkbox 
+class P5_Html_Form_Checkbox
 {
     /**
-     * Current version
+     * Current version.
      */
     const VERSION = '1.1.0';
 
     /**
-     * Set default value
+     * Set default value.
      *
-     * @param  object   $fmObj
-     * @param  object   $html
-     * @param  object   $element
-     * @param  string   $name
-     * @param  mixed    $value
-     * @param  mixed    $sec
-     * @return void
+     * @param object $fmObj
+     * @param object $html
+     * @param object $element
+     * @param string $name
+     * @param mixed  $value
+     * @param mixed  $sec
      */
-    static public function setValue($fmObj, $html, $element, $name, $value, $sec) 
+    public static function setValue($fmObj, $html, $element, $name, $value, $sec)
     {
         //$pattern = $element->getAttribute('value');
         $attvalue = P5_Html::rewindEntityReference($element->getAttribute('value'));
@@ -40,7 +39,7 @@ class P5_Html_Form_Checkbox
         if (P5_Array::is_hash($value)) {
             if (preg_match("/.+\[([a-zA-Z0-9\-_]+)\]/", $name, $match)) {
                 $sec = $match[1];
-                $value = (isset($value[$sec])) ? $value[$sec] : NULL;
+                $value = (isset($value[$sec])) ? $value[$sec] : null;
             }
         }
         if ((is_array($value) && (in_array($attvalue, $value) || in_array($entities, $value) || in_array($decoders, $value))) ||
@@ -53,43 +52,45 @@ class P5_Html_Form_Checkbox
     }
 
     /**
-     * Change source Input to Preview
+     * Change source Input to Preview.
      *
-     * @param  object   $fmObj
-     * @param  object   $html
-     * @param  object   $form
-     * @param  object   $element
-     * @param  string   $name
-     * @param  mixed    $value
-     * @return void
+     * @param object $fmObj
+     * @param object $html
+     * @param object $form
+     * @param object $element
+     * @param string $name
+     * @param mixed  $value
      */
-    static public function preview($fmObj, $html, $form, $element, $name, $value)
+    public static function preview($fmObj, $html, $form, $element, $name, $value)
     {
         $name = preg_replace("/\[.*\]$/", '', $name);
         $container = $html->getElementById($name);
         $src = '';
-        if (!is_array($value)) $container = $container->parentNode;
+        if (!is_array($value)) {
+            $container = $container->parentNode;
+        }
         if (is_object($container)) {
             $separator = $container->getAttribute('separator');
-            if (empty($separator)) $separator = '<br />';
-            $src = '<' . $container->nodeName . ' id="' . $name . '">';
+            if (empty($separator)) {
+                $separator = '<br />';
+            }
+            $src = '<'.$container->nodeName.' id="'.$name.'">';
             if (is_array($value)) {
-                $src .= '<em class="textfield">' . implode($separator, $value) . '</em>';
+                $src .= '<em class="textfield">'.implode($separator, $value).'</em>';
                 foreach ($value as $val) {
-                    $src .= '<input type="hidden"' .
-                            ' name="' . $name . '[]"' .
-                            ' value="' . $val . '"' .
+                    $src .= '<input type="hidden"'.
+                            ' name="'.$name.'[]"'.
+                            ' value="'.$val.'"'.
                             '/>';
                 }
             } else {
-
                 $label = '';
                 $node = P5_Xml_Dom::getParentNode($element, 'label');
-                if(!empty($value)) {
-                    if(!is_object($node)) {
+                if (!empty($value)) {
+                    if (!is_object($node)) {
                         $id = $element->getAttribute('id');
                         $labels = $form->getElementsByTagName('label');
-                        for($l = 0, $max = $labels->length; $l < $max; $l++) {
+                        for ($l = 0, $max = $labels->length; $l < $max; ++$l) {
                             $tmp = $labels->item($l);
                             if (!empty($id) && $id === $tmp->getAttribute('for')) {
                                 $node = $tmp;
@@ -97,25 +98,25 @@ class P5_Html_Form_Checkbox
                             }
                         }
                     }
-                    if(!is_object($node)) {
+                    if (!is_object($node)) {
                         $label = $val;
                     } else {
                         $children = $node->childNodes;
-                        foreach($children as $child) {
-                            if($child->nodeType === 3) {
+                        foreach ($children as $child) {
+                            if ($child->nodeType === 3) {
                                 $label .= $child->nodeValue;
                             }
                         }
                     }
                 }
 
-                $src .= '<em class="textfield">' . $label . '</em>';
-                $src .= '<input type="hidden"' .
-                        ' name="' . $name . '"' .
-                        ' value="' . $value . '"' .
+                $src .= '<em class="textfield">'.$label.'</em>';
+                $src .= '<input type="hidden"'.
+                        ' name="'.$name.'"'.
+                        ' value="'.$value.'"'.
                         '/>';
             }
-            $src .= '</' . $container->nodeName . '>';
+            $src .= '</'.$container->nodeName.'>';
             if (is_array($value)) {
                 $fmObj->insertElement($html, $container, $src, 0, 1);
                 $container->parentNode->removeChild($container);

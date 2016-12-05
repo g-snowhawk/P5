@@ -1,6 +1,6 @@
 <?php
 /**
- * This file is part of P5 Framework
+ * This file is part of P5 Framework.
  *
  * Copyright (c)2016 PlusFive (http://www.plus-5.com)
  *
@@ -9,7 +9,7 @@
  */
 
 /**
- * Date class
+ * Date class.
  *
  * @license  http://www.plus-5.com/licenses/mit-license  MIT License
  * @author   Taka Goto <http://www.plus-5.com/>
@@ -17,26 +17,29 @@
 class P5_Date
 {
     /** 
-     * Current version
+     * Current version.
      */
     const VERSION = '1.1.0';
 
     /**
-     * Timestamp to string
+     * Timestamp to string.
      *
      * @param string $format
      * @param number $timestamp
+     *
      * @return string
      */
-    static public function format($format, $timestamp = null)
+    public static function format($format, $timestamp = null)
     {
-        if (empty($timestamp)) $timestamp = time();
+        if (empty($timestamp)) {
+            $timestamp = time();
+        }
 
-        $sec  = date('s', $timestamp);
-        $min  = date('i', $timestamp);
+        $sec = date('s', $timestamp);
+        $min = date('i', $timestamp);
         $hour = date('H', $timestamp);
         $mday = date('j', $timestamp);
-        $mon  = date('n', $timestamp);
+        $mon = date('n', $timestamp);
         $year = date('Y', $timestamp);
 
         // Keyword
@@ -57,17 +60,21 @@ class P5_Date
     }
 
     /**
-     * Check expire
+     * Check expire.
      *
      * @param string $date
      * @param number $expire
      * @param string $ymd
-     * @return boolean
+     *
+     * @return bool
      */
-    static public function expire($date, $expire, $ymd = 'month')
+    public static function expire($date, $expire, $ymd = 'month')
     {
-        if ((int)$expire === 0) return true;
+        if ((int) $expire === 0) {
+            return true;
+        }
         $a = strtotime("+{$expire} {$ymd}", strtotime($date));
+
         return $a - time() > 0;
     }
 }

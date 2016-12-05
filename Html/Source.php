@@ -1,6 +1,6 @@
 <?php
 /**
- * This file is part of P5 Framework
+ * This file is part of P5 Framework.
  *
  * Copyright (c)2016 PlusFive (http://www.plus-5.com)
  *
@@ -8,7 +8,7 @@
  * http://www.plus-5.com/licenses/mit-license
  */
 /**
- * HTML source to DOM class
+ * HTML source to DOM class.
  *
  * @license  http://www.plus-5.com/licenses/mit-license  MIT License
  * @author   Taka Goto <http://www.plus-5.com/>
@@ -16,72 +16,71 @@
 class P5_Html_Source extends P5_Xml_Dom
 {
     /**
-     * Current version
+     * Current version.
      */
-    const VERSION = '1.1.0'; 
+    const VERSION = '1.1.0';
 
     /**
-     * Name space
+     * Name space.
      */
     const NAMESPACE_URI = 'http://www.plus-5.com/xml';
 
     /**
-     * Original Characterset
+     * Original Characterset.
      *
      * @var string
      */
     private $_charset = '';
 
     /**
-     * Original Source
+     * Original Source.
      *
      * @var string
      */
     protected $_orgSource = '';
 
     /**
-     * CDATA Tags
+     * CDATA Tags.
      *
      * @var array
      */
-    protected $_cdataTags = array ('script', 'style');
+    protected $_cdataTags = array('script', 'style');
 
     /**
-     * XSS Protection
+     * XSS Protection.
      *
      * @var bool
      */
     protected $_xssProtection = 1;
 
     /**
-     * Feed format frag
+     * Feed format frag.
      *
-     * @var boolean
+     * @var bool
      */
     //public $isFeed = false;
 
     /**
-     * Object constructor
+     * Object constructor.
      *
      * @param mixed $template
-     * @param bool $ishtml
-     * @return  void
+     * @param bool  $ishtml
      */
     public function __construct($template, $ishtml = false)
     {
-        $pattern = "/^[a-zA-Z0-9_:\-" . preg_quote('./\\', '/') . "]+$/";
-        if(preg_match($pattern, $template) && is_file($template)) {
+        $pattern = "/^[a-zA-Z0-9_:\-".preg_quote('./\\', '/').']+$/';
+        if (preg_match($pattern, $template) && is_file($template)) {
             $source = file_get_contents($template);
         } else {
             $source = $template;
         }
 
         // Append Namespace for P5 tags.
-        if(preg_match("/<P5:[^>]+>/", $source)) {
+        if (preg_match('/<P5:[^>]+>/', $source)) {
             $ns = self::NAMESPACE_URI;
-            if(preg_match('/<(html|dummy)/i', $source)) {
+            if (preg_match('/<(html|dummy)/i', $source)) {
                 $source = preg_replace('/<(html|dummy)/i', "<$1 xmlns:P5=\"$ns\"", $source);
-            } elseif(preg_match('/<(\?xml|!doctype)/i', $source)) {
+            } elseif (preg_match('/<(\?xml|!doctype)/i', $source)) {
                 $source = preg_replace('/<([a-z0-9:]+)/i', "<$1 xmlns:P5=\"$ns\"", $source, 1);
             } else {
                 $source = "<dummy xmlns:P5=\"$ns\">$source</dummy>";
@@ -100,22 +99,27 @@ class P5_Html_Source extends P5_Xml_Dom
     }
 
     /**
-     * Append X-UA-Compatible
+     * Append X-UA-Compatible.
      *
-     * @param   object  $html
-     * @return  void
+     * @param object $html
      */
     public function insertXUACompatible($meta = false)
     {
         $content = '';
-        if(preg_match("/MSIE ([0-9\.]+);/", $_SERVER['HTTP_USER_AGENT'], $ver)) {
+        if (preg_match("/MSIE ([0-9\.]+);/", $_SERVER['HTTP_USER_AGENT'], $ver)) {
             $version = (int) $ver[1];
-            if($version >= 7) $content .= 'IE7';
-            if($version >= 8) $content .= '; IE8';
-            if($version >= 9) $content .= '; IE9';
+            if ($version >= 7) {
+                $content .= 'IE7';
+            }
+            if ($version >= 8) {
+                $content .= '; IE8';
+            }
+            if ($version >= 9) {
+                $content .= '; IE9';
+            }
         }
-        if(!empty($content)) {
-            if($meta == true) {
+        if (!empty($content)) {
+            if ($meta == true) {
                 $this->insertMetaData('', $content, 'X-UA-Compatible');
             } else {
                 P5_Http::responceHeader('X-UA-Compatible', $content);
@@ -126,10 +130,11 @@ class P5_Html_Source extends P5_Xml_Dom
     /**
      * DOMDocument to string.
      *
-     * @param  mixed    $noDecl
-     * @param  mixed    $noDtd
-     * @param  boolean  $noFormat
-     * @param  string   $enc
+     * @param mixed  $noDecl
+     * @param mixed  $noDtd
+     * @param bool   $noFormat
+     * @param string $enc
+     *
      * @return string
      */
     public function toString($noDecl = null, $noDtd = null, $noFormat = false, $enc = null)
@@ -143,18 +148,20 @@ class P5_Html_Source extends P5_Xml_Dom
             case 'rss'  :
             case 'feed' :
                 $rootNode->removeAttributeNS(self::NAMESPACE_URI, 'P5');
-                if(empty($this->_dom->encoding)) $this->_dom->encoding = "UTF-8";
+                if (empty($this->_dom->encoding)) {
+                    $this->_dom->encoding = 'UTF-8';
+                }
                 $html = $this->_dom->saveXML();
                 break;
             default :
                 $rootNodes = $this->_dom->childNodes;
-                if(is_object($rootNodes)) {
-                    foreach($rootNodes as $node) {
-                        if($node->nodeType === XML_ELEMENT_NODE) {
+                if (is_object($rootNodes)) {
+                    foreach ($rootNodes as $node) {
+                        if ($node->nodeType === XML_ELEMENT_NODE) {
                             $node->removeAttributeNS(self::NAMESPACE_URI, 'P5');
-                            if($node->nodeName === 'dummy') {
+                            if ($node->nodeName === 'dummy') {
                                 $children = $node->childNodes;
-                                foreach($children as $child) {
+                                foreach ($children as $child) {
                                     $html .= $this->_dom->saveXML($child);
                                 }
                                 continue;
@@ -166,12 +173,12 @@ class P5_Html_Source extends P5_Xml_Dom
         }
 
         $source = $html;
-        if($noFormat === false) {
+        if ($noFormat === false) {
             $formatted = new P5_Html_Format($source, $noDecl, $noDtd);
             $source = $formatted->toString();
         }
 
-        if(is_null($enc)) {
+        if (is_null($enc)) {
             return $source;
         }
 
@@ -179,10 +186,11 @@ class P5_Html_Source extends P5_Xml_Dom
     }
 
     /**
-     * Get elements
+     * Get elements.
      *
      * @param string $id
      * @param string $attr
+     *
      * @return mixed
      */
     public function getElementById($id, $attr = 'id')
@@ -193,84 +201,89 @@ class P5_Html_Source extends P5_Xml_Dom
     /**
      * Getting HTML element by tag name.
      *
-     * @param   string  $name
-     * @param   object  $parent
-     * @return  mixed
+     * @param string $name
+     * @param object $parent
+     *
+     * @return mixed
      */
     public function getElementByName($name, $parent = null)
     {
-        if(is_null($parent)) {
+        if (is_null($parent)) {
             $parent = $this->_dom;
         }
 
         $nodelist = $parent->getElementsByTagName('*');
-        for($i = 0; $i < $nodelist->length; $i++) {
-            if($nodelist->item($i)->getAttribute('name') == $name) {
+        for ($i = 0; $i < $nodelist->length; ++$i) {
+            if ($nodelist->item($i)->getAttribute('name') == $name) {
                 return $nodelist->item($i);
             }
         }
+
         return;
     }
 
     /**
      * Getting HTML element by tag name.
      *
-     * @param   string  $name
-     * @param   object  $parent
-     * @return  mixed
+     * @param string $name
+     * @param object $parent
+     *
+     * @return mixed
      */
     public function getElementsByName($name, $parent = null)
     {
-        if(is_null($parent)) {
+        if (is_null($parent)) {
             $parent = $this->_dom;
         }
         $nodes = array();
         $this->_getElementsByAttr($parent, 'name', $name, $nodes);
+
         return new P5_Xml_Dom_NodeList($nodes);
     }
 
     /**
-     * Get elements by classname
+     * Get elements by classname.
      *
      * @param string $id
      * @param object $id
+     *
      * @return mixed
      */
     public function getElementsByClassName($class, $parent = null)
     {
-        if(!is_object($parent)) {
+        if (!is_object($parent)) {
             $parent = $this->_dom;
         }
         $nodes = array();
         $this->_getElementsByAttr($parent, 'class', $class, $nodes);
+
         return new P5_Xml_Dom_NodeList($nodes);
     }
 
     /**
-     * get elements by attirbute
+     * get elements by attirbute.
      *
      * @param object $node
      * @param string $attr
      * @param string $value
-     * @param array $arr
-     * @return void
+     * @param array  $arr
      */
     private function _getElementsByAttr($node, $attr, $value, &$arr)
     {
-        if(method_exists($node, 'hasAttribute') && $node->hasAttribute($attr)) {
+        if (method_exists($node, 'hasAttribute') && $node->hasAttribute($attr)) {
             $attribute = $node->getAttribute($attr);
-            if($attr === 'class') {
+            if ($attr === 'class') {
                 $classes = explode(' ', $attribute);
-                if(in_array($value, $classes)) {
+                if (in_array($value, $classes)) {
                     $arr[] = $node;
                 }
             } else {
-                if($attribute === $value) {
+                if ($attribute === $value) {
                     $arr[] = $node;
                 }
             }
         }
-        if($node->hasChildNodes()) {
+        if ($node->hasChildNodes()) {
             foreach ($node->childNodes as $cn) {
                 self::_getElementsByAttr($cn, $attr, $value, $arr);
             }
@@ -278,255 +291,264 @@ class P5_Html_Source extends P5_Xml_Dom
     }
 
     /**
-     * Append class attribute
+     * Append class attribute.
      *
-     * @param  DOMElement   $element
-     * @param  string       $class
-     * @return boolean
+     * @param DOMElement $element
+     * @param string     $class
+     *
+     * @return bool
      */
     public function setAttrClass($element, $class)
     {
-        if($element->nodeType != 1) {
+        if ($element->nodeType != 1) {
             return true;
         }
         $classes = preg_split("/[\s]+/", $element->getAttribute('class'));
         array_push($classes, $class);
         $attr = implode(' ', array_unique(array_filter($classes)));
+
         return $element->setAttribute('class', $attr);
     }
 
     /**
-     * remove class attribute
+     * remove class attribute.
      *
-     * @param  DOMElement   $element
-     * @param  string       $class
-     * @return boolean
+     * @param DOMElement $element
+     * @param string     $class
+     *
+     * @return bool
      */
     public function unsetAttrClass($element, $class)
     {
-        if($element->nodeType != 1) {
+        if ($element->nodeType != 1) {
             return true;
         }
         $classes = preg_split("/[\s]+/", $element->getAttribute('class'));
         $keys = array_keys($classes, $class);
-        foreach($keys as $key) {
+        foreach ($keys as $key) {
             unset($classes[$key]);
         }
         $attr = implode(' ', $classes);
+
         return $element->setAttribute('class', $attr);
     }
 
     /**
-     * Insert meta tag
+     * Insert meta tag.
      *
-     * @param   string  $name
-     * @param   string  $content
-     * @param   string  $attr
-     * @return  boolean
+     * @param string $name
+     * @param string $content
+     * @param string $attr
+     *
+     * @return bool
      */
     public function insertMetaData($name, $content, $httpEquiv = '')
     {
         $head = $this->_dom->getElementsByTagName('head')->item(0);
-        if(!is_object($head)) {
+        if (!is_object($head)) {
             return;
         }
 
         $after = null;
         $key = '';
         $meta = $this->getElementsByTagName('meta');
-        if($meta->length === 0) {
+        if ($meta->length === 0) {
             $meta = $this->_dom->createElement('meta');
             $meta->setAttribute('http-equiv', 'Content-Type');
             $meta->setAttribute('content', 'text/html');
             $head->insertBefore($meta, $head->firstChild);
             $meta = $this->getElementsByTagName('meta');
         }
-        for($i = 0; $i < $meta->length; $i++) {
-            if(empty($name) && !empty($httpEquiv)) {
-                $key   = 'http-equiv';
+        for ($i = 0; $i < $meta->length; ++$i) {
+            if (empty($name) && !empty($httpEquiv)) {
+                $key = 'http-equiv';
                 $value = $httpEquiv;
-                if($meta->item($i)->getAttribute($key)) {
+                if ($meta->item($i)->getAttribute($key)) {
                     $after = $meta->item($i);
-                    if($after->getAttribute($key) == $httpEquiv) {
+                    if ($after->getAttribute($key) == $httpEquiv) {
                         return $after->setAttribute('content', $content);
                     }
                 }
             } else {
-                $key   = 'name';
+                $key = 'name';
                 $value = $name;
-                if($meta->item($i)->getAttribute($key)) {
+                if ($meta->item($i)->getAttribute($key)) {
                     $after = $meta->item($i);
-                    if($after->getAttribute($key) == $name) {
+                    if ($after->getAttribute($key) == $name) {
                         return $after->setAttribute('content', $content);
                     }
                 }
             }
         }
 
-        if($key) {
+        if ($key) {
             $meta = $this->_dom->createElement('meta');
             $meta->setAttribute($key, $value);
             $meta->setAttribute('content', $content);
         }
 
-        if(!is_object($after)) {
+        if (!is_object($after)) {
             $after = $head->getElementsByTagName('title')->item(0);
         } else {
             $after = $after->nextSibling;
         }
+
         return $head->insertBefore($meta, $after);
     }
 
     /**
-     * Insert link tag
+     * Insert link tag.
      *
      * @param string $href
-     * @param string $rel    (optional)
-     * @param string $rev    (optioanl)
-     * @param array $attrs   (optioanl)
-     * @return  boolean
+     * @param string $rel   (optional)
+     * @param string $rev   (optioanl)
+     * @param array  $attrs (optioanl)
+     *
+     * @return bool
      */
     public function insertLink($href, $rel = null, $rev = null, $attrs = array())
     {
-        if(is_object($href)) {
+        if (is_object($href)) {
             $link = $href;
         } else {
             $link = $this->_dom->createElement('link');
-            if(!empty($rel)) {
+            if (!empty($rel)) {
                 $link->setAttribute('rel',  $rel);
             }
-            if(!empty($rev)) {
+            if (!empty($rev)) {
                 $link->setAttribute('rev',  $rev);
             }
-            foreach($attrs as $key => $value) {
+            foreach ($attrs as $key => $value) {
                 $link->setAttribute($key, $value);
             }
             $link->setAttribute('href', $href);
         }
 
         $head = $this->_dom->getElementsByTagName('head')->item(0);
-        if(!is_object($head)) {
+        if (!is_object($head)) {
             return;
         }
 
         $refNode = $head->getElementsByTagName('link');
-        if(!$refNode) {
+        if (!$refNode) {
             $title = $head->getElementsByTagName('title')->item(0);
             $refNode = $title->nextSibling;
         } else {
-            foreach($refNode as $element) {
-                if($element->getAttribute('href') === $href) {
+            foreach ($refNode as $element) {
+                if ($element->getAttribute('href') === $href) {
                     return $element;
                 }
             }
-            $i = (int)$refNode->length - 1;
+            $i = (int) $refNode->length - 1;
             $lastChild = $refNode->item($i);
             $refNode = $lastChild->nextSibling;
-            if(is_object($refNode)) {
+            if (is_object($refNode)) {
                 return $head->insertBefore($link, $refNode);
             }
         }
+
         return $head->appendChild($link);
     }
 
     /**
-     * Insert script tags
+     * Insert script tags.
      *
-     * @param   string  $src
-     * @param   mixed   $index
-     * @return  boolean
+     * @param string $src
+     * @param mixed  $index
+     *
+     * @return bool
      */
     public function insertScript($src, $index = null)
     {
         $head = $this->_dom->getElementsByTagName('head')->item(0);
-        if(!is_object($head)) {
+        if (!is_object($head)) {
             return false;
         }
 
         $nodes = $this->importChild($src);
 
         $scripts = $head->getElementsByTagName('script');
-        if($scripts->length > 0) {
+        if ($scripts->length > 0) {
             $refNode = (is_null($index)) ? $scripts->item($scripts->length - 1)->nextSibling
                                          : $scripts->item($index);
         }
 
         $error = 0;
-        if(isset($refNode) && is_object($refNode)) {
-            foreach($nodes as $node) {
-                if(!$head->insertBefore($node, $refNode)) {
-                    $error++;
+        if (isset($refNode) && is_object($refNode)) {
+            foreach ($nodes as $node) {
+                if (!$head->insertBefore($node, $refNode)) {
+                    ++$error;
                 }
             }
         } else {
-            foreach($nodes as $node) {
-                if(!$head->appendChild($node)) {
-                    $error++;
+            foreach ($nodes as $node) {
+                if (!$head->appendChild($node)) {
+                    ++$error;
                 }
             }
         }
+
         return $error == 0;
     }
 
     /**
      * DOMDocument to string.
      *
-     * @return  string
+     * @return string
      */
     public function coat()
     {
-        $_blockLevelTags = array
-        (
+        $_blockLevelTags = array(
             'address',
             'blockquote',
             'center',
             'div',
-            'dl','dt','dd',
+            'dl', 'dt', 'dd',
             'fieldset',
             'form',
-            'h1','h2','h3','h4','h5','h6',
+            'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
             'hr',
             'li',
             'noframes',
             'ol',
             'p',
             'pre',
-            'table','tr','td',
+            'table', 'tr', 'td',
             'ul',
         );
         $html = '';
 
         $elm = $this->_dom->getElementsByTagName('html');
-        if($elm && $elm->item(0)) {
+        if ($elm && $elm->item(0)) {
             // NooP
         } else {
             $rootNodes = $this->_dom->childNodes;
-            if(is_object($rootNodes)) {
-                foreach($rootNodes as $node) {
-                    if($node->nodeType == XML_ELEMENT_NODE) {
+            if (is_object($rootNodes)) {
+                foreach ($rootNodes as $node) {
+                    if ($node->nodeType == XML_ELEMENT_NODE) {
                         $node->removeAttributeNS(self::NAMESPACE_URI, 'P5');
-                        if($node->nodeName === 'dummy') {
+                        if ($node->nodeName === 'dummy') {
                             $children = $node->childNodes;
                             $inner = '';
-                            foreach($children as $child) {
-                                if(in_array(strtolower($child->nodeName), $_blockLevelTags)) {
-                                    if(!empty($inner)) {
-                                        $inner = preg_replace("/(\r\n|\r|\n)$/", "", $inner);
-                                        $html .= preg_replace("/(\r\n|\r|\n)/", "<br />$1", $inner) . '</p>';
+                            foreach ($children as $child) {
+                                if (in_array(strtolower($child->nodeName), $_blockLevelTags)) {
+                                    if (!empty($inner)) {
+                                        $inner = preg_replace("/(\r\n|\r|\n)$/", '', $inner);
+                                        $html .= preg_replace("/(\r\n|\r|\n)/", '<br />$1', $inner).'</p>';
                                         $inner = '';
                                     }
                                     $html .= $this->_dom->saveXML($child);
                                 } else {
-                                    if(empty($inner)) {
+                                    if (empty($inner)) {
                                         $inner = preg_replace("/^(\r\n|\r|\n)/", '', $this->_dom->saveXML($child), 1);
-                                        $inner = '<p>' . $inner;
+                                        $inner = '<p>'.$inner;
                                         continue;
                                     }
                                     $inner .= $this->_dom->saveXML($child);
                                 }
                             }
-                            if(!empty($inner)) {
-                                $html .= $inner . '</p>';
+                            if (!empty($inner)) {
+                                $html .= $inner.'</p>';
                                 $inner = '';
                             }
                             continue;
@@ -536,11 +558,12 @@ class P5_Html_Source extends P5_Xml_Dom
                 }
             }
         }
+
         return $html;
     }
 
     /**
-     * Get characterset
+     * Get characterset.
      *
      * @return string
      */
@@ -550,20 +573,19 @@ class P5_Html_Source extends P5_Xml_Dom
     }
 
     /**
-     * Set Original Characterset
+     * Set Original Characterset.
      *
-     * @param  string   $source
-     * @return void
+     * @param string $source
      */
     public function setCharset($source)
     {
         $this->_charset = '';
         $pattern = "/<meta ([^>]*)http-equiv\s*=\s*[\"']?content-type[\"']?([^>]*)(\/?)>/i";
         $replace = '<meta http-equiv="Content-type" content="text/html;charset=UTF-8"$3>';
-        if(preg_match($pattern, $source, $match)) {
-            foreach($match as $reg) {
-                if(preg_match("/charset\s*=\s*([0-9a-z_-]+)/i", $reg, $cs)) {
-                    if(strtolower($cs[1]) !== 'utf-8' && strtolower($cs[1]) !== 'utf') {
+        if (preg_match($pattern, $source, $match)) {
+            foreach ($match as $reg) {
+                if (preg_match("/charset\s*=\s*([0-9a-z_-]+)/i", $reg, $cs)) {
+                    if (strtolower($cs[1]) !== 'utf-8' && strtolower($cs[1]) !== 'utf') {
                         $this->_charset = $cs[1];
                         $source = preg_replace($pattern, $replace, $source);
                         break;
@@ -573,20 +595,20 @@ class P5_Html_Source extends P5_Xml_Dom
                 }
             }
         }
+
         return $source;
     }
 
     /**
-     * change caracterset
+     * change caracterset.
      *
      * @param string $charset
-     * @return void
      */
     public function changeCharset($charset)
     {
         $meta = $this->_dom->getElementsByTagName('meta');
-        foreach($meta as $node) {
-            if($node->hasAttribute('http-equiv') && 
+        foreach ($meta as $node) {
+            if ($node->hasAttribute('http-equiv') &&
                 strtolower($node->getAttribute('http-equiv')) === 'content-type'
             ) {
                 $attr = ($charset !== '') ? "; charset={$charset}" : '';
@@ -597,16 +619,17 @@ class P5_Html_Source extends P5_Xml_Dom
     }
 
     /** 
-     * Require Public Idenfifer Callback to PregReplace
+     * Require Public Idenfifer Callback to PregReplace.
      *
-     * @param  array    $args
+     * @param array $args
+     *
      * @return string
      */
     public function setPi($args)
     {
         $unit = preg_split("/\s+/", $args[1]);
         $systemId = '';
-        if(preg_match("/HTML\s+PUBLIC\s+\"([^\"]+)\"/i", $args[1], $unit)) {
+        if (preg_match("/HTML\s+PUBLIC\s+\"([^\"]+)\"/i", $args[1], $unit)) {
             switch (strtolower($unit[1])) {
                 case '-//w3c//dtd html 4.01//en' :
                     $systemId = 'http://www.w3.org/TR/html4/strict.dtd';
@@ -629,40 +652,40 @@ class P5_Html_Source extends P5_Xml_Dom
                 case '-//w3c//dtd xhtml 1.1//en' :
                     $systemId = 'http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd';
                     break;
-                default : 
+                default :
                     $systemId = '';
             }
         }
-        return '<!DOCTYPE ' . $args[1] . ' "' . $systemId . '">';
+
+        return '<!DOCTYPE '.$args[1].' "'.$systemId.'">';
     }
 
     /** 
-     * Insert Hidden Element
+     * Insert Hidden Element.
      *
      * @param string $formID
      * @param string $name
      * @param string $value
-     * @return void
      */
     public function insertHidden($formID, $name, $value = '')
     {
         $form = $this->getElementById($formID);
-        if(!is_object($form)) {
+        if (!is_object($form)) {
             return;
         }
 
         $inputs = $form->getElementsByTagName('input');
 
-        foreach($inputs as $input) {
-            if($input->getAttribute('name') == $name && false === strpos($name, '[]')) {
+        foreach ($inputs as $input) {
+            if ($input->getAttribute('name') == $name && false === strpos($name, '[]')) {
                 $exists = 1;
                 break;
             }
         }
-        if(isset($exists)) {
+        if (isset($exists)) {
             $input->setAttribute('value', $value);
         } else {
-            $src = '<input type="hidden" name="' . $name . '" value="' . $value . '" />';
+            $src = '<input type="hidden" name="'.$name.'" value="'.$value.'" />';
             $this->appendChild($src, $form);
         }
     }
@@ -677,19 +700,19 @@ class P5_Html_Source extends P5_Xml_Dom
         $tags = array('style', 'link', 'meta', 'title', 'script');
         $body = $this->_dom->getElementsByTagName('body')->item(0);
         $head = $this->_dom->getElementsByTagName('head')->item(0);
-        foreach($tags as $tag) {
+        foreach ($tags as $tag) {
             $elements = $body->getElementsByTagName($tag);
             $exists = $head->getElementsByTagName($tag);
-            for($i = 0, $max = $elements->length; $i < $max; $i++) {
+            for ($i = 0, $max = $elements->length; $i < $max; ++$i) {
                 $element = $elements->item(0);
-                if($tag === 'script') {
-                    if(true !== $element->hasAttribute('src') || $element->getAttribute('class') === 'stay') {
+                if ($tag === 'script') {
+                    if (true !== $element->hasAttribute('src') || $element->getAttribute('class') === 'stay') {
                         continue;
                     }
                 }
-                if(is_object($exists) && $exists->length > 0) {
+                if (is_object($exists) && $exists->length > 0) {
                     $last = $exists->item(($exists->length - 1))->nextSibling;
-                    if(is_object($last)) {
+                    if (is_object($last)) {
                         $head->insertBefore($element, $last);
                         continue;
                     }
@@ -700,52 +723,48 @@ class P5_Html_Source extends P5_Xml_Dom
     }
 
     /**
-     * escape script data
-     *
-     * @return void
+     * escape script data.
      */
     protected function _escapeCdata()
     {
-        foreach($this->_cdataTags as $tag) {
+        foreach ($this->_cdataTags as $tag) {
             // Enpty tag 
-            $pattern = "/(<" . preg_quote($tag, '/') . "[^>]*)\/>/i";
+            $pattern = '/(<'.preg_quote($tag, '/')."[^>]*)\/>/i";
             $this->_orgSource = preg_replace($pattern, "$1></$tag>", $this->_orgSource);
 
-            $pattern = "/(<" . preg_quote($tag, '/') . "[^>]*>)/i";
-            $this->_orgSource = preg_replace($pattern, "$1<![CDATA[", $this->_orgSource);
+            $pattern = '/(<'.preg_quote($tag, '/').'[^>]*>)/i';
+            $this->_orgSource = preg_replace($pattern, '$1<![CDATA[', $this->_orgSource);
 
-            $pattern = "/(<\/" . preg_quote($tag, '/') . ">)/i";
-            $this->_orgSource = preg_replace($pattern, "]]>$1", $this->_orgSource);
+            $pattern = "/(<\/".preg_quote($tag, '/').'>)/i';
+            $this->_orgSource = preg_replace($pattern, ']]>$1', $this->_orgSource);
         }
 
-        $pattern = "/" . preg_quote('<![CDATA[', '/') . "[\s]*?" . preg_quote('<![CDATA[', '/') . "/is";
-        $this->_orgSource = preg_replace($pattern, "<![CDATA[", $this->_orgSource);
-        $pattern = "/" . preg_quote(']]>', '/') . "[\s]*?" . preg_quote(']]>', '/') . "/is";
-        $this->_orgSource = preg_replace($pattern, "]]>", $this->_orgSource);
+        $pattern = '/'.preg_quote('<![CDATA[', '/')."[\s]*?".preg_quote('<![CDATA[', '/').'/is';
+        $this->_orgSource = preg_replace($pattern, '<![CDATA[', $this->_orgSource);
+        $pattern = '/'.preg_quote(']]>', '/')."[\s]*?".preg_quote(']]>', '/').'/is';
+        $this->_orgSource = preg_replace($pattern, ']]>', $this->_orgSource);
     }
 
     /**
-     * Set XSS Protection
+     * Set XSS Protection.
      *
      * @param int $value
-     * @return void
      */
     public function setXssProtection($value = 1)
     {
-        $this->_xssProtection = (int)$value;
+        $this->_xssProtection = (int) $value;
     }
 
     /**
-     * Using getElementById
+     * Using getElementById.
      * 
      * @param object $node
      * @param string $attr
-     * @return void
      */
-    static public function setIdAttrs($node, $attr = 'id') 
+    public static function setIdAttrs($node, $attr = 'id')
     {
-        if(method_exists($node, 'item')) {
-            foreach($node as $cn) {
+        if (method_exists($node, 'item')) {
+            foreach ($node as $cn) {
                 self::setIdAttrs($cn, $attr);
             }
         } else {
@@ -757,8 +776,8 @@ class P5_Html_Source extends P5_Xml_Dom
                     }
                 }
             }
-            if($node->hasChildNodes()) {
-                foreach($node->childNodes as $cn) {
+            if ($node->hasChildNodes()) {
+                foreach ($node->childNodes as $cn) {
                     self::setIdAttrs($cn, $attr);
                 }
             }
@@ -766,71 +785,79 @@ class P5_Html_Source extends P5_Xml_Dom
     }
 
     /**
-     * Append child node
+     * Append child node.
      *
-     * @param mixed $node Source code or XML::DOM::Element
+     * @param mixed  $node    Source code or XML::DOM::Element
      * @param object $refNode
+     *
      * @return mixed
      */
     public function appendChild($node, $refNode)
     {
         $new = parent::appendChild($node, $refNode);
-        if(is_object($new)) {
+        if (is_object($new)) {
             self::setIdAttrs($new);
         }
+
         return $new;
     }
 
     /**
-     * Replace child node
+     * Replace child node.
      *
-     * @param  mixed $node Source code or XML::DOM::Element
-     * @param  object $refNode
+     * @param mixed  $node    Source code or XML::DOM::Element
+     * @param object $refNode
+     *
      * @return mixed
      */
     public function replaceChild($node, $refNode)
     {
         $new = parent::replaceChild($node, $refNode);
-        if(is_object($new)) {
+        if (is_object($new)) {
             self::setIdAttrs($new);
         }
+
         return $new;
     }
 
     /**
-     * Insert child node
+     * Insert child node.
      *
-     * @param mixed $node Source code or XML::DOM::Element
+     * @param mixed  $node    Source code or XML::DOM::Element
      * @param object $refNode
+     *
      * @return mixed
      */
     public function insertBefore($node, DOMNode $refNode)
     {
         $new = parent::insertBefore($node, $refNode);
-        if(is_object($new)) {
+        if (is_object($new)) {
             self::setIdAttrs($new);
         }
+
         return $new;
     }
 
     /**
-     * Insert after child node
+     * Insert after child node.
      *
-     * @param mixed $node       Source code or XML::DOM::Element
+     * @param mixed  $node    Source code or XML::DOM::Element
      * @param object $refNode
+     *
      * @return mixed
      */
     public function insertAfter($node, DOMNode $refNode)
     {
         $new = parent::insertAfter($node, $refNode);
-        if(is_object($new)) {
+        if (is_object($new)) {
             self::setIdAttrs($new);
         }
+
         return $new;
     }
 
     /**
-     * Body Element
+     * Body Element.
      *
      * preturn mixed
      */

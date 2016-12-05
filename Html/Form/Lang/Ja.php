@@ -1,6 +1,6 @@
 <?php
 /**
- * This file is part of P5 Framework
+ * This file is part of P5 Framework.
  *
  * Copyright (c)2016 PlusFive (http://www.plus-5.com)
  *
@@ -8,7 +8,7 @@
  * http://www.plus-5.com/licenses/mit-license
  */
 /**
- * HTML form language class
+ * HTML form language class.
  *
  * @license  http://www.plus-5.com/licenses/mit-license  MIT License
  * @author   Taka Goto <http://www.plus-5.com/>
@@ -16,12 +16,12 @@
 class P5_Html_Form_Lang_Ja extends P5_Lang
 {
     /**
-     * Current version
+     * Current version.
      */
     const VERSION = '1.1.0';
 
     /**
-     * Default option
+     * Default option.
      */
     const SELECT_IT = '選択してください';
 
@@ -30,9 +30,9 @@ class P5_Html_Form_Lang_Ja extends P5_Lang
      *
      * @return array
      */
-    static public function PREFS()
+    public static function PREFS()
     {
-        return array (
+        return array(
             '北海道',
             '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県',
             '茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県',
