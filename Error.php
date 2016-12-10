@@ -85,8 +85,10 @@ class P5_Error
         }
         $msg = "$errstr in $errfile on $errline.";
         self::log($msg, $errno);
-        self::displayError($msg, $errno);
 
+        throw new ErrorException($msg, 0, $errno, $errfile, $errline);
+
+        self::displayError($msg, $errno);
         return false;
     }
 
@@ -97,11 +99,7 @@ class P5_Error
      */
     public function exceptionHandler($ex)
     {
-        $errstr = $ex->getMessage();
-        $errfile = $ex->getFile();
-        $errline = $ex->getLine();
-        $msg = "$errstr in $errfile on $errline.";
-        self::log($msg, $ex->getCode());
+        self::log($ex->getMessage(), $ex->getCode(), $ex->getFile(), $ex->getLine());
     }
 
     /**
