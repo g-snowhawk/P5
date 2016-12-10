@@ -83,12 +83,14 @@ class P5_Error
         if (error_reporting() === 0) {
             return false;
         }
+
         $msg = "$errstr in $errfile on $errline.";
         self::log($msg, $errno);
 
-        throw new ErrorException($msg, 0, $errno, $errfile, $errline);
+        if (DEBUG_MODE > 1 || ($errno !== E_NOTICE && $errno !== E_USER_NOTICE)) {
+            throw new ErrorException($msg, 0, $errno, $errfile, $errline);
+        }
 
-        self::displayError($msg, $errno);
         return false;
     }
 
@@ -96,6 +98,7 @@ class P5_Error
      * Custom exception handler.
      *
      * @param Exception $ex
+     * @return mixed
      */
     public function exceptionHandler($ex)
     {
@@ -207,27 +210,6 @@ class P5_Error
     }
 
     /**
-     * Default Error HTML.
-     *
-     * @return string
-     */
-    public function htmlSource()
-    {
-        return <<<_HERE_
-<html>
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-        <title>[P5] System Error</title>
-    </head>
-    <body>
-        <h1>System Error</h1>
-        <!--ERROR_DESCRIPTION-->
-    </body>
-</html>
-_HERE_;
-    }
-
-    /**
      * backtrace.
      *
      * @return string
@@ -243,5 +225,26 @@ _HERE_;
         }
 
         return $str;
+    }
+
+    /**
+     * Default Error HTML.
+     *
+     * @return string
+     */
+    private function htmlSource()
+    {
+        return <<<_HERE_
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <title>[P5] System Error</title>
+    </head>
+    <body>
+        <h1>System Error</h1>
+        <!--ERROR_DESCRIPTION-->
+    </body>
+</html>
+_HERE_;
     }
 }

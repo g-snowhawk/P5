@@ -141,6 +141,9 @@ class P5_Html_Source extends P5_Xml_Dom
     {
         $html = '';
         $rootNode = $this->_dom->documentElement;
+        if (!is_object($rootNode)) {
+            return $html;
+        }
         switch ($rootNode->nodeName) {
             case 'html' :
                 $this->moveHeaderElements();
