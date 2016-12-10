@@ -334,6 +334,23 @@ class P5_Html_Source extends P5_Xml_Dom
     }
 
     /**
+     * Insert base tag.
+     *
+     * @param string $url
+     * @return bool
+     */
+    public function insertBaseTag($url)
+    {
+        $head = $this->_dom->getElementsByTagName('head')->item(0);
+        if (!is_object($head)) {
+            return;
+        }
+        $base = $this->_dom->createElement('base');
+        $base->setAttribute('href', $url);
+        return $head->insertBefore($base, $head->firstChild);
+    }
+
+    /**
      * Insert meta tag.
      *
      * @param string $name

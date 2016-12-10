@@ -65,7 +65,7 @@ class P5_Error
         ini_set('display_errors', 'Off');
         register_shutdown_function(array($this, 'unloadHandler'));
         $this->_oldErrorHandler = set_error_handler(array($this, 'errorHandler'));
-        $this->_oldExceptionHandler = set_exception_handler(array($this, 'exceptionHandler'));
+        //$this->_oldExceptionHandler = set_exception_handler(array($this, 'exceptionHandler'));
         $this->_template = $template;
     }
 
