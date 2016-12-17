@@ -885,4 +885,14 @@ class P5_Html_Source extends P5_Xml_Dom
     {
         return $this->_dom->getElementsByTagName('body')->item(0);
     }
+
+    /**
+     * HTML Header Element.
+     *
+     * preturn mixed
+     */
+    public function head()
+    {
+        return $this->_dom->getElementsByTagName('head')->item(0);
+    }
 }
