@@ -338,6 +338,30 @@ class P5_Image
     }
 
     /**
+     * Copy Image.
+     *
+     * @param string $source
+     * @param string $dest
+     * @return bool
+     */
+    public function copy($source, $dest)
+    {
+        $size = getimagesize($source);
+        if (!$this->readImage($source, $size[2])) {
+            return false;
+        }
+        $copy = $this->destinationPath($dest, null);
+        if (empty($dest)) {
+            $copy = null;
+        }
+        $this->_out = $this->_in;
+        $result = $this->writeImage($copy);
+        imagedestroy($this->_in);
+
+        return ($result) ? basename($copy) : false;
+    }
+
+    /**
      * Check trancparency background.
      *
      * @param string $source
@@ -422,6 +446,15 @@ class P5_Image
     {
         $dir = dirname($path);
         if (is_writable($dir)) {
+            if (preg_match("/\.gif$/i", $path) && $this->_mime !== 'image/gif') {
+                $this->_mime = 'image/gif';
+            }
+            elseif (preg_match("/\.jpe?g$/i", $path) && $this->_mime !== 'image/jpeg') {
+                $this->_mime = 'image/jpeg';
+            }
+            elseif (preg_match("/\.png$/i", $path) && $this->_mime !== 'image/png') {
+                $this->_mime = 'image/png';
+            }
             switch ($this->_mime) {
                 case 'image/gif'  : return imagegif($this->_out, $path);
                 case 'image/jpeg' : return imagejpeg($this->_out, $path, $this->_jpegQuality);
