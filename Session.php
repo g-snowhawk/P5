@@ -221,7 +221,7 @@ class P5_Session
         $_SESSION = array();
         if (isset($_COOKIE[$this->_sessname])) {
             $params = session_get_cookie_params();
-            setcookie($this->_sessname, '', time() - 3600, $params['path'], $params['domain']);
+            setcookie($this->_sessname, '', time() - 3600, $params['path'], $params['domain'], $params['secure'], $params['httponly']);
         }
         $sessId = session_id();
         if ($this->_status !== true) {
