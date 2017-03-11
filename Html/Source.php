@@ -106,7 +106,7 @@ class P5_Html_Source extends P5_Xml_Dom
     public function insertXUACompatible($meta = false)
     {
         $content = '';
-        if (preg_match("/MSIE ([0-9\.]+);/", $_SERVER['HTTP_USER_AGENT'], $ver)) {
+        if (preg_match("/MSIE ([0-9\.]+);/", P5_Environment::server('HTTP_USER_AGENT'), $ver)) {
             $version = (int) $ver[1];
             if ($version >= 7) {
                 $content .= 'IE7';
