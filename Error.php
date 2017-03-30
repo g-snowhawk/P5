@@ -184,6 +184,9 @@ class P5_Error
      */
     static public function feedback($msg, $errno)
     {
+        if (!defined('FEEDBACK_ADDR')) {
+            return;
+        }
         $configuration = P5_Text::explode(',', FEEDBACK_ADDR);
         $feedbacks = array();
         foreach ($configuration as $feedback_addr) {
