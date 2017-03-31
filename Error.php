@@ -34,13 +34,6 @@ class P5_Error
     protected $_oldErrorHandler;
 
     /**
-     * Template file path.
-     *
-     * @var mixed
-     */
-    protected $_template;
-
-    /**
      * Temporary Template file path.
      *
      * @var mixed
@@ -71,7 +64,13 @@ class P5_Error
         ini_set('display_errors', 'Off');
         register_shutdown_function(array('P5_Error', 'unloadHandler'));
         $this->_oldErrorHandler = set_error_handler(array($this, 'errorHandler'));
-        $this->_template = $template;
+
+        if (!empty($template) && !defined('ERROR_DOCUMENT')) {
+            $src = file_get_contents($template, FILE_USE_INCLUDE_PATH);
+            if (!empty($src)) {
+                define('ERROR_DOCUMENT', $src);
+            }
+        }
     }
 
     /**
@@ -146,11 +145,13 @@ class P5_Error
         if (in_array($errno, array(E_NOTICE, E_USER_NOTICE, E_STRICT))) {
             return;
         }
-        if (defined('ERROR_DOCUMENT') && file_exists(ERROR_DOCUMENT)) {
-            $src = file_get_contents(ERROR_DOCUMENT);
+        if (defined('ERROR_DOCUMENT')) {
+            if (file_exists(ERROR_DOCUMENT)) {
+                $src = file_get_contents(ERROR_DOCUMENT);
+            } else {
+                $src = ERROR_DOCUMENT;
+            }
         } else {
-            echo ERROR_DOCUMENT;
-            exit;
             $src = self::htmlSource();
         }
 
