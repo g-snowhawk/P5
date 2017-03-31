@@ -9,17 +9,17 @@
  */
 
 /**
- * See the P5_Text
+ * See the P5_Text.
  */
-require_once('P5/Text.php');
+require_once 'P5/Text.php';
 
 /**
- * See the P5_Environment
+ * See the P5_Environment.
  */
-require_once('P5/Environment.php');
+require_once 'P5/Environment.php';
 
 /**
- * Custom error handler class
+ * Custom error handler class.
  *
  * @license  http://www.plus-5.com/licenses/mit-license  MIT License
  * @author   Taka Goto <http://www.plus-5.com/>
@@ -103,11 +103,12 @@ class P5_Error
      * Custom exception handler.
      *
      * @param Exception $ex
+     *
      * @return mixed
      */
     public function exceptionHandler($ex)
     {
-        $msg = $ex->getMessage() . " in " . $ex->getFile() . " on " . $ex->getLine();
+        $msg = $ex->getMessage().' in '.$ex->getFile().' on '.$ex->getLine();
         $code = $ex->getCode();
         self::feedback($msg, $code);
         self::log($msg, $code);
@@ -116,7 +117,7 @@ class P5_Error
     /**
      * Unload action.
      */
-    static public function unloadHandler()
+    public static function unloadHandler()
     {
         $err = (version_compare(PHP_VERSION, '5.3.0') >= 0) ? error_get_last() : null;
         if (!is_null($err)) {
@@ -133,7 +134,7 @@ class P5_Error
      * @param string $msg
      * @param int    $errno
      */
-    static public function displayError($msg, $errno)
+    public static function displayError($msg, $errno)
     {
         // POST Size Over.
         if (preg_match("/POST Content\-Length of ([0-9]+) bytes exceeds the limit of ([0-9]+) bytes/i", $msg, $match)) {
@@ -183,7 +184,7 @@ class P5_Error
      * @param int    $errno
      * @return void
      */
-    static public function feedback($msg, $errno)
+    public static function feedback($msg, $errno)
     {
         if (!defined('FEEDBACK_ADDR')) {
             return;
@@ -197,15 +198,15 @@ class P5_Error
                 array(
                     'options' => array(
                         'default' => null,
-                    )
+                    ),
                 )
             );
         }
-        $feedbacks = array_values(array_filter($feedbacks, "strlen"));
+        $feedbacks = array_values(array_filter($feedbacks, 'strlen'));
         if (count($feedbacks) > 0) {
             $msg .= PHP_EOL;
-            $msg .= PHP_EOL . "Host: " . P5_Environment::server('server_name');
-            $msg .= PHP_EOL . "Time: " . date('Y-m-d H:i:s');
+            $msg .= PHP_EOL.'Host: '.P5_Environment::server('server_name');
+            $msg .= PHP_EOL.'Time: '.date('Y-m-d H:i:s');
             foreach ($feedbacks as $to) {
                 error_log($msg, 1, $to);
             }
@@ -218,7 +219,7 @@ class P5_Error
      * @param string $msg
      * @param int    $errno
      */
-    static public function log($msg, $errno)
+    public static function log($msg, $errno)
     {
         if (defined('DEBUG_MODE') && DEBUG_MODE === 0) {
             if (in_array($errno, array(8, 1024, 2048))) {

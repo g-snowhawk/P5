@@ -340,6 +340,7 @@ class P5_Html_Source extends P5_Xml_Dom
      * Insert base tag.
      *
      * @param string $url
+     *
      * @return bool
      */
     public function insertBaseTag($url)
@@ -350,6 +351,7 @@ class P5_Html_Source extends P5_Xml_Dom
         }
         $base = $this->_dom->createElement('base');
         $base->setAttribute('href', $url);
+
         return $head->insertBefore($base, $head->firstChild);
     }
 

@@ -125,9 +125,7 @@ class P5_Http
     }
 
     /**
-     * Security headers
-     *
-     * @return void
+     * Security headers.
      */
     public static function secureHeaders()
     {

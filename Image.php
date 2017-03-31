@@ -342,6 +342,7 @@ class P5_Image
      *
      * @param string $source
      * @param string $dest
+     *
      * @return bool
      */
     public function copy($source, $dest)
@@ -448,11 +449,9 @@ class P5_Image
         if (is_writable($dir)) {
             if (preg_match("/\.gif$/i", $path) && $this->_mime !== 'image/gif') {
                 $this->_mime = 'image/gif';
-            }
-            elseif (preg_match("/\.jpe?g$/i", $path) && $this->_mime !== 'image/jpeg') {
+            } elseif (preg_match("/\.jpe?g$/i", $path) && $this->_mime !== 'image/jpeg') {
                 $this->_mime = 'image/jpeg';
-            }
-            elseif (preg_match("/\.png$/i", $path) && $this->_mime !== 'image/png') {
+            } elseif (preg_match("/\.png$/i", $path) && $this->_mime !== 'image/png') {
                 $this->_mime = 'image/png';
             }
             switch ($this->_mime) {
