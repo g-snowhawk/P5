@@ -22,11 +22,6 @@ define('UTF8_BOM', chr(0xEF).chr(0xBB).chr(0xBF));
 class P5_Text
 {
     /**
-     * Current version.
-     */
-    const VERSION = '1.1.0';
-
-    /**
      * Text wrapping.
      *
      * @param string $text
@@ -253,5 +248,13 @@ class P5_Text
         }
 
         return empty($var);
+    }
+
+    public static function strtoaster($str)
+    {
+        if (!empty($str)) {
+            $str = preg_replace("/./", '*', $str);
+        }
+        return $str;
     }
 }
