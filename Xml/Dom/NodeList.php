@@ -13,82 +13,67 @@
  * @license  http://www.plus-5.com/licenses/mit-license  MIT License
  * @author   Taka Goto <http://www.plus-5.com/>
  */
-class P5_Xml_Dom_NodeList implements IteratorAggregate
+class P5_Xml_Dom_NodeList implements Iterator
 {
-    /** 
-     * Current version.
-     */
-    const VERSION = '1.1.0';
+    private $index = 0;
+    private $items = array();
+    private $nofilter = false;
 
-    /**
-     * Length (readonly).
-     *
-     * @var int
-     */
-    private $length = 0;
-
-    /**
-     * Items.
-     *
-     * @var array
-     */
-    private $_items = array();
-
-    /** 
-     * Object constructor.
-     *
-     * @param array $items
-     */
-    public function __construct(array $items)
+    public function __construct(array $items, $nofilter = false)
     {
-        $this->_items = $items;
-        $this->length = count($items);
+        $this->items = $items;
+        $this->nofilter = $nofilter;
+        $this->rewind();
     }
 
-    /**
-     * Getter Method.
-     *
-     * @param string $key
-     *
-     * @return mixed
-     */
     public function __get($key)
     {
         switch ($key) {
             case 'length' :
-                foreach ($this->_items as $index => $item) {
-                    if (is_null($this->_items[$index]->parentNode)) {
-                        array_splice($this->_items, $index, 1);
-                    }
+                if ($this->nofilter === false) {
+                    $this->items = array_values(array_filter($this->items, array($this, 'itemFilter')));
                 }
 
-                return count($this->_items);
+                return count($this->items);
+                break;
         }
     }
 
-    /**
-     * Iterator.
-     *
-     * @return ArrayIterator
-     */
-    public function getIterator()
-    {
-        return new ArrayIterator($this->_items);
-    }
-
-    /**
-     * item.
-     *
-     * @param int $index
-     *
-     * @return DOMNode
-     */
     public function item($index)
     {
-        if (is_null($this->_items[$index]->parentNode)) {
-            array_splice($this->_items, $index, 1);
+        if ($this->nofilter === false) {
+            $this->items = array_values(array_filter($this->items, array($this, 'itemFilter')));
         }
 
-        return $this->_items[$index];
+        return $this->items[$index];
+    }
+
+    private function itemFilter($value)
+    {
+        return !is_null($value->parentNode);
+    }
+
+    public function current()
+    {
+        return $this->items[$this->index];
+    }
+    public function key()
+    {
+        return $this->index;
+    }
+    public function next()
+    {
+        if ($this->nofilter === false) {
+            $this->items = array_values(array_filter($this->items, array($this, 'itemFilter')));
+        }
+        ++$this->index;
+    }
+    public function rewind()
+    {
+        $this->index = 0;
+    }
+    public function valid()
+    {
+        return isset($this->items[$this->index]);
     }
 }

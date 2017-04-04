@@ -7,7 +7,6 @@
  * This software is released under the MIT License.
  * http://www.plus-5.com/licenses/mit-license
  */
-
 /**
  * XML DOM custom exception.
  *
@@ -16,18 +15,6 @@
  */
 class P5_Xml_Dom_Exception extends ErrorException
 {
-    /** 
-     * Current version.
-     */
-    const VERSION = '1.1.0';
-
-    /**
-     * object constructer.
-     *
-     * @param string    $message
-     * @param int       $code
-     * @param Exception $previous
-     */
     public function __construct($message, $code = 0, $previous = null)
     {
         parent::__construct($message, $code, $previous);

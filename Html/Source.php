@@ -16,11 +16,6 @@
 class P5_Html_Source extends P5_Xml_Dom
 {
     /**
-     * Current version.
-     */
-    const VERSION = '1.1.0';
-
-    /**
      * Name space.
      */
     const NAMESPACE_URI = 'http://www.plus-5.com/xml';
@@ -30,35 +25,28 @@ class P5_Html_Source extends P5_Xml_Dom
      *
      * @var string
      */
-    private $_charset = '';
+    private $charset = '';
 
     /**
      * Original Source.
      *
      * @var string
      */
-    protected $_orgSource = '';
+    protected $orgSource = '';
 
     /**
      * CDATA Tags.
      *
      * @var array
      */
-    protected $_cdataTags = array('script', 'style');
+    protected $cdataTags = array('script', 'style');
 
     /**
      * XSS Protection.
      *
      * @var bool
      */
-    protected $_xssProtection = 1;
-
-    /**
-     * Feed format frag.
-     *
-     * @var bool
-     */
-    //public $isFeed = false;
+    protected $xssProtection = 1;
 
     /**
      * Object constructor.
@@ -68,12 +56,7 @@ class P5_Html_Source extends P5_Xml_Dom
      */
     public function __construct($template, $ishtml = false)
     {
-        $pattern = "/^[a-zA-Z0-9_:\-".preg_quote('./\\', '/').']+$/';
-        if (preg_match($pattern, $template) && is_file($template)) {
-            $source = file_get_contents($template);
-        } else {
-            $source = $template;
-        }
+        $source = (is_file($template)) ? file_get_contents($template) : $template;
 
         // Append Namespace for P5 tags.
         if (preg_match('/<P5:[^>]+>/', $source)) {
@@ -89,13 +72,13 @@ class P5_Html_Source extends P5_Xml_Dom
 
         $source = $this->setCharset($source);
         $source = P5_Html::htmlToXml($source, $ishtml);
-        $this->_orgSource = $source;
-        $this->_escapeCdata();
+        $this->orgSource = $source;
+        $this->escapeCdata();
 
         // Call parent constructor.
-        parent::__construct($this->_orgSource);
+        parent::__construct($this->orgSource);
 
-        self::setIdAttrs($this->_dom);
+        self::setIdAttrs($this->dom);
     }
 
     /**
@@ -134,13 +117,12 @@ class P5_Html_Source extends P5_Xml_Dom
      * @param mixed  $noDtd
      * @param bool   $noFormat
      * @param string $enc
-     *
      * @return string
      */
     public function toString($noDecl = null, $noDtd = null, $noFormat = false, $enc = null)
     {
         $html = '';
-        $rootNode = $this->_dom->documentElement;
+        $rootNode = $this->dom->documentElement;
         if (!is_object($rootNode)) {
             return $html;
         }
@@ -151,13 +133,13 @@ class P5_Html_Source extends P5_Xml_Dom
             case 'rss'  :
             case 'feed' :
                 $rootNode->removeAttributeNS(self::NAMESPACE_URI, 'P5');
-                if (empty($this->_dom->encoding)) {
-                    $this->_dom->encoding = 'UTF-8';
+                if (empty($this->dom->encoding)) {
+                    $this->dom->encoding = 'UTF-8';
                 }
-                $html = $this->_dom->saveXML();
+                $html = $this->dom->saveXML();
                 break;
             default :
-                $rootNodes = $this->_dom->childNodes;
+                $rootNodes = $this->dom->childNodes;
                 if (is_object($rootNodes)) {
                     foreach ($rootNodes as $node) {
                         if ($node->nodeType === XML_ELEMENT_NODE) {
@@ -165,12 +147,12 @@ class P5_Html_Source extends P5_Xml_Dom
                             if ($node->nodeName === 'dummy') {
                                 $children = $node->childNodes;
                                 foreach ($children as $child) {
-                                    $html .= $this->_dom->saveXML($child);
+                                    $html .= $this->dom->saveXML($child);
                                 }
                                 continue;
                             }
                         }
-                        $html .= $this->_dom->saveXML($node);
+                        $html .= $this->dom->saveXML($node);
                     }
                 }
         }
@@ -193,12 +175,11 @@ class P5_Html_Source extends P5_Xml_Dom
      *
      * @param string $id
      * @param string $attr
-     *
      * @return mixed
      */
     public function getElementById($id, $attr = 'id')
     {
-        return $this->_dom->getElementById($id);
+        return $this->dom->getElementById($id);
     }
 
     /**
@@ -206,13 +187,12 @@ class P5_Html_Source extends P5_Xml_Dom
      *
      * @param string $name
      * @param object $parent
-     *
      * @return mixed
      */
     public function getElementByName($name, $parent = null)
     {
         if (is_null($parent)) {
-            $parent = $this->_dom;
+            $parent = $this->dom;
         }
 
         $nodelist = $parent->getElementsByTagName('*');
@@ -230,16 +210,15 @@ class P5_Html_Source extends P5_Xml_Dom
      *
      * @param string $name
      * @param object $parent
-     *
      * @return mixed
      */
     public function getElementsByName($name, $parent = null)
     {
         if (is_null($parent)) {
-            $parent = $this->_dom;
+            $parent = $this->dom;
         }
         $nodes = array();
-        $this->_getElementsByAttr($parent, 'name', $name, $nodes);
+        $this->getElementsByAttr($parent, 'name', $name, $nodes);
 
         return new P5_Xml_Dom_NodeList($nodes);
     }
@@ -249,16 +228,15 @@ class P5_Html_Source extends P5_Xml_Dom
      *
      * @param string $id
      * @param object $id
-     *
      * @return mixed
      */
     public function getElementsByClassName($class, $parent = null)
     {
         if (!is_object($parent)) {
-            $parent = $this->_dom;
+            $parent = $this->dom;
         }
         $nodes = array();
-        $this->_getElementsByAttr($parent, 'class', $class, $nodes);
+        $this->getElementsByAttr($parent, 'class', $class, $nodes);
 
         return new P5_Xml_Dom_NodeList($nodes);
     }
@@ -271,7 +249,7 @@ class P5_Html_Source extends P5_Xml_Dom
      * @param string $value
      * @param array  $arr
      */
-    private function _getElementsByAttr($node, $attr, $value, &$arr)
+    private function getElementsByAttr($node, $attr, $value, &$arr)
     {
         if (method_exists($node, 'hasAttribute') && $node->hasAttribute($attr)) {
             $attribute = $node->getAttribute($attr);
@@ -288,7 +266,7 @@ class P5_Html_Source extends P5_Xml_Dom
         }
         if ($node->hasChildNodes()) {
             foreach ($node->childNodes as $cn) {
-                self::_getElementsByAttr($cn, $attr, $value, $arr);
+                self::getElementsByAttr($cn, $attr, $value, $arr);
             }
         }
     }
@@ -298,7 +276,6 @@ class P5_Html_Source extends P5_Xml_Dom
      *
      * @param DOMElement $element
      * @param string     $class
-     *
      * @return bool
      */
     public function setAttrClass($element, $class)
@@ -318,7 +295,6 @@ class P5_Html_Source extends P5_Xml_Dom
      *
      * @param DOMElement $element
      * @param string     $class
-     *
      * @return bool
      */
     public function unsetAttrClass($element, $class)
@@ -340,16 +316,15 @@ class P5_Html_Source extends P5_Xml_Dom
      * Insert base tag.
      *
      * @param string $url
-     *
      * @return bool
      */
     public function insertBaseTag($url)
     {
-        $head = $this->_dom->getElementsByTagName('head')->item(0);
+        $head = $this->dom->getElementsByTagName('head')->item(0);
         if (!is_object($head)) {
             return;
         }
-        $base = $this->_dom->createElement('base');
+        $base = $this->dom->createElement('base');
         $base->setAttribute('href', $url);
 
         return $head->insertBefore($base, $head->firstChild);
@@ -361,12 +336,11 @@ class P5_Html_Source extends P5_Xml_Dom
      * @param string $name
      * @param string $content
      * @param string $attr
-     *
      * @return bool
      */
     public function insertMetaData($name, $content, $httpEquiv = '')
     {
-        $head = $this->_dom->getElementsByTagName('head')->item(0);
+        $head = $this->dom->getElementsByTagName('head')->item(0);
         if (!is_object($head)) {
             return;
         }
@@ -375,7 +349,7 @@ class P5_Html_Source extends P5_Xml_Dom
         $key = '';
         $meta = $this->getElementsByTagName('meta');
         if ($meta->length === 0) {
-            $meta = $this->_dom->createElement('meta');
+            $meta = $this->dom->createElement('meta');
             $meta->setAttribute('http-equiv', 'Content-Type');
             $meta->setAttribute('content', 'text/html');
             $head->insertBefore($meta, $head->firstChild);
@@ -404,7 +378,7 @@ class P5_Html_Source extends P5_Xml_Dom
         }
 
         if ($key) {
-            $meta = $this->_dom->createElement('meta');
+            $meta = $this->dom->createElement('meta');
             $meta->setAttribute($key, $value);
             $meta->setAttribute('content', $content);
         }
@@ -425,7 +399,6 @@ class P5_Html_Source extends P5_Xml_Dom
      * @param string $rel   (optional)
      * @param string $rev   (optioanl)
      * @param array  $attrs (optioanl)
-     *
      * @return bool
      */
     public function insertLink($href, $rel = null, $rev = null, $attrs = array())
@@ -433,7 +406,7 @@ class P5_Html_Source extends P5_Xml_Dom
         if (is_object($href)) {
             $link = $href;
         } else {
-            $link = $this->_dom->createElement('link');
+            $link = $this->dom->createElement('link');
             if (!empty($rel)) {
                 $link->setAttribute('rel',  $rel);
             }
@@ -446,7 +419,7 @@ class P5_Html_Source extends P5_Xml_Dom
             $link->setAttribute('href', $href);
         }
 
-        $head = $this->_dom->getElementsByTagName('head')->item(0);
+        $head = $this->dom->getElementsByTagName('head')->item(0);
         if (!is_object($head)) {
             return;
         }
@@ -477,12 +450,11 @@ class P5_Html_Source extends P5_Xml_Dom
      *
      * @param string $src
      * @param mixed  $index
-     *
      * @return bool
      */
     public function insertScript($src, $index = null)
     {
-        $head = $this->_dom->getElementsByTagName('head')->item(0);
+        $head = $this->dom->getElementsByTagName('head')->item(0);
         if (!is_object($head)) {
             return false;
         }
@@ -540,11 +512,11 @@ class P5_Html_Source extends P5_Xml_Dom
         );
         $html = '';
 
-        $elm = $this->_dom->getElementsByTagName('html');
+        $elm = $this->dom->getElementsByTagName('html');
         if ($elm && $elm->item(0)) {
             // NooP
         } else {
-            $rootNodes = $this->_dom->childNodes;
+            $rootNodes = $this->dom->childNodes;
             if (is_object($rootNodes)) {
                 foreach ($rootNodes as $node) {
                     if ($node->nodeType == XML_ELEMENT_NODE) {
@@ -559,14 +531,14 @@ class P5_Html_Source extends P5_Xml_Dom
                                         $html .= preg_replace("/(\r\n|\r|\n)/", '<br />$1', $inner).'</p>';
                                         $inner = '';
                                     }
-                                    $html .= $this->_dom->saveXML($child);
+                                    $html .= $this->dom->saveXML($child);
                                 } else {
                                     if (empty($inner)) {
-                                        $inner = preg_replace("/^(\r\n|\r|\n)/", '', $this->_dom->saveXML($child), 1);
+                                        $inner = preg_replace("/^(\r\n|\r|\n)/", '', $this->dom->saveXML($child), 1);
                                         $inner = '<p>'.$inner;
                                         continue;
                                     }
-                                    $inner .= $this->_dom->saveXML($child);
+                                    $inner .= $this->dom->saveXML($child);
                                 }
                             }
                             if (!empty($inner)) {
@@ -576,7 +548,7 @@ class P5_Html_Source extends P5_Xml_Dom
                             continue;
                         }
                     }
-                    $html .= $this->_dom->saveXML($node);
+                    $html .= $this->dom->saveXML($node);
                 }
             }
         }
@@ -591,7 +563,7 @@ class P5_Html_Source extends P5_Xml_Dom
      */
     public function getCharset()
     {
-        return $this->_charset;
+        return $this->charset;
     }
 
     /**
@@ -601,18 +573,18 @@ class P5_Html_Source extends P5_Xml_Dom
      */
     public function setCharset($source)
     {
-        $this->_charset = '';
+        $this->charset = '';
         $pattern = "/<meta ([^>]*)http-equiv\s*=\s*[\"']?content-type[\"']?([^>]*)(\/?)>/i";
         $replace = '<meta http-equiv="Content-type" content="text/html;charset=UTF-8"$3>';
         if (preg_match($pattern, $source, $match)) {
             foreach ($match as $reg) {
                 if (preg_match("/charset\s*=\s*([0-9a-z_-]+)/i", $reg, $cs)) {
                     if (strtolower($cs[1]) !== 'utf-8' && strtolower($cs[1]) !== 'utf') {
-                        $this->_charset = $cs[1];
+                        $this->charset = $cs[1];
                         $source = preg_replace($pattern, $replace, $source);
                         break;
                     } else {
-                        $this->_charset = 'UTF-8';
+                        $this->charset = 'UTF-8';
                     }
                 }
             }
@@ -628,14 +600,14 @@ class P5_Html_Source extends P5_Xml_Dom
      */
     public function changeCharset($charset)
     {
-        $meta = $this->_dom->getElementsByTagName('meta');
+        $meta = $this->dom->getElementsByTagName('meta');
         foreach ($meta as $node) {
             if ($node->hasAttribute('http-equiv') &&
                 strtolower($node->getAttribute('http-equiv')) === 'content-type'
             ) {
                 $attr = ($charset !== '') ? "; charset={$charset}" : '';
                 $node->setAttribute('content', "text/html{$attr}");
-                $this->_charset = $charset;
+                $this->charset = $charset;
             }
         }
     }
@@ -644,7 +616,6 @@ class P5_Html_Source extends P5_Xml_Dom
      * Require Public Idenfifer Callback to PregReplace.
      *
      * @param array $args
-     *
      * @return string
      */
     public function setPi($args)
@@ -720,8 +691,8 @@ class P5_Html_Source extends P5_Xml_Dom
     public function moveHeaderElements()
     {
         $tags = array('style', 'link', 'meta', 'title', 'script');
-        $body = $this->_dom->getElementsByTagName('body')->item(0);
-        $head = $this->_dom->getElementsByTagName('head')->item(0);
+        $body = $this->dom->getElementsByTagName('body')->item(0);
+        $head = $this->dom->getElementsByTagName('head')->item(0);
         foreach ($tags as $tag) {
             $elements = $body->getElementsByTagName($tag);
             $exists = $head->getElementsByTagName($tag);
@@ -747,24 +718,24 @@ class P5_Html_Source extends P5_Xml_Dom
     /**
      * escape script data.
      */
-    protected function _escapeCdata()
+    protected function escapeCdata()
     {
-        foreach ($this->_cdataTags as $tag) {
+        foreach ($this->cdataTags as $tag) {
             // Enpty tag 
             $pattern = '/(<'.preg_quote($tag, '/')."[^>]*)\/>/i";
-            $this->_orgSource = preg_replace($pattern, "$1></$tag>", $this->_orgSource);
+            $this->orgSource = preg_replace($pattern, "$1></$tag>", $this->orgSource);
 
             $pattern = '/(<'.preg_quote($tag, '/').'[^>]*>)/i';
-            $this->_orgSource = preg_replace($pattern, '$1<![CDATA[', $this->_orgSource);
+            $this->orgSource = preg_replace($pattern, '$1<![CDATA[', $this->orgSource);
 
             $pattern = "/(<\/".preg_quote($tag, '/').'>)/i';
-            $this->_orgSource = preg_replace($pattern, ']]>$1', $this->_orgSource);
+            $this->orgSource = preg_replace($pattern, ']]>$1', $this->orgSource);
         }
 
         $pattern = '/'.preg_quote('<![CDATA[', '/')."[\s]*?".preg_quote('<![CDATA[', '/').'/is';
-        $this->_orgSource = preg_replace($pattern, '<![CDATA[', $this->_orgSource);
+        $this->orgSource = preg_replace($pattern, '<![CDATA[', $this->orgSource);
         $pattern = '/'.preg_quote(']]>', '/')."[\s]*?".preg_quote(']]>', '/').'/is';
-        $this->_orgSource = preg_replace($pattern, ']]>', $this->_orgSource);
+        $this->orgSource = preg_replace($pattern, ']]>', $this->orgSource);
     }
 
     /**
@@ -774,7 +745,7 @@ class P5_Html_Source extends P5_Xml_Dom
      */
     public function setXssProtection($value = 1)
     {
-        $this->_xssProtection = (int) $value;
+        $this->xssProtection = (int) $value;
     }
 
     /**
@@ -811,7 +782,6 @@ class P5_Html_Source extends P5_Xml_Dom
      *
      * @param mixed  $node    Source code or XML::DOM::Element
      * @param object $refNode
-     *
      * @return mixed
      */
     public function appendChild($node, $refNode)
@@ -829,7 +799,6 @@ class P5_Html_Source extends P5_Xml_Dom
      *
      * @param mixed  $node    Source code or XML::DOM::Element
      * @param object $refNode
-     *
      * @return mixed
      */
     public function replaceChild($node, $refNode)
@@ -847,7 +816,6 @@ class P5_Html_Source extends P5_Xml_Dom
      *
      * @param mixed  $node    Source code or XML::DOM::Element
      * @param object $refNode
-     *
      * @return mixed
      */
     public function insertBefore($node, DOMNode $refNode)
@@ -865,7 +833,6 @@ class P5_Html_Source extends P5_Xml_Dom
      *
      * @param mixed  $node    Source code or XML::DOM::Element
      * @param object $refNode
-     *
      * @return mixed
      */
     public function insertAfter($node, DOMNode $refNode)
@@ -885,7 +852,7 @@ class P5_Html_Source extends P5_Xml_Dom
      */
     public function body()
     {
-        return $this->_dom->getElementsByTagName('body')->item(0);
+        return $this->dom->getElementsByTagName('body')->item(0);
     }
 
     /**
@@ -895,6 +862,6 @@ class P5_Html_Source extends P5_Xml_Dom
      */
     public function head()
     {
-        return $this->_dom->getElementsByTagName('head')->item(0);
+        return $this->dom->getElementsByTagName('head')->item(0);
     }
 }

@@ -16,37 +16,32 @@
 class P5_Xml_Dom
 {
     /** 
-     * Current version.
-     */
-    const VERSION = '1.1.0';
-
-    /** 
      * DOMDocument object.
      *
      * @ver DOMDocument
      */
-    protected $_dom;
+    protected $dom;
 
     /**
      * Skip WhiteSpace.
      *
      * @var bool
      */
-    private $_skipWhiteSpace = false;
+    private $skipWhiteSpace = false;
 
     /**
      * XML Processing Instruction.
      *
      * @var bool
      */
-    private $_pi = false;
+    private $pi = false;
 
     /**
      * Error message.
      *
      * @var string
      */
-    private $_error = '';
+    private $error = '';
 
     /** 
      * Object constructor.
@@ -56,21 +51,20 @@ class P5_Xml_Dom
      */
     public function __construct($source, $ishtml = false)
     {
-        $this->_pi = preg_match("/<\?xml[^>]+>/", $source);
-        $this->_dom = $this->load($source);
+        $this->pi = preg_match("/<\?xml[^>]+>/", $source);
+        $this->dom = $this->load($source);
     }
 
     /**
      * Getter Method.
      *
      * @param string $key
-     *
      * @return mixed
      */
     public function __get($key)
     {
-        if (true === property_exists($this->_dom, $key)) {
-            return $this->_dom->$key;
+        if (true === property_exists($this->dom, $key)) {
+            return $this->dom->$key;
         }
 
         return;
@@ -83,48 +77,36 @@ class P5_Xml_Dom
      */
     public function reload($template)
     {
-        $this->_pi = preg_match("/<\?xml[^>]+>/", $template);
-        $this->_dom = $this->load($template);
+        $this->pi = preg_match("/<\?xml[^>]+>/", $template);
+        $this->dom = $this->load($template);
     }
 
     /**
      * Load source to DOM Document.
      *
      * @param string $template
-     *
      * @return mixed
      */
     public function load($template)
     {
         clearstatcache();
         $dom = new DOMDocument();
-        $dom->preserveWhiteSpace = !$this->_skipWhiteSpace;
-
-        $pattern = "/^[a-zA-Z0-9_:\-".preg_quote('./\\', '/').']+$/';
-        if (preg_match($pattern, $template) && is_file($template)) {
-            $source = file_get_contents($template);
-        } else {
-            $source = $template;
-        }
-
-        $br = '';
-        if (preg_match("/^([\r\n]+)/", $source, $match)) {
-            $br = $match[1];
-        }
-
+        $dom->preserveWhiteSpace = !$this->skipWhiteSpace;
+        $source = (is_file($template)) ? file_get_contents($template) : $template;
         if (!empty($source) || $source === '0') {
+            $firstline_format = '';
+            if (preg_match("/^([\r\n]+)/", $source, $match)) {
+                $firstline_format = $match[1];
+            }
             $source = P5_Html::escapeEntityReference($source);
-
             // if source is plain text
             if (!preg_match("/^[\s]*</", $source)) {
                 $source = "<dummy>$source</dummy>";
             }
-            if (!empty($br)) {
+            if (!empty($firstline_format)) {
                 $source = "<dummy>$source</dummy>";
             }
-
-            $oeh = set_error_handler(array($this, 'errorHandler'));
-
+            $old_error_handler = set_error_handler(array($this, 'errorHandler'));
             try {
                 $dom->loadXML($source);
             } catch (Exception $e) {
@@ -167,15 +149,15 @@ class P5_Xml_Dom
                 ) {
                     throw new P5_Xml_Dom_Exception($e->getMessage());
                 } else {
-                    $this->_error = $e->getMessage();
+                    $this->error = $e->getMessage();
                 }
             }
-            set_error_handler($oeh);
-            if (!empty($this->_error)) {
-                trigger_error($this->_error, E_USER_ERROR);
+            set_error_handler($old_error_handler);
+            if (!empty($this->error)) {
+                trigger_error($this->error, E_USER_ERROR);
             }
         } else {
-            $this->_parseError = true;
+            $this->parseError = true;
         }
 
         return $dom;
@@ -187,7 +169,6 @@ class P5_Xml_Dom
      * @param DOMElement $element
      * @param string     $node_name
      * @param string     $class_name
-     *
      * @return mixed
      */
     public static function getParentNode(DOMElement $element, $node_name, $class_name = '')
@@ -217,7 +198,7 @@ class P5_Xml_Dom
      */
     public function getChildNodes()
     {
-        return $this->_dom->childNodes;
+        return $this->dom->childNodes;
     }
 
     /**
@@ -225,37 +206,24 @@ class P5_Xml_Dom
      *
      * @param string $id
      * @param string $attr
-     *
      * @return mixed
      */
     public function getElementById($id, $attr = 'id')
     {
-        self::_setIdAttrs($this->_dom, $attr);
+        self::_setIdAttrs($this->dom, $attr);
 
-        return $this->_dom->getElementById($id);
+        return $this->dom->getElementById($id);
     }
 
     /**
      * Get elements.
      *
      * @param string $tagName
-     *
      * @return mixed
      */
     public function getElementsByTagName($tagName)
     {
-        $tagName = strtolower($tagName);
-        $nodeList = $this->_dom->getElementsByTagName($tagName);
-        if ($nodeList->length == 0) {
-            $tagName = strtoupper($tagName);
-            $nodeList = $this->_dom->getElementsByTagName($tagName);
-        }
-        if ($nodeList->length == 0) {
-            $tagName = ucfirst(strtolower($tagName));
-            $nodeList = $this->_dom->getElementsByTagName($tagName);
-        }
-
-        return $nodeList;
+        return $this->dom->getElementsByTagName(strtolower($tagName));
     }
 
     /**
@@ -263,31 +231,18 @@ class P5_Xml_Dom
      *
      * @param string $url
      * @param string $tagName
-     *
      * @return mixed
      */
     public function getElementsByTagNameNS($url, $tagName)
     {
-        $tagName = strtolower($tagName);
-        $nodeList = $this->_dom->getElementsByTagNameNS($url, $tagName);
-        if ($nodeList->length == 0) {
-            $tagName = strtoupper($tagName);
-            $nodeList = $this->_dom->getElementsByTagNameNS($url, $tagName);
-        }
-        if ($nodeList->length == 0) {
-            $tagName = ucfirst(strtolower($tagName));
-            $nodeList = $this->_dom->getElementsByTagNameNS($url, $tagName);
-        }
-
-        return $nodeList;
+        return $this->dom->getElementsByTagNameNS($url, strtolower($tagName));
     }
 
     /**
      * Insert child node.
      *
-     * @param mixed  $node    Source code or XML::DOM::Element
+     * @param mixed  $node    Source code or DOMElement
      * @param object $refNode
-     *
      * @return mixed
      */
     public function insertBefore($node, DOMNode $refNode)
@@ -295,17 +250,15 @@ class P5_Xml_Dom
         if (is_string($node)) {
             $node = $this->importChild($node);
         }
-
         $parentNode = $refNode->parentNode;
         if (!is_object($parentNode)) {
             return;
         }
-
         if (is_array($node) || method_exists($node, 'item')) {
             $imported = array();
             foreach ($node as $child) {
                 $ret = $parentNode->insertBefore($child, $refNode);
-                array_push($imported, $ret);
+                $imported[] = $ret;
             }
             if (count($imported) > 1) {
                 return new P5_Xml_Dom_NodeList($imported);
@@ -322,9 +275,8 @@ class P5_Xml_Dom
     /**
      * Insert after child node.
      *
-     * @param mixed  $node    Source code or XML::DOM::Element
+     * @param mixed  $node    Source code or DOMElement
      * @param object $refNode
-     *
      * @return mixed
      */
     public function insertAfter($node, DOMNode $refNode)
@@ -332,14 +284,11 @@ class P5_Xml_Dom
         if (is_string($node)) {
             $node = $this->importChild($node);
         }
-
         $parentNode = $refNode->parentNode;
         if (!is_object($parentNode)) {
             return;
         }
-
         $nextSibling = $refNode->nextSibling;
-
         if (is_array($node) || method_exists($node, 'item')) {
             $imported = array();
             foreach ($node as $child) {
@@ -348,7 +297,7 @@ class P5_Xml_Dom
                 } else {
                     $ret = $parentNode->appendChild($child);
                 }
-                array_push($imported, $ret);
+                $imported[] = $ret;
             }
             if (count($imported) > 1) {
                 return new P5_Xml_Dom_NodeList($imported);
@@ -358,7 +307,6 @@ class P5_Xml_Dom
 
             return;
         }
-
         if (is_object($nextSibling)) {
             $ret = $parentNode->insertBefore($node, $nextSibling);
         } else {
@@ -374,14 +322,13 @@ class P5_Xml_Dom
      * @param string $node
      * @param object $refNode
      * @param string $lf
-     *
      * @return mixed
      */
     public function appendComment($data, $refNode, $lf = '')
     {
-        $com = $refNode->appendChild($this->_dom->createComment($data));
+        $com = $refNode->appendChild($this->dom->createComment($data));
         if (!empty($lf)) {
-            $this->insertBefore($this->_dom->createTextNode($lf), $com);
+            $this->insertBefore($this->dom->createTextNode($lf), $com);
         }
     }
 
@@ -390,7 +337,6 @@ class P5_Xml_Dom
      *
      * @param mixed  $node    Source code or XML::DOM::Element
      * @param object $refNode
-     *
      * @return mixed
      */
     public function appendChild($node, $refNode)
@@ -403,7 +349,7 @@ class P5_Xml_Dom
             foreach ($node as $child) {
                 if (is_object($refNode)) {
                     $ret = $refNode->appendChild($child);
-                    array_push($imported, $ret);
+                    $imported[] = $ret;
                 }
             }
             if (count($imported) > 1) {
@@ -423,7 +369,6 @@ class P5_Xml_Dom
      *
      * @param object $node
      * @param bool   $recursive
-     *
      * @return mixed
      */
     public function removeChild($node, $recursive = false)
@@ -431,8 +376,8 @@ class P5_Xml_Dom
         if (!is_object($node)) {
             return;
         }
-        if (get_class($node) == 'P5_Xml_Dom_NodeList' || get_class($node) == 'DOMNodeList') {
-            for ($i = $node->length - 1; $i >= 0; --$i) {
+        if (get_class($node) === 'P5_Xml_Dom_NodeList' || get_class($node) === 'DOMNodeList') {
+            for ($last = $node->length - 1, $i = $last; $i >= 0; --$i) {
                 if (false === $node->item($i)->parentNode->removeChild($node->item($i))) {
                     return false;
                 }
@@ -444,20 +389,19 @@ class P5_Xml_Dom
             return $node->parentNode->removeChild($node);
         }
 
-        return $this->_cleanUpNode($node);
+        return $this->cleanUpNode($node);
     }
 
     /**
      * Clean up childnodes.
      * 
      * @param DOMElement $node
-     *
      * @return mixed
      */
-    private function _cleanUpNode($node)
+    private function cleanUpNode($node)
     {
         while ($node->hasChildNodes()) {
-            $this->_cleanUpNode($node->firstChild);
+            $this->cleanUpNode($node->firstChild);
         }
 
         return $node->parentNode->removeChild($node);
@@ -466,9 +410,8 @@ class P5_Xml_Dom
     /**
      * Import child node.
      *
-     * @param mixed  $node    Source code or XML::DOM::Element
+     * @param mixed  $node    Source code or DOMElement
      * @param object $refNode
-     *
      * @return object
      */
     public function replaceChild($node, $refNode)
@@ -476,7 +419,7 @@ class P5_Xml_Dom
         if (is_string($node)) {
             $node = $this->importChild($node);
         }
-        if (get_class($refNode) == 'DOMNodeList') {
+        if (get_class($refNode) === 'DOMNodeList') {
             while ($refNode->length > 1) {
                 $refNode->item(0)->parentNode->removeChild($refNode->item(0));
             }
@@ -490,7 +433,7 @@ class P5_Xml_Dom
             $imported = array();
             foreach ($node as $child) {
                 $ret = $parent->insertBefore($child, $refNode);
-                array_push($imported, $ret);
+                $imported[] = $ret;
             }
             $parent->removeChild($refNode);
             if (count($imported) > 1) {
@@ -508,8 +451,7 @@ class P5_Xml_Dom
     /**
      * Import child node.
      *
-     * @param mixed $node Source code or XML::DOM::Element
-     *
+     * @param mixed $node Source code or DOMElement
      * @return object
      */
     public function importChild($node)
@@ -521,21 +463,20 @@ class P5_Xml_Dom
         if (property_exists($node, 'length')) {
             $imported = array();
             foreach ($node as $child) {
-                if ($child->nodeName == 'dummy') {
+                if ($child->nodeName === 'dummy') {
                     $children = $child->childNodes;
                     foreach ($children as $childNode) {
-                        array_push($imported, $this->_dom->importNode($childNode, true));
+                        $imported[] = $this->dom->importNode($childNode, true);
                     }
                     continue;
                 }
-                array_push($imported, $this->_dom->importNode($child, true));
+                $imported[] = $this->dom->importNode($child, true);
             }
 
-            return new P5_Xml_Dom_NodeList($imported);
-            //return $imported;
+            return new P5_Xml_Dom_NodeList($imported, true);
         }
 
-        return $this->_dom->importNode($node, true);
+        return $this->dom->importNode($node, true);
     }
 
     /**
@@ -543,36 +484,35 @@ class P5_Xml_Dom
      *
      * @param string $tag
      * @param string $value
-     *
      * @return object
      */
     public function createElement($name, $value = '')
     {
-        return $this->_dom->createElement($name, $value);
+        return $this->dom->createElement($name, $value);
     }
 
     /**
      * Create new Text node.
      *
      * @param string $text
-     *
      * @return object
      */
     public function createTextNode($text)
     {
-        return $this->_dom->createTextNode($text);
+        return $this->dom->createTextNode($text);
     }
 
     /**
      * Processing Instruction.
-     *
      * @return mixed
      */
     public function processingInstruction()
     {
-        if ($this->_pi) {
-            return (object) array('version' => $this->_dom->xmlVersion,
-                                   'encoding' => $this->_dom->xmlEncoding, );
+        if ($this->pi) {
+            return (object) array(
+                'version' => $this->dom->xmlVersion,
+                'encoding' => $this->dom->xmlEncoding,
+            );
         }
 
         return;
@@ -585,8 +525,8 @@ class P5_Xml_Dom
      */
     public function doctype()
     {
-        if (is_object($this->_dom->doctype)) {
-            return $this->_dom->doctype;
+        if (is_object($this->dom->doctype)) {
+            return $this->dom->doctype;
         }
 
         return;
@@ -599,7 +539,7 @@ class P5_Xml_Dom
      */
     public function error()
     {
-        return $this->_error;
+        return $this->error;
     }
 
     /**
@@ -629,12 +569,11 @@ class P5_Xml_Dom
      * Save XML.
      *
      * @param DOMNode
-     *
      * @return string
      */
     public function saveXML($node)
     {
-        return $this->_dom->saveXML($node);
+        return $this->dom->saveXML($node);
     }
 
     /**
