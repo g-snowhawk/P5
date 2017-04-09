@@ -438,7 +438,11 @@ class P5_Html_Format extends P5_Html
             }
             $value = str_replace("\n", '%0A', $value);
             $value = str_replace("\r", '%0D', $value);
-            $this->_formatted .= ' '.$key.'="'.$value.'"';
+            if ($key === $value) {
+                $this->_formatted .= ' '.$key;
+            } else {
+                $this->_formatted .= ' '.$key.'="'.$value.'"';
+            }
         }
         $slash = (isset($this->_emptyTags[$name])) ? $this->_xhtmlCloser : '';
         $this->_formatted .= $slash.'>';
