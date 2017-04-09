@@ -94,6 +94,9 @@ class P5_Environment
         } elseif (preg_match("/Safari\/([0-9\.]+)/", $user_agent, $match)) {
             $name = 'Safari';
             $version = $match[1];
+            if (preg_match("/Version\/([0-9\.]+)/", $user_agent, $match)) {
+                $version = $match[1];
+            }
         } elseif (preg_match("/Firefox\/([0-9\.]+)/", $user_agent, $match)) {
             $name = 'Firefox';
             $version = $match[1];
@@ -102,15 +105,14 @@ class P5_Environment
             $version = $match[1];
         } elseif (preg_match("/Trident\/([0-9\.]+)/", $user_agent, $match)) {
             $name = 'Internet Explorer';
-        } elseif (preg_match("/MSIE ([5678][0-9\.]+);/", $user_agent, $match)) {
-            $name = 'Internet Explorer';
-            if ($match[1] < 6) {
-                $version = '9.0';
-            } elseif ($match[1] < 7) {
-                $version = '10.0';
+            if ($match[1] < 7) {
+                $version = 'unsupported';
             } else {
                 $version = '11';
             }
+        } elseif (preg_match("/MSIE ([567][0-9\.]+);/", $user_agent, $match)) {
+            $name = 'Internet Explorer';
+            $version = 'unsupported';
         }
         return array($name, $version);
     }
