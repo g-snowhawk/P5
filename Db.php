@@ -447,10 +447,11 @@ class P5_Db
                     unset($update[$key]);
                 }
             }
-            if (false === $ret = self::update($table, $update, implode(' AND ', $arr), $where, $raws)) {
-                return false;
-            }
-            if ($ret === 0) {
+            if (self::exists($table, implode(' AND ', $arr), $where)) {
+                if (false === $ret = self::update($table, $update, implode(' AND ', $arr), $where, $raws)) {
+                    return false;
+                }
+            } else {
                 if (false === $ret = self::insert($table, $unit, $raws)) {
                     return false;
                 }
