@@ -27,16 +27,23 @@ require_once 'P5/Environment.php';
 class P5_Error
 {
     /**
-     * Error Handler.
+     * Custom error handler.
      *
      * @var mixed
      */
     protected $_oldErrorHandler;
 
     /**
-     * Temporary Template file path.
+     * Custom exception handler.
      *
      * @var mixed
+     */
+    protected $_oldExceptionHandler;
+
+    /**
+     * Temporary Template file path.
+     *
+     * @var string
      */
     protected $_temporaryTemplate;
 
@@ -64,6 +71,7 @@ class P5_Error
         ini_set('display_errors', 'Off');
         register_shutdown_function(array('P5_Error', 'unloadHandler'));
         $this->_oldErrorHandler = set_error_handler(array($this, 'errorHandler'));
+        $this->_oldExceptionHandler = set_exception_handler(array($this, 'exceptionHandler'));
 
         if (!empty($template) && !defined('ERROR_DOCUMENT')) {
             $src = file_get_contents($template, FILE_USE_INCLUDE_PATH);
