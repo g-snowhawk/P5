@@ -37,6 +37,10 @@ class P5_Lang
         }
         $pkg = (is_null($package)) ? $caller[1]['class'] : $package;
 
+        if ($pkg === '') {
+            return self::words($key, "Lang_$lc");
+        }
+
         if (preg_match('/^.*_Plugin_(.+)$/', $pkg, $match)) {
             $name = $match[1];
             $path = 'plugins/'.preg_replace('/_/', '/', $name).'/Lang/'.$lc.'.php';
@@ -77,7 +81,19 @@ class P5_Lang
         if (isset($caller[1]['object']) && is_object($caller[1]['object'])) {
             $class = get_class($caller[1]['object']);
         }
-        $pkg = (empty($package)) ? $caller[1]['class'] : $package;
+        $pkg = (is_null($package)) ? $caller[1]['class'] : $package;
+
+        if ($pkg === '') {
+            if ($result = self::words($key, "Lang_$lc")) {
+                if (is_array($result)) {
+                    if (empty($subkey)) {
+                        return $result;
+                    }
+
+                    return (isset($result[$subkey])) ? $result[$subkey] : null;
+                }
+            }
+        }
 
         if (preg_match('/^.*_Plugin_(.+)$/', $pkg, $match)) {
             $name = $match[1];
