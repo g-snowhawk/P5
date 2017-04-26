@@ -2,128 +2,119 @@
 /**
  * This file is part of P5 Framework.
  *
- * Copyright (c)2016 PlusFive (http://www.plus-5.com)
+ * Copyright (c)2016 PlusFive (https://www.plus-5.com)
  *
  * This software is released under the MIT License.
- * http://www.plus-5.com/licenses/mit-license
+ * https://www.plus-5.com/licenses/mit-license
  */
+
+namespace P5;
+
 /**
  * Database connection class.
  *
- * @license  http://www.plus-5.com/licenses/mit-license  MIT License
- * @author   Taka Goto <http://www.plus-5.com/>
+ * @license  https://www.plus-5.com/licenses/mit-license  MIT License
+ * @author   Taka Goto <www.plus-5.com>
  */
-class P5_Db
+class Db
 {
-    /**
-     * Current version.
-     */
-    const VERSION = '1.1.0';
-
     /**
      * Database Type.
      *
      * @var string
      */
-    private $_driver;
+    private $driver;
 
     /**
      * Database name.
      *
      * @var string
      */
-    private $_source;
+    private $source;
 
     /**
      * server port.
      *
      * @var string
      */
-    private $_port;
+    private $port;
 
     /**
      * Database Handler.
      *
      * @var PDO
      */
-    private $_dbHandler;
+    private $handler;
 
     /**
      * PDOStatement Object.
      *
      * @var PDOStatement
      */
-    private $_dbResult;
-
-    /**
-     * Transaction.
-     *
-     * @var bool
-     */
-    private $_isTransaction = false;
+    private $statement;
 
     /**
      * SQL string.
      * 
      * @vat string
      */
-    private $_sql;
+    private $sql;
 
     /**
      * Error Code.
      *
      * @var int|string
      */
-    private $_errorCode;
+    private $error_code;
 
     /**
      * Error Message.
      *
      * @var string
      */
-    private $_errorMessage;
+    private $error_message;
 
     /**
      * Database.
      *
      * @var string
      */
-    private $_dsn;
+    private $dsn;
 
     /**
      * Database user name.
      *
      * @var string
      */
-    private $_user;
+    private $user;
 
     /**
      * Database access password.
      *
      * @var string
      */
-    private $_password;
+    private $password;
 
     /**
      * Database encoding.
      *
      * @var string
      */
-    private $_enc;
+    private $encoding;
 
     /**
      * excute counter.
      *
      * @var int
      */
-    private $_ecount;
+    private $ecount;
 
     /*
      * PDO Attributes
      *
      * @var array
      */
-    private $_options = array();
+    private $options = [];
 
     /**
      * Object Constructor.
@@ -138,37 +129,38 @@ class P5_Db
      */
     public function __construct($driver, $host, $source, $user, $password, $port = 3306, $enc = '')
     {
-        $this->_driver = $driver;
-        $this->_source = $source;
-        $this->_port = $port;
-        $this->_user = $user;
-        $this->_password = $password;
-        $this->_enc = $enc;
-        if ($this->_driver != 'sqlite' && $this->_driver != 'sqlite2') {
-            $this->_dsn = "$driver:host=$host;port=$port;dbname=$source";
+        $this->driver = $driver;
+        $this->source = $source;
+        $this->port = $port;
+        $this->user = $user;
+        $this->password = $password;
+        $this->encoding = $enc;
+        if ($this->driver != 'sqlite' && $this->driver != 'sqlite2') {
+            $this->dsn = "$driver:host=$host;port=$port;dbname=$source";
             if ($enc !== '') {
                 if (file_exists($enc)) {
-                    $this->_options[PDO::MYSQL_ATTR_READ_DEFAULT_FILE] = $enc;
+                    $this->options[\PDO::MYSQL_ATTR_READ_DEFAULT_FILE] = $enc;
                     $content = str_replace('#', ';', file_get_contents($enc));
                     $init = parse_ini_string($content, true);
                     if (isset($init['client']['default-character-set'])) {
-                        $this->_enc = $init['client']['default-character-set'];
+                        $this->encoding = $init['client']['default-character-set'];
                     }
                 } else {
-                    $this->_dsn .= ";charset=$enc";
+                    $this->dsn .= ";charset=$enc";
                 }
             }
-            if ($this->_driver === 'mysql') {
-                $this->_options[PDO::MYSQL_ATTR_LOCAL_INFILE] = true;
-                $this->_options[PDO::MYSQL_ATTR_INIT_COMMAND] = "SET SQL_MODE='ANSI_QUOTES';";
+            if ($this->driver === 'mysql') {
+                $this->options[\PDO::MYSQL_ATTR_LOCAL_INFILE] = true;
+                $this->options[\PDO::MYSQL_ATTR_INIT_COMMAND] = "SET SQL_MODE='ANSI_QUOTES';";
             }
+            $this->options[\PDO::ATTR_ERRMODE] = \PDO::ERRMODE_EXCEPTION;
         } else {
             if (!file_exists($host)) {
                 mkdir($host, 0777, true);
             }
-            $this->_dsn = "$driver:$host/$source";
+            $this->dsn = "$driver:$host/$source";
             if (!empty($port)) {
-                $this->_dsn .= ".$port";
+                $this->dsn .= ".$port";
             }
         }
     }
@@ -203,32 +195,34 @@ class P5_Db
     /**
      * Create database.
      *
-     * @param string $source
+     * @param string $db_name
      *
      * @return bool
      */
-    public function create($source = null)
+    public function create($db_name = null)
     {
         try {
-            if (empty($source)) {
-                $source = $this->_source;
+            if (empty($db_name)) {
+                $db_name = $this->source;
             }
-            $dsn = "{$this->_driver}:{$this->_host};port={$this->_port}";
-            $this->_dbHandler = new PDO($dsn, $this->_user, $this->_password);
-            $this->_dbHandler->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            if ($this->_driver === 'mysql') {
-                $this->_dbHandler->query(
-                    "CREATE DATABASE {$source} DEFAULT CHARACTER SET {$this->_enc}"
+            $dsn = "{$this->driver}:{$this->host};port={$this->port}";
+            $this->handler = new \PDO($dsn, $this->user, $this->password);
+            $this->handler->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+            if ($this->driver === 'mysql') {
+                $sql = "CREATE DATABASE $db_name";
+                if (!empty($this->encoding)) {
+                    $sql .= " DEFAULT CHARACTER SET {$this->encoding}";
+                }
+                $this->handler->query($sql);
+            }
+            if ($this->driver === 'pgsql') {
+                $this->handler->query(
+                    "CREATE DATABASE {$db_name} ENCODING '{$this->encoding}'"
                 );
             }
-            if ($this->_driver === 'pgsql') {
-                $this->_dbHandler->query(
-                    "CREATE DATABASE {$source} ENCODING '{$this->_enc}'"
-                );
-            }
-        } catch (PDOException $e) {
-            $this->_errorCode = $e->getCode();
-            $this->_errorMessage = $e->getMessage();
+        } catch (\PDOException $e) {
+            $this->error_code = $e->getCode();
+            $this->error_message = $e->getMessage();
 
             return false;
         }
@@ -244,7 +238,7 @@ class P5_Db
     public function addOptions($options)
     {
         foreach ($options as $key => $value) {
-            $this->_options[$key] = $value;
+            $this->options[$key] = $value;
         }
     }
 
@@ -259,13 +253,12 @@ class P5_Db
     {
         try {
             if (!is_null($timeout)) {
-                $this->_options[PDO::ATTR_TIMEOUT] = $timeout;
+                $this->options[\PDO::ATTR_TIMEOUT] = $timeout;
             }
-            $this->_dbHandler = new PDO($this->_dsn, $this->_user, $this->_password, $this->_options);
-            $this->_dbHandler->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        } catch (PDOException $e) {
-            $this->_errorCode = $e->getCode();
-            $this->_errorMessage = $e->getMessage();
+            $this->handler = new \PDO($this->dsn, $this->user, $this->password, $this->options);
+        } catch (\PDOException $e) {
+            $this->error_code = $e->getCode();
+            $this->error_message = $e->getMessage();
 
             return false;
         }
@@ -282,17 +275,17 @@ class P5_Db
      */
     public function exec($sql)
     {
-        $this->_sql = $this->normalizeSQL($sql);
+        $this->sql = $this->normalizeSQL($sql);
         try {
-            $this->_ecount = $this->_dbHandler->exec($this->_sql);
-        } catch (PDOException $e) {
-            $this->_errorCode = $e->getCode();
-            $this->_errorMessage = $e->getMessage();
+            $this->ecount = $this->handler->exec($this->sql);
+        } catch (\PDOException $e) {
+            $this->error_code = $e->getCode();
+            $this->error_message = $e->getMessage();
 
             return false;
         }
 
-        return $this->_ecount;
+        return $this->ecount;
     }
 
     /**
@@ -304,17 +297,17 @@ class P5_Db
      */
     public function query($sql)
     {
-        $this->_sql = $this->normalizeSQL($sql);
+        $this->sql = $this->normalizeSQL($sql);
         try {
-            $this->_dbResult = $this->_dbHandler->query($this->_sql);
-        } catch (PDOException $e) {
-            $this->_errorCode = $e->getCode();
-            $this->_errorMessage = $e->getMessage();
+            $this->statement = $this->handler->query($this->sql);
+        } catch (\PDOException $e) {
+            $this->error_code = $e->getCode();
+            $this->error_message = $e->getMessage();
 
             return false;
         }
 
-        return $this->_dbResult;
+        return $this->statement;
     }
 
     /**
@@ -332,13 +325,13 @@ class P5_Db
         if (is_null($fields)) {
             $fields = $this->getFields($table, true);
         }
-        $data = (P5_Array::is_hash($data)) ? array($data) : $data;
-        $raws = (P5_Array::is_hash($raws)) ? array($raws) : $raws;
+        $data = (\P5\Variable::isHash($data)) ? [$data] : $data;
+        $raws = (\P5\Variable::isHash($raws)) ? [$raws] : $raws;
         $cnt = 0;
-        $keys = array();
-        $rows = array();
+        $keys = [];
+        $rows = [];
         foreach ($data as $n => $unit) {
-            $vals = array();
+            $vals = [];
             foreach ($unit as $key => $value) {
                 if ($cnt === 0) {
                     $keys[] = "\"$key\"";
@@ -377,12 +370,12 @@ class P5_Db
      *
      * @return mixed
      */
-    public function update($table, $data, $statement = '', $options = array(), $raws = null, $fields = null)
+    public function update($table, $data, $statement = '', $options = [], $raws = null, $fields = null)
     {
         if (is_null($fields)) {
             $fields = $this->getFields($table, true);
         }
-        $pair = array();
+        $pair = [];
         foreach ($data as $key => $value) {
             $type = (isset($fields[$key]['Type'])) ? $fields[$key]['Type'] : null;
             $fZero = (isset($fields[$key]) && self::is_number($type)) ? true : false;
@@ -429,17 +422,16 @@ class P5_Db
      *
      * @return mixed
      */
-    public function updateOrInsert($table, array $data, $unique, $raws = array())
+    public function updateOrInsert($table, array $data, $unique, $raws = [])
     {
         $ecount = 0;
-        if (P5_Array::is_hash($data)) {
-            $data = array($data);
+        if (\P5\Variable::isHash($data)) {
+            $data = [$data];
         }
         foreach ($data as $unit) {
             $keys = array_keys($unit);
             $update = $unit;
-            $where = array();
-            $states = array();
+            $where = [];
             foreach ($unique as $key) {
                 $where[] = $unit[$key];
                 $arr[] = "{$key} = ?";
@@ -447,20 +439,20 @@ class P5_Db
                     unset($update[$key]);
                 }
             }
-            if (self::exists($table, implode(' AND ', $arr), $where)) {
-                if (false === $ret = self::update($table, $update, implode(' AND ', $arr), $where, $raws)) {
-                    return false;
-                }
-            } else {
+            $statement = implode(' AND ', $arr);
+            if (false === $ret = self::update($table, $update, $statement, $where, $raws)) {
+                return false;
+            }
+            if ($ret === 0 && !self::exists($table, $statement, $where)) {
                 if (false === $ret = self::insert($table, $unit, $raws)) {
                     return false;
                 }
             }
             $ecount += $ret;
         }
-        $this->_ecount = $ecount;
+        $this->ecount = $ecount;
 
-        return $this->_ecount;
+        return $this->ecount;
     }
 
     /**
@@ -474,21 +466,21 @@ class P5_Db
      *
      * @return mixed
      */
-    public function replace($table, array $data, $unique, $raws = array(), $fields = null)
+    public function replace($table, array $data, $unique, $raws = [], $fields = null)
     {
         $ecount = 0;
         if (is_null($fields)) {
             $fields = $this->getFields($table, true);
         }
-        if (P5_Array::is_hash($data)) {
-            $data = array($data);
+        if (\P5\Variable::isHash($data)) {
+            $data = [$data];
         }
         $cnt = 0;
-        $keys = array();
-        $dest = array();
+        $keys = [];
+        $dest = [];
         $cols = '';
         foreach ($data as $unit) {
-            $vals = array();
+            $vals = [];
             foreach ($unit as $key => $value) {
                 if (empty($cols)) {
                     $keys[] = "\"$key\"";
@@ -511,11 +503,11 @@ class P5_Db
                 $cols = implode(',', $keys);
             }
             $sql = "($cols) VALUES (".implode(',', $vals).')';
-            if ($this->_driver == 'mysql') {
+            if ($this->driver == 'mysql') {
                 $sql = "INSERT INTO \"$table\" $sql ON DUPLICATE KEY UPDATE ".implode(',', $dest);
-            } elseif ($this->_driver == 'pgsql') {
-                $where = array();
-                $arr = array();
+            } elseif ($this->driver == 'pgsql') {
+                $where = [];
+                $arr = [];
                 foreach ($unique as $key) {
                     $where[] = $unit[$key];
                     $arr[] = "{$key} = ?";
@@ -528,13 +520,13 @@ class P5_Db
                     continue;
                 }
                 $sql = "INSERT INTO \"$table\" $sql";
-            } elseif ($this->_driver == 'sqlite' || $this->_driver == 'sqlite2') {
+            } elseif ($this->driver == 'sqlite' || $this->driver == 'sqlite2') {
                 $sql = "INSERT INTO \"$table\" $sql";
                 if (false === $ret = $this->exec($sql)) {
                     if (preg_match('/columns? (.+) (is|are) not unique/i', $this->error(), $match)) {
-                        $unique = P5_Text::explode(',', $match[1]);
-                        $where = array();
-                        $arr = array();
+                        $unique = Text::explode(',', $match[1]);
+                        $where = [];
+                        $arr = [];
                         foreach ($unique as $key) {
                             $where[] = $unit[$key];
                             $arr[] = "{$key} = ?";
@@ -555,9 +547,9 @@ class P5_Db
             }
             $ecount += $ret;
         }
-        $this->_ecount = $ecount;
+        $this->ecount = $ecount;
 
-        return $this->_ecount;
+        return $this->ecount;
     }
 
     /**
@@ -570,7 +562,7 @@ class P5_Db
      *
      * @return mixed
      */
-    public function select($columns, $table, $statement = '', $options = array())
+    public function select($columns, $table, $statement = '', $options = [])
     {
         $sql = "SELECT $columns FROM $table";
         if (!empty($statement) && is_array($options)) {
@@ -592,7 +584,7 @@ class P5_Db
      *
      * @return bool
      */
-    public function exists($table, $statement = '', $options = array())
+    public function exists($table, $statement = '', $options = [])
     {
         $sql = "SELECT COUNT(*) AS cnt FROM $table";
         if (!empty($statement) && !empty($options)) {
@@ -616,7 +608,7 @@ class P5_Db
      *
      * @return mixed
      */
-    public function count($table, $statement = '', $options = array())
+    public function count($table, $statement = '', $options = [])
     {
         $sql = "SELECT COUNT(*) AS cnt FROM $table";
         if (!empty($statement) && !empty($options)) {
@@ -636,17 +628,23 @@ class P5_Db
      *
      * @return mixed
      */
-    public function get($column, $table, $statement = '', $options = array())
+    public function get($column, $table, $statement = '', $options = [])
     {
         $sql = "SELECT $column FROM $table";
         if (!empty($statement) && !empty($options)) {
             $sql .= ' WHERE '.$this->prepareStatement($statement, $options);
         }
-        if ($this->query($sql)) {
-            return $this->fetchColumn();
+        if (false === $this->query($sql)) {
+            return false;
+        }
+        $ret = $this->fetch();
+        if (!is_array($ret)) {
+            return $ret;
+        } elseif (count($ret) > 1) {
+            return $ret;
         }
 
-        return false;
+        return array_shift($ret);
     }
 
     /**
@@ -659,7 +657,7 @@ class P5_Db
      *
      * @return mixed
      */
-    public function min($column, $table, $statement = '', $options = array())
+    public function min($column, $table, $statement = '', $options = [])
     {
         $sql = "SELECT MIN($column) FROM \"$table\"";
         if (!empty($statement) && !empty($options)) {
@@ -682,7 +680,7 @@ class P5_Db
      *
      * @return mixed
      */
-    public function max($column, $table, $statement = '', $options = array())
+    public function max($column, $table, $statement = '', $options = [])
     {
         $sql = "SELECT MAX($column)
                   FROM \"$table\"";
@@ -707,7 +705,7 @@ class P5_Db
     {
         $statement = $this->normalizeSQL($statement);
 
-        return $this->_dbResult = $this->_dbHandler->prepare($statement);
+        return $this->statement = $this->handler->prepare($statement);
     }
 
     /**
@@ -719,8 +717,8 @@ class P5_Db
      */
     public function execute($input_parameters)
     {
-        if (false !== $this->_dbResult->execute($input_parameters)) {
-            return $this->_dbResult->rowCount();
+        if (false !== $this->statement->execute($input_parameters)) {
+            return $this->statement->rowCount();
         }
 
         return false;
@@ -736,26 +734,30 @@ class P5_Db
     public function prepareStatement($statement, array $options)
     {
         $statement = $this->normalizeSQL($statement);
-        if (P5_Array::is_hash($options)) {
-            $pattern = array();
-            $replace = array();
+        if ($options !== array_values($options)) {
+            $pattern = [];
+            $replace = [];
+            $holder = [];
             foreach ($options as $key => $option) {
-                $option = preg_replace('/'.preg_quote('$', '/').'/', '$\\', $option);
+                if (is_int($key)) {
+                    $holder[] = $option;
+                    continue;
+                }
+                $option = str_replace('$', '$\\', $option);
                 $key = preg_replace('/^:/', '', $key, 1);
                 $pattern[] = '/'.preg_quote(preg_replace('/^:?/', ':', $key, 1), '/').'/';
                 $replace[] = $this->quote($option);
             }
             $statement = preg_replace($pattern, $replace, $statement);
         } else {
-            if (is_array($options)) {
-                foreach ($options as $option) {
-                    $option = preg_replace('/'.preg_quote('$', '/').'/', '$\\', $option);
-                    $statement = preg_replace("/\?/", $this->quote($option), $statement, 1);
-                }
-            }
+            $holder = $options;
+        }
+        foreach ($holder as $option) {
+            $option = str_replace('$', '$\\', $option);
+            $statement = preg_replace("/\?/", $this->quote($option), $statement, 1);
         }
 
-        return preg_replace('/'.preg_quote('$\\', '/').'/', '$', $statement);
+        return str_replace('$\\', '$', $statement);
     }
 
     /**
@@ -767,13 +769,13 @@ class P5_Db
      *
      * @return mixed
      */
-    public function fetch($type = PDO::FETCH_ASSOC, $cursor = PDO::FETCH_ORI_NEXT, $offset = 0)
+    public function fetch($type = \PDO::FETCH_ASSOC, $cursor = \PDO::FETCH_ORI_NEXT, $offset = 0)
     {
         try {
-            $data = $this->_dbResult->fetch($type, $cursor, $offset);
-        } catch (PDOException $e) {
-            $this->_errorCode = $e->getCode();
-            $this->_errorMessage = $e->getMessage();
+            $data = $this->statement->fetch($type, $cursor, $offset);
+        } catch (\PDOException $e) {
+            $this->error_code = $e->getCode();
+            $this->error_message = $e->getMessage();
 
             return false;
         }
@@ -788,17 +790,17 @@ class P5_Db
      *
      * @return mixed
      */
-    public function fetchAll($type = PDO::FETCH_ASSOC, $columnIndex = 0)
+    public function fetchAll($type = \PDO::FETCH_ASSOC, $columnIndex = 0)
     {
         try {
-            if ($type == PDO::FETCH_COLUMN) {
-                $data = $this->_dbResult->fetchAll($type, $columnIndex);
+            if ($type == \PDO::FETCH_COLUMN) {
+                $data = $this->statement->fetchAll($type, $columnIndex);
             } else {
-                $data = $this->_dbResult->fetchAll($type);
+                $data = $this->statement->fetchAll($type);
             }
-        } catch (PDOException $e) {
-            $this->_errorCode = $e->getCode();
-            $this->_errorMessage = $e->getMessage();
+        } catch (\PDOException $e) {
+            $this->error_code = $e->getCode();
+            $this->error_message = $e->getMessage();
 
             return false;
         }
@@ -816,10 +818,10 @@ class P5_Db
     public function fetchColumn($column_number = 0)
     {
         try {
-            $data = $this->_dbResult->fetchColumn($column_number);
-        } catch (PDOException $e) {
-            $this->_errorCode = $e->getCode();
-            $this->_errorMessage = $e->getMessage();
+            $data = $this->statement->fetchColumn($column_number);
+        } catch (\PDOException $e) {
+            $this->error_code = $e->getCode();
+            $this->error_message = $e->getMessage();
 
             return false;
         }
@@ -831,34 +833,26 @@ class P5_Db
      * escape string.
      *
      * @param mixed $value
-     * @param bool  $isZero
-     * @param bool  $isNull
+     * @param int   $force
      *
      * @return string
      */
-    public function quote($value, $isZero = false, $isNull = false)
+    public function quote($value, $force = null)
     {
-        if (is_null($value)) {
-            return 'NULL';
-        }
-        if ($value === 0) {
-            return '0';
-        }
-        if ($value === '0') {
-            return "'0'";
+        if (!is_null($force)) {
+            $parameter_type = (int) $force;
+        } elseif (is_null($value)) {
+            $parameter_type = PDO::PARAM_NULL;
+        } elseif (preg_match('/^[0-9]+$/', $value)) {
+            $parameter_type = PDO::PARAM_INT;
+        } else {
+            $parameter_type = PDO::PARAM_STR;
         }
         if (get_magic_quotes_gpc()) {
             $value = stripslashes($value);
         }
 
-        // TODO: Do I really need this?
-        if (empty($value)) {
-            if ($isZero === false && $isNull === true) {
-                return 'NULL';
-            }
-        }
-
-        return $this->_dbHandler->quote($value);
+        return $this->handler->quote($value, $parameter_type);
     }
 
     /**
@@ -868,7 +862,7 @@ class P5_Db
      */
     public function escapeName($str)
     {
-        $str = $this->_dbHandler->quote($str);
+        $str = $this->handler->quote($str);
         $str = preg_replace("/^'/", '"', $str, 1);
         $str = preg_replace("/'$/", '"', $str, 1);
 
@@ -884,23 +878,23 @@ class P5_Db
      */
     public function fields($data = null)
     {
-        $result = array();
+        $result = [];
         if (is_array($data)) {
             return array_keys($data);
         }
-        if ($this->_driver == 'sqlite' || $this->_driver == 'sqlite2') {
-            if (preg_match("/^SELECT\s+.+\s+FROM\s[`'\"]?(\w+)[`'\"]?.*$/i", $this->_sql, $match)) {
+        if ($this->driver == 'sqlite' || $this->driver == 'sqlite2') {
+            if (preg_match("/^SELECT\s+.+\s+FROM\s[`'\"]?(\w+)[`'\"]?.*$/i", $this->sql, $match)) {
                 $tableName = $match[1];
-            } elseif (preg_match("/^UPDATE\s+[`'\"]?(\w+)[`'\"]?.*$/i", $this->_sql, $match)) {
+            } elseif (preg_match("/^UPDATE\s+[`'\"]?(\w+)[`'\"]?.*$/i", $this->sql, $match)) {
                 $tableName = $match[1];
             }
             $sql = "PRAGMA table_info($tableName)";
             if ($this->query($sql)) {
-                $result = $this->fetchAll(PDO::FETCH_COLUMN, 1);
+                $result = $this->fetchAll(\PDO::FETCH_COLUMN, 1);
             }
         } else {
-            for ($i = 0; $i < $this->_dbResult->columnCount(); ++$i) {
-                $meta = $this->_dbResult->getColumnMeta($i);
+            for ($i = 0; $i < $this->statement->columnCount(); ++$i) {
+                $meta = $this->statement->getColumnMeta($i);
                 $result[] = $meta['name'];
             }
         }
@@ -917,11 +911,10 @@ class P5_Db
      */
     public function begin($identifire = '')
     {
-        if ($this->_dbHandler->inTransaction() || $this->_dbHandler->beginTransaction()) {
+        if ($this->handler->inTransaction() || $this->handler->beginTransaction()) {
             if (!empty($identifire)) {
                 $this->query("SAVEPOINT $identifire");
             }
-            $this->_isTransaction = true;
 
             return true;
         }
@@ -936,9 +929,7 @@ class P5_Db
      */
     public function commit()
     {
-        if ($this->_dbHandler->commit()) {
-            $this->_isTransaction = false;
-
+        if ($this->handler->commit()) {
             return true;
         }
 
@@ -954,27 +945,22 @@ class P5_Db
      */
     public function rollback($identifire = '')
     {
-        if ($this->_isTransaction === false) {
+        if (false === $this->handler->inTransaction()) {
             return true;
         }
         if (!empty($identifire)) {
             if ($this->query("ROLLBACK TO SAVEPOINT $identifire")) {
-                $this->_isTransaction = false;
-
                 return true;
             }
         }
         try {
-            if ($this->_dbHandler->rollBack()) {
-                $this->_isTransaction = false;
-
+            if ($this->handler->rollBack()) {
                 return true;
             }
-        } catch (PDOException $e) {
-            $this->_errorCode = $e->getCode();
-            $this->_errorMessage = $e->getMessage();
+        } catch (\PDOException $e) {
+            $this->error_code = $e->getCode();
+            $this->error_message = $e->getMessage();
         }
-        $this->_isTransaction = false;
 
         return false;
     }
@@ -986,7 +972,7 @@ class P5_Db
      */
     public function getTransaction()
     {
-        return $this->_dbHandler->inTransaction();
+        return $this->handler->inTransaction();
     }
 
     /**
@@ -997,14 +983,14 @@ class P5_Db
     public function recordCount($sql = '')
     {
         if (empty($sql)) {
-            $sql = $this->_sql;
+            $sql = $this->sql;
         }
         $this->query('SELECT COUNT(*) AS rec FROM ('.$sql.') AS rc');
         try {
-            return $this->_dbResult->fetchColumn();
-        } catch (PDOException $e) {
-            $this->_errorCode = $e->getCode();
-            $this->_errorMessage = $e->getMessage();
+            return $this->statement->fetchColumn();
+        } catch (\PDOException $e) {
+            $this->error_code = $e->getCode();
+            $this->error_message = $e->getMessage();
         }
 
         return false;
@@ -1018,10 +1004,10 @@ class P5_Db
     public function rowCount()
     {
         try {
-            return $this->_dbResult->rowCount();
-        } catch (PDOException $e) {
-            $this->_errorCode = $e->getCode();
-            $this->_errorMessage = $e->getMessage();
+            return $this->statement->rowCount();
+        } catch (\PDOException $e) {
+            $this->error_code = $e->getCode();
+            $this->error_message = $e->getMessage();
         }
 
         return false;
@@ -1039,7 +1025,7 @@ class P5_Db
             return $err[2];
         }
 
-        return $this->_errorMessage;
+        return $this->error_message;
     }
 
     /**
@@ -1052,11 +1038,11 @@ class P5_Db
     public function lastInsertId($table = null, $col = null)
     {
         if (is_null($table)) {
-            return $this->_dbHandler->lastInsertId($col);
+            return $this->handler->lastInsertId($col);
         }
 
         $sql = "SELECT LAST_INSERT_ID() AS id FROM \"$table\"";
-        if ($this->_driver == 'sqlite' || $this->_driver == 'sqlite2') {
+        if ($this->driver == 'sqlite' || $this->driver == 'sqlite2') {
             $sql = "SELECT last_insert_rowid() AS id FROM \"$table\"";
         }
         if ($this->query($sql)) {
@@ -1079,15 +1065,15 @@ class P5_Db
      */
     public function getFields($table, $property = false, $comment = false)
     {
-        if ($this->_driver === 'mysql') {
+        if ($this->driver === 'mysql') {
             $sql = ($comment === true) ? "SHOW FULL COLUMNS FROM \"$table\"" : "DESCRIBE \"$table\";";
-        } elseif ($this->_driver === 'pgsql') {
-            $primary = array();
-            $comments = array();
+        } elseif ($this->driver === 'pgsql') {
+            $primary = [];
+            $comments = [];
             $sql = 'SELECT ccu.column_name as column_name
                       FROM information_schema.table_constraints tc,
                            information_schema.constraint_column_usage ccu
-                     WHERE tc.table_catalog = '.$this->quote($this->_source).'
+                     WHERE tc.table_catalog = '.$this->quote($this->source).'
                        AND tc.table_name = '.$this->quote($table)."
                        AND tc.constraint_type = 'PRIMARY KEY'
                        AND tc.table_catalog = ccu.table_catalog
@@ -1127,27 +1113,27 @@ class P5_Db
 
             $sql = 'SELECT * 
                       FROM information_schema.columns
-                     WHERE table_catalog = '.$this->quote($this->_source).'
+                     WHERE table_catalog = '.$this->quote($this->source).'
                        AND table_name = '.$this->quote($table).'
                      ORDER BY ordinal_position';
-        } elseif ($this->_driver === 'sqlite' || $this->_driver === 'sqlite2') {
+        } elseif ($this->driver === 'sqlite' || $this->driver === 'sqlite2') {
             $sql = "PRAGMA table_info($table);";
         }
-        $data = array();
+        $data = [];
         if ($this->query($sql)) {
             while ($value = $this->fetch()) {
                 if ($property === false) {
-                    if ($this->_driver === 'sqlite' || $this->_driver === 'sqlite2') {
+                    if ($this->driver === 'sqlite' || $this->driver === 'sqlite2') {
                         $data[] = $value['name'];
-                    } elseif ($this->_driver === 'pgsql') {
+                    } elseif ($this->driver === 'pgsql') {
                         $data[] = $value['column_name'];
                     } else {
                         $data[] = $value['Field'];
                     }
                 } else {
-                    if ($this->_driver === 'sqlite' || $this->_driver === 'sqlite2') {
+                    if ($this->driver === 'sqlite' || $this->driver === 'sqlite2') {
                         $data[$value['name']] = $value;
-                    } elseif ($this->_driver === 'pgsql') {
+                    } elseif ($this->driver === 'pgsql') {
                         if (isset($primary[$value['column_name']])) {
                             $value['Key'] = $primary[$value['column_name']];
                         }
@@ -1184,7 +1170,7 @@ class P5_Db
      */
     public function latestSQL()
     {
-        return $this->_sql;
+        return $this->sql;
     }
 
     /**
@@ -1194,7 +1180,7 @@ class P5_Db
      */
     public function getRow()
     {
-        return $this->_ecount;
+        return $this->ecount;
     }
 
     /**
@@ -1204,17 +1190,17 @@ class P5_Db
      */
     public function errorInfo()
     {
-        if (is_object($this->_dbResult)) {
-            $info = $this->_dbResult->errorInfo();
+        if (is_object($this->statement)) {
+            $info = $this->statement->errorInfo();
             if (!is_null($info[2])) {
                 return $info;
             }
         }
-        if (is_null($this->_dbHandler)) {
+        if (is_null($this->handler)) {
             return;
         }
 
-        return $this->_dbHandler->errorInfo();
+        return $this->handler->errorInfo();
     }
 
     /**
@@ -1224,14 +1210,14 @@ class P5_Db
      */
     public function errorCode()
     {
-        if (is_object($this->_dbResult)) {
-            $code = $this->_dbResult->errorCode();
+        if (is_object($this->statement)) {
+            $code = $this->statement->errorCode();
             if (!is_null($code)) {
                 return $code;
             }
         }
 
-        return $this->_dbHandler->errorCode();
+        return $this->handler->errorCode();
     }
 
     /**
@@ -1244,7 +1230,7 @@ class P5_Db
      */
     public function setAttribute($attribute, $value)
     {
-        return $this->_dbHandler->setAttribute($attribute, $value);
+        return $this->handler->setAttribute($attribute, $value);
     }
 
     /**
@@ -1264,26 +1250,6 @@ class P5_Db
     }
 
     /**
-     * Update Modified date.
-     *
-     * @param string $table
-     * @param string $column
-     * @param string $statement
-     * @param array  $options
-     *
-     * @return bool
-     */
-    public function modified($table, $column = 'modify_date', $statement = '', array $options = array())
-    {
-        $where = $this->prepareStatement($statement, $options);
-        $sql = 'UPDATE "'.$table."\"
-                   SET $column = CURRENT_TIMESTAMP
-                 WHERE $where";
-
-        return $this->exec($sql);
-    }
-
-    /**
      * Convert Count SQL.
      *
      * @param string $sql
@@ -1292,13 +1258,13 @@ class P5_Db
      */
     public static function countSQL($sql)
     {
-        $arr = array();
-        $tags = array('select', 'from');
+        $arr = [];
+        $tags = ['select', 'from'];
         foreach ($tags as $tag) {
             $offset = 0;
             while (false !== $idx = stripos($sql, $tag, $offset)) {
                 if (!isset($arr[$tag])) {
-                    $arr[$tag] = array();
+                    $arr[$tag] = [];
                 }
                 $arr[$tag][] = $idx;
                 $offset = $idx + strlen($tag);
@@ -1325,7 +1291,7 @@ class P5_Db
      */
     public function normalizeSQL($sql)
     {
-        $sql = preg_replace('/`/', '"', $sql);
+        $sql = str_replace('`', '"', $sql);
         $sql = preg_replace("/LIMIT[\s]+([0-9]+)[\s]*,[\s]*([0-9]+)/i", 'LIMIT $2 OFFSET $1', $sql);
 
         return $sql;

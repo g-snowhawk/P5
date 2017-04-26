@@ -2,19 +2,38 @@
 /**
  * This file is part of P5 Framework.
  *
- * Copyright (c)2016 PlusFive (http://www.plus-5.com)
+ * Copyright (c)2016 PlusFive (https://www.plus-5.com)
  *
  * This software is released under the MIT License.
- * http://www.plus-5.com/licenses/mit-license
+ * https://www.plus-5.com/licenses/mit-license
  */
+
+namespace P5;
+
 /**
- * Language class.
+ * Multi language translator.
  *
- * @license  http://www.plus-5.com/licenses/mit-license  MIT License
- * @author   Taka Goto <http://www.plus-5.com/>
+ * @license  https://www.plus-5.com/licenses/mit-license  MIT License
+ * @author   Taka Goto <www.plus-5.com>
  */
-class P5_Lang
+class Lang
 {
+    /** 
+     * Getter method.
+     *
+     * @param string $name
+     *
+     * @return string
+     */
+    public function __get($name)
+    {
+        if (false === property_exists($this, $name) && false === property_exists(__CLASS__, $name)) {
+            return false;
+        }
+
+        return $this->$key;
+    }
+
     /** 
      * Translate Language.
      *
@@ -26,114 +45,46 @@ class P5_Lang
      */
     public static function translate($key, $package = null, $locale = null)
     {
-        if (is_null($locale)) {
-            $locale = (isset($_ENV['P5_LOCALE'])) ? $_ENV['P5_LOCALE'] : getenv('P5_LOCALE');
+        if (is_null($package)) {
+            $caller = debug_backtrace();
+            if (isset($caller[1]['object']) && is_object($caller[1]['object'])) {
+                $class = get_class($caller[1]['object']);
+            }
+            $package = $caller[1]['class'];
         }
-        $lc = (!empty($locale)) ? $locale : 'En';
-
-        $caller = debug_backtrace();
-        if (isset($caller[1]['object']) && is_object($caller[1]['object'])) {
-            $class = get_class($caller[1]['object']);
+        if (empty($locale)) {
+            $locale = ($_ENV{'P5_LOCALE'}) ? $_ENV{'P5_LOCALE'} : 'En';
         }
-        $pkg = (is_null($package)) ? $caller[1]['class'] : $package;
-
-        if ($pkg === '') {
-            return self::words($key, "Lang_$lc");
-        }
-
-        if (preg_match('/^.*_Plugin_(.+)$/', $pkg, $match)) {
+        if (preg_match('/^.*\\\\Plugin\\\\(.+)$/', $package, $match)) {
             $name = $match[1];
-            $path = 'plugins/'.preg_replace('/_/', '/', $name).'/Lang/'.$lc.'.php';
-            $package = $pkg.'_Lang_'.$lc;
+            $path = 'plugins/'.str_replace('\\', '/', $name).'/Lang/'.$locale.'.php';
+            $package = $package.'\\Lang\\'.$locale;
 
-            return ($result = self::words($key, $package)) ? $result : '';
+            return self::words($package, $key);
         }
-
-        $dirs = explode('_', $pkg);
-        while ($dirs) {
-            $package = implode('_', $dirs).'_Lang_'.$lc;
-            if ($result = self::words($key, $package)) {
+        while (strpos($package, '\\') !== false) {
+            if ($result = self::words($package.'\\Lang\\'.$locale, $key)) {
                 return $result;
             }
-            array_pop($dirs);
+            $package = preg_replace('/\\\\[^\\\\]+$/', '', $package);
         }
+        $package = ($package !== '') ? '\\'.$package.'\\' : '';
+        $package = $package.'Lang\\'.$locale;
 
-        return '';
-    }
-
-    /** 
-     * Get Array Element.
-     *
-     * @param string $key
-     * @param string $subkey
-     * @param mixed  $package
-     *
-     * @return string
-     */
-    public static function transarray($key, $subkey = null, $package = null)
-    {
-        if (is_null($locale)) {
-            $locale = (isset($_ENV['P5_LOCALE'])) ? $_ENV['P5_LOCALE'] : getenv('P5_LOCALE');
-        }
-        $lc = (!empty($locale)) ? $locale : 'En';
-
-        $caller = debug_backtrace();
-        if (isset($caller[1]['object']) && is_object($caller[1]['object'])) {
-            $class = get_class($caller[1]['object']);
-        }
-        $pkg = (is_null($package)) ? $caller[1]['class'] : $package;
-
-        if ($pkg === '') {
-            if ($result = self::words($key, "Lang_$lc")) {
-                if (is_array($result)) {
-                    if (empty($subkey)) {
-                        return $result;
-                    }
-
-                    return (isset($result[$subkey])) ? $result[$subkey] : null;
-                }
-            }
-        }
-
-        if (preg_match('/^.*_Plugin_(.+)$/', $pkg, $match)) {
-            $name = $match[1];
-            $path = 'plugins/'.preg_replace('/_/', '/', $name).'/Lang/'.$lc.'.php';
-            $package = $pkg.'_Lang_'.$lc;
-
-            return ($result = self::words($key, $package)) ? $result : '';
-        }
-
-        $dirs = explode('_', $pkg);
-        while ($dirs) {
-            $package = implode('_', $dirs).'_Lang_'.$lc;
-            if ($result = self::words($key, $package)) {
-                if (is_array($result)) {
-                    if (empty($subkey)) {
-                        return $result;
-                    }
-
-                    return (isset($result[$subkey])) ? $result[$subkey] : null;
-                }
-            }
-            array_pop($dirs);
-        }
-
-        return;
+        return self::words($package, $key);
     }
 
     /** 
      * Select Words.
      *
-     * @param string $key
      * @param string $package
-     *
-     * @see P5_Auto_Loader::isIncludable
+     * @param string $key
      *
      * @return string
      */
-    protected static function words($key, $package)
+    public static function words($package, $key)
     {
-        if (!P5_Auto_Loader::isIncludable($package)) {
+        if (!Auto\Loader::isIncludable($package)) {
             return false;
         }
         if (!class_exists($package, true)) {
@@ -141,25 +92,6 @@ class P5_Lang
         }
         $inst = new $package();
 
-        return $inst->$key;
-    }
-
-    /** 
-     * Getter method.
-     *
-     * @param string $name
-     *
-     * @return string
-     */
-    public function __get($name)
-    {
-        $key = '_'.$name;
-        if (false === property_exists($this, $key) &&
-            false === property_exists(__CLASS__, $key)
-        ) {
-            return false;
-        }
-
-        return $this->$key;
+        return (property_exists($inst, $key)) ? $inst->$key : '';
     }
 }

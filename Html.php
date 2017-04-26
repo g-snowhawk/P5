@@ -2,204 +2,22 @@
 /**
  * This file is part of P5 Framework.
  *
- * Copyright (c)2016 PlusFive (http://www.plus-5.com)
+ * Copyright (c)2016 PlusFive (https://www.plus-5.com)
  *
  * This software is released under the MIT License.
- * http://www.plus-5.com/licenses/mit-license
+ * https://www.plus-5.com/licenses/mit-license
  */
+
+namespace P5;
+
 /**
- * HTML class.
+ * Methods for HTML.
  *
- * @license  http://www.plus-5.com/licenses/mit-license  MIT License
- * @author   Taka Goto <http://www.plus-5.com/>
+ * @license  https://www.plus-5.com/licenses/mit-license  MIT License
+ * @author   Taka Goto <www.plus-5.com>
  */
-class P5_Html
+class Html
 {
-    /**
-     * Current version.
-     */
-    const VERSION = '1.1.0';
-
-    /**
-     * Empty tag list.
-     *
-     * @var array
-     */
-    public static $emptyTags = array(
-        'area' => '', 'base' => '', 'basefont' => '', 'br' => '', 'frame' => '', 'hr' => '',
-        'img' => '', 'input' => '', 'link' => '', 'meta' => '', 'param' => '',
-    );
-
-    /**
-     * CDATA Tags.
-     *
-     * @var array
-     */
-    protected $_cdataTags = array(
-        'script' => '', 'style' => '',
-    );
-
-    /**
-     * Original Source.
-     *
-     * @var string
-     */
-    protected $_orgSource = '';
-
-    /**
-     * escape entity reference.
-     *
-     * @param string $source
-     *
-     * @return string
-     */
-    public static function escapeEntityReference($source)
-    {
-        $regex = array('/&([a-zA-Z]+);/', '/&#([0-9]+);/');
-        $replace = array('[%:%$1%:%]', '[%:%#$1%:%]');
-
-        return preg_replace($regex, $replace, $source);
-    }
-
-    /**
-     * Rewind escape elements.
-     *
-     * @param string $source
-     *
-     * @return string
-     */
-    public static function rewindEntityReference($source)
-    {
-        $regex = array("/\[%:%([a-zA-Z]+)%:%\]/", "/\[%:%#([0-9]+)%:%\]/");
-        $replace = array('&$1;', '&#$1;');
-
-        return preg_replace($regex, $replace, $source);
-    }
-
-    /**
-     * escape comment elements.
-     *
-     * @param string $source
-     *
-     * @return string
-     */
-    public static function escapeComment($source)
-    {
-        $regex = array("/([\s]*<!--)/s", '/(-->)/');
-        $replace = array('<![CDATA[$1', '$1]]>');
-
-        return preg_replace($regex, $replace, $source);
-    }
-
-    /**
-     * escape script data.
-     *
-     * @param string $source
-     * @param array  $tags
-     */
-    public static function escapeCdata($source, $tags = null)
-    {
-        $pattern = '/'.preg_quote('<![CDATA[', '/').'/i';
-        $source = preg_replace($pattern, '', $source);
-        $pattern = '/'.preg_quote(']]>', '/').'/i';
-        $source = preg_replace($pattern, '', $source);
-        if (is_array($tags)) {
-            foreach ($tags as $tag) {
-                $pattern = '/(<'.preg_quote($tag, '/').'[^>]*>)/i';
-                $source = preg_replace($pattern, '$1<![CDATA[', $source);
-                $pattern = "/(<\/".preg_quote($tag, '/').'>)/i';
-                $source = preg_replace($pattern, ']]>$1', $source);
-            }
-        }
-    }
-
-    /**
-     * Make pagenation source.
-     *
-     * @param number $total
-     * @param number $row
-     * @param number $current
-     * @param string $href
-     * @param string $sep
-     * @param mixed  $col
-     * @param bool   $force
-     * @param mixed  $step
-     * @param string $prev
-     * @param string $next
-     *
-     * @return string
-     */
-    public static function pager($total, $row, $current, $href, $sep = '', $col = null, $force = false, $step = null, $prev = '', $next = '')
-    {
-        $current = (int) $current;
-        $sum = ceil($total / $row);
-        if ($sum == 1 && $force === false) {
-            return '';
-        }
-        if (empty($col)) {
-            $col = $sum;
-        }
-        $start = ($current < $col) ? 1 : $current - floor($col / 2);
-        $end = $start + $col - 1;
-        if ($end > $sum) {
-            $end = $sum;
-        }
-        if ($end - $start < $col) {
-            $start = $end - $col + 1;
-        }
-        if ($start < 1) {
-            $start = 1;
-        }
-        $links = array();
-        for ($i = $start; $i <= $end; ++$i) {
-            if ($i == $current) {
-                array_push($links, "<strong>$i</strong>");
-            } else {
-                $link = preg_replace('/__PAGE__/', $i, $href);
-                $anchor = '<a href="'.$link.'">'.$i.'</a>';
-                array_push($links, $anchor);
-            }
-        }
-        // Link for first page
-        if ($step === true && $start > 1) {
-            $link = preg_replace('/__PAGE__/', 1, $href);
-            $anchor = '<a href="'.$link.'" class="first">1..</a>';
-            array_unshift($links, $anchor);
-        }
-        // Link for last page
-        if ($step === true && $end < $sum) {
-            $link = preg_replace('/__PAGE__/', $sum, $href);
-            $anchor = '<a href="'.$link.'" class="last">..'.$sum.'</a>';
-            array_push($links, $anchor);
-        }
-        // Link for prev page
-        if (!empty($prev)) {
-            if ($current != 1) {
-                $link = preg_replace('/__PAGE__/', $current - 1, $href);
-                $anchor = '<a href="'.$link.'" class="prev">'.htmlspecialchars($prev).'</a>';
-            } else {
-                $anchor = '<span class="prev">'.htmlspecialchars($prev).'</span>';
-            }
-            array_unshift($links, $anchor);
-        }
-        // Link for prev page
-        if (!empty($next)) {
-            if ($current != $sum) {
-                $link = preg_replace('/__PAGE__/', $current + 1, $href);
-                $anchor = '<a href="'.$link.'" class="next">'.htmlspecialchars($next).'</a>';
-            } else {
-                $anchor = '<span class="next">'.htmlspecialchars($next).'</span>';
-            }
-            array_push($links, $anchor);
-        }
-
-        if (!empty($sep)) {
-            $sep = '<span class="P5-separator">'.$sep.'</span>';
-        }
-
-        return implode($sep, $links);
-    }
-
     /**
      * decode escaped HTML tags.
      *
@@ -286,62 +104,6 @@ class P5_Html
     }
 
     /**
-     * Convert HTML to XML, Replace empty tags.
-     *
-     * @param string $source
-     * @param bool   $ishtml
-     *
-     * @return string
-     */
-    public static function htmlToXml($source, $ishtml = false)
-    {
-        if ($ishtml) {
-            $source = preg_replace_callback("/<([A-Z]+)(([\s]+[^>]+)?)>/", 'self::_opTag', $source);
-            $source = preg_replace_callback("/<\/([A-Z]+)>/", 'self::_clTag', $source);
-        }
-        foreach (self::$emptyTags as $tag => $value) {
-            // continue when finded close tags.
-            $pattern = "/<\/".preg_quote($tag, '/').'>/i';
-            if (preg_match($pattern, $source)) {
-                continue;
-            }
-            // No Attributes
-            $pattern = '/<('.preg_quote($tag, '/').')>/i';
-            $source = preg_replace($pattern, '<$1 />', $source);
-            // has Attributes
-            $pattern = '/<('.preg_quote($tag, '/').")[\s]+([^>]*)>/i";
-            $source = preg_replace($pattern, '<$1 $2/>', $source);
-        }
-        $source = preg_replace("/\/\/>/", '/>', $source);
-
-        return $source;
-    }
-
-    /** 
-     * Replace open tag.
-     *
-     * @param array $tags
-     *
-     * @return string
-     */
-    private static function _opTag($tags)
-    {
-        return '<'.strtolower($tags[1]).$tags[2].'>';
-    }
-
-    /** 
-     * Replace close tag.
-     *
-     * @param array $tags
-     *
-     * @return string
-     */
-    private static function _clTag($tags)
-    {
-        return '</'.strtolower($tags[1]).'>';
-    }
-
-    /**
      * convert source encoding.
      *
      * @param string $source
@@ -423,29 +185,6 @@ class P5_Html
                    'content="text/html'.$attr.'"$1>';
 
         return preg_replace($pattern, $replace, $source);
-    }
-
-    /**
-     * escape script data.
-     */
-    protected function _escapeCdata()
-    {
-        foreach ($this->_cdataTags as $tag => $value) {
-            // Enpty tag 
-            $pattern = '/(<'.preg_quote($tag, '/')."[^>]*)\/>/i";
-            $this->_orgSource = preg_replace($pattern, "$1></$tag>", $this->_orgSource);
-
-            $pattern = '/(<'.preg_quote($tag, '/').'[^>]*>)/i';
-            $this->_orgSource = preg_replace($pattern, '$1<![CDATA[', $this->_orgSource);
-
-            $pattern = "/(<\/".preg_quote($tag, '/').'>)/i';
-            $this->_orgSource = preg_replace($pattern, ']]>$1', $this->_orgSource);
-        }
-
-        $pattern = '/'.preg_quote('<![CDATA[', '/')."[\s]*?".preg_quote('<![CDATA[', '/').'/is';
-        $this->_orgSource = preg_replace($pattern, '<![CDATA[', $this->_orgSource);
-        $pattern = '/'.preg_quote(']]>', '/')."[\s]*?".preg_quote(']]>', '/').'/is';
-        $this->_orgSource = preg_replace($pattern, ']]>', $this->_orgSource);
     }
 
     /**

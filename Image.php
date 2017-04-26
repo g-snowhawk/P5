@@ -2,15 +2,17 @@
 /**
  * This file is part of P5 Framework.
  *
- * Copyright (c)2016 PlusFive (http://www.plus-5.com)
+ * Copyright (c)2016 PlusFive (https://www.plus-5.com)
  *
  * This software is released under the MIT License.
- * http://www.plus-5.com/licenses/mit-license
+ * https://www.plus-5.com/licenses/mit-license
  */
 
-/**
+namespace P5;
+
+/*
  * PHP Version < 5.5
- * imageflip constant.
+ * imageflip constant
  */
 if (!defined('IMG_FLIP_HORIZONTAL')) {
     define('IMG_FLIP_HORIZONTAL', 1);
@@ -23,66 +25,61 @@ if (!defined('IMG_FLIP_BOTH')) {
 }
 
 /**
- * Image class.
+ * Image with GD class.
  *
- * @license  http://www.plus-5.com/licenses/mit-license  MIT License
- * @author   Taka Goto <http://www.plus-5.com/>
+ * @license  https://www.plus-5.com/licenses/mit-license  MIT License
+ * @author   Taka Goto <www.plus-5.com>
  */
-class P5_Image
+class Image
 {
-    /**
-     * Current version.
-     */
-    const VERSION = '1.1.0';
-
     /**
      * Image output extension.
      *
      * @var string
      */
-    private $_ext;
+    private $ext;
 
     /**
      * Image MIME Type.
      *
      * @var string
      */
-    private $_mime;
+    private $mime;
 
     /**
      * Image output.
      *
      * @var resource
      */
-    private $_out;
+    private $out;
 
     /**
      * Image input.
      *
      * @var resource
      */
-    private $_in;
+    private $in;
 
     /**
      * JPEG Quality.
      *
      * @var int
      */
-    private $_jpegQuality = 99;
+    private $jpeg_quality = 99;
 
     /**
      * PNG Quality.
      *
      * @var int
      */
-    private $_pngQuality = 0;
+    private $png_quality = 0;
 
     /**
      * Error message.
      *
      * @var string
      */
-    private $_error;
+    private $error;
 
     /**
      * Object constructer.
@@ -98,14 +95,14 @@ class P5_Image
      * @param string $dest
      * @param number $width
      * @param number $height
-     * @param mixed  $offsetX
-     * @param mixed  $offsetY
+     * @param mixed  $offset_x
+     * @param mixed  $offset_y
      * @param bool   $resizable
      * @param mixed  $force     Image file extension.
      *
      * @return mixed
      */
-    public function trimming($source, $dest, $width, $height, $offsetX = '50%', $offsetY = '50%', $resizable = true, $force = null)
+    public function trimming($source, $dest, $width, $height, $offset_x = '50%', $offset_y = '50%', $resizable = true, $force = null)
     {
         $size = getimagesize($source);
         if (false === $this->readImage($source, $size[2])) {
@@ -135,19 +132,19 @@ class P5_Image
         $dest_x = 0;
         $dest_y = 0;
 
-        if (is_numeric($offsetX)) {
-            $src_x = $offsetX;
+        if (is_numeric($offset_x)) {
+            $src_x = $offset_x;
         } else {
-            $shift = (preg_match('/^([0-9]+)%$/', $offsetX, $n)) ? $n[1] / 100 : 0.5;
+            $shift = (preg_match('/^([0-9]+)%$/', $offset_x, $n)) ? $n[1] / 100 : 0.5;
             if ($shift > 1) {
                 $shift = 1;
             }
             $src_x = round(($size[0] - $src_w) * $shift);
         }
-        if (is_numeric($offsetY)) {
-            $src_y = $offsetY;
+        if (is_numeric($offset_y)) {
+            $src_y = $offset_y;
         } else {
-            $shift = (preg_match('/^([0-9]+)%$/', $offsetY, $n)) ? $n[1] / 100 : 0.5;
+            $shift = (preg_match('/^([0-9]+)%$/', $offset_y, $n)) ? $n[1] / 100 : 0.5;
             if ($shift > 1) {
                 $shift = 1;
             }
@@ -168,13 +165,13 @@ class P5_Image
 
         $this->newImage($width, $height);
         if ($resizable) {
-            imagecopyresampled($this->_out, $this->_in, $dest_x, $dest_y, $src_x, $src_y, $width, $height, $src_w, $src_h);
+            imagecopyresampled($this->out, $this->in, $dest_x, $dest_y, $src_x, $src_y, $width, $height, $src_w, $src_h);
         } else {
-            imagecopy($this->_out, $this->_in, $dest_x, $dest_y, $src_x, $src_y, $width, $height);
+            imagecopy($this->out, $this->in, $dest_x, $dest_y, $src_x, $src_y, $width, $height);
         }
         $result = $this->writeImage($copy);
-        imagedestroy($this->_out);
-        imagedestroy($this->_in);
+        imagedestroy($this->out);
+        imagedestroy($this->in);
 
         return ($result) ? basename($copy) : false;
     }
@@ -207,7 +204,7 @@ class P5_Image
         $src_h = $size[1];
 
         if (!is_numeric($height)) {
-            if ($notexpansion == true && $size[0] <= $width) {
+            if ($notexpansion === true && $size[0] <= $width) {
                 if ($copy) {
                     return  copy($source, $copy);
                 }
@@ -218,7 +215,7 @@ class P5_Image
             $height = round($size[1] * ($width / $size[0]));
         }
         if (!is_numeric($width)) {
-            if ($notexpansion == true && $size[1] <= $height) {
+            if ($notexpansion === true && $size[1] <= $height) {
                 if ($copy) {
                     return copy($source, $copy);
                 }
@@ -235,11 +232,11 @@ class P5_Image
         $src_y = 0;
 
         $this->newImage($width, $height);
-        imagecopyresampled($this->_out, $this->_in, $dest_x, $dest_y, $src_x, $src_y,
+        imagecopyresampled($this->out, $this->in, $dest_x, $dest_y, $src_x, $src_y,
                            $width, $height, $src_w, $src_h);
         $result = $this->writeImage($copy);
-        imagedestroy($this->_out);
-        imagedestroy($this->_in);
+        imagedestroy($this->out);
+        imagedestroy($this->in);
 
         return ($result) ? basename($copy) : false;
     }
@@ -280,7 +277,7 @@ class P5_Image
      *
      * @return bool
      */
-    public function framein($source, $dest, $longer, $margin = 0, $rgb = array('R' => 0, 'G' => 0, 'B' => 0), $force = null)
+    public function framein($source, $dest, $longer, $margin = 0, $rgb = ['R' => 0, 'G' => 0, 'B' => 0], $force = null)
     {
         $size = getimagesize($source);
         if (!$this->readImage($source, $size[2])) {
@@ -291,7 +288,7 @@ class P5_Image
             $copy = null;
         }
 
-        $isTrans = strtolower($rgb) == 'transparent';
+        $isTrans = strtolower($rgb) === 'transparent';
 
         // Resize
         $inner_size = $longer - ($margin * 2);
@@ -315,49 +312,26 @@ class P5_Image
 
         $this->newImage($longer, $longer);
 
-        if (!$isTrans || preg_match('/jp*g/i', $this->_ext)) {
+        if (!$isTrans || preg_match('/jp*g/i', $this->ext)) {
             if (!is_array($rgb)) {
                 if (preg_match('/^#([0-9A-F]{2})([0-9A-F]{2})([0-9A-F]{2})$/i', $rgb, $color)) {
-                    $rgb = array('R' => hexdec($color[1]),
-                                 'G' => hexdec($color[2]),
-                                 'B' => hexdec($color[3]), );
+                    $rgb = [
+                        'R' => hexdec($color[1]),
+                        'G' => hexdec($color[2]),
+                        'B' => hexdec($color[3]),
+                    ];
                 } else {
-                    $rgb = array('R' => 0, 'G' => 0, 'B' => 0);
+                    $rgb = ['R' => 0, 'G' => 0, 'B' => 0];
                 }
             }
-            $background = imagecolorallocate($this->_out, $rgb['R'], $rgb['G'], $rgb['B']);
-            imagefilledrectangle($this->_out, 0, 0, $longer, $longer, $background);
+            $background = imagecolorallocate($this->out, $rgb['R'], $rgb['G'], $rgb['B']);
+            imagefilledrectangle($this->out, 0, 0, $longer, $longer, $background);
         }
 
-        imagecopyresampled($this->_out, $this->_in, $dest_x, $dest_y, $src_x, $src_y, $width, $height, $src_w, $src_h);
+        imagecopyresampled($this->out, $this->in, $dest_x, $dest_y, $src_x, $src_y, $width, $height, $src_w, $src_h);
         $result = $this->writeImage($copy);
-        imagedestroy($this->_out);
-        imagedestroy($this->_in);
-
-        return ($result) ? basename($copy) : false;
-    }
-
-    /**
-     * Copy Image.
-     *
-     * @param string $source
-     * @param string $dest
-     *
-     * @return bool
-     */
-    public function copy($source, $dest)
-    {
-        $size = getimagesize($source);
-        if (!$this->readImage($source, $size[2])) {
-            return false;
-        }
-        $copy = $this->destinationPath($dest, null);
-        if (empty($dest)) {
-            $copy = null;
-        }
-        $this->_out = $this->_in;
-        $result = $this->writeImage($copy);
-        imagedestroy($this->_in);
+        imagedestroy($this->out);
+        imagedestroy($this->in);
 
         return ($result) ? basename($copy) : false;
     }
@@ -401,8 +375,8 @@ class P5_Image
      */
     public function newImage($width, $height)
     {
-        $this->_out = imagecreatetruecolor($width, $height);
-        imagecolortransparent($this->_out, imagecolorat($this->_out, 0, 0));
+        $this->out = imagecreatetruecolor($width, $height);
+        imagecolortransparent($this->out, imagecolorat($this->out, 0, 0));
     }
 
     /**
@@ -416,24 +390,26 @@ class P5_Image
     public function readImage($source, $imagetype)
     {
         switch ($imagetype) {
-            case 1 : $this->_in = imagecreatefromgif($source);
-                     $this->_ext = 'gif';
-                     $this->_mime = 'image/gif';
-                     break;
-            case 2 : $this->_in = imagecreatefromjpeg($source);
-                     $this->_ext = 'jpg';
-                     $this->_mime = 'image/jpeg';
-                     break;
-            case 3 : $this->_in = imagecreatefrompng($source);
-                     $this->_ext = 'png';
-                     $this->_mime = 'image/png';
-                     break;
-            default: $this->_error = P5_Lang::translate('OUT_OF_MIME');
-
-                     return false;
+            case 1 :
+                $this->in = imagecreatefromgif($source);
+                $this->ext = 'gif';
+                $this->mime = 'image/gif';
+                break;
+            case 2 :
+                $this->in = imagecreatefromjpeg($source);
+                $this->ext = 'jpg';
+                $this->mime = 'image/jpeg';
+                break;
+            case 3 :
+                $this->in = imagecreatefrompng($source);
+                $this->ext = 'png';
+                $this->mime = 'image/png';
+                break;
+            default :
+                return false;
         }
 
-        return is_resource($this->_in);
+        return is_resource($this->in);
     }
 
     /**
@@ -447,21 +423,14 @@ class P5_Image
     {
         $dir = dirname($path);
         if (is_writable($dir)) {
-            if (preg_match("/\.gif$/i", $path) && $this->_mime !== 'image/gif') {
-                $this->_mime = 'image/gif';
-            } elseif (preg_match("/\.jpe?g$/i", $path) && $this->_mime !== 'image/jpeg') {
-                $this->_mime = 'image/jpeg';
-            } elseif (preg_match("/\.png$/i", $path) && $this->_mime !== 'image/png') {
-                $this->_mime = 'image/png';
-            }
-            switch ($this->_mime) {
-                case 'image/gif'  : return imagegif($this->_out, $path);
-                case 'image/jpeg' : return imagejpeg($this->_out, $path, $this->_jpegQuality);
-                case 'image/png'  : return imagepng($this->_out, $path, $this->_pngQuality);
-                default           : throw new P5_Exception("{$this->_mime} isn't handled.");
+            switch ($this->mime) {
+                case 'image/gif'  : return imagegif($this->out, $path);
+                case 'image/jpeg' : return imagejpeg($this->out, $path, $this->jpeg_quality);
+                case 'image/png'  : return imagepng($this->out, $path, $this->png_quality);
+                default           : throw new \P5\Exception("{$this->mime} isn't handled.");
             }
         } else {
-            throw new P5_Exception("$dir isn't writable.");
+            throw new \P5\Exception("$dir isn't writable.");
         }
 
         return false;
@@ -480,15 +449,15 @@ class P5_Image
     {
         if (preg_match("/(.+)\.([a-z0-9]+)$/i", $dest, $match)) {
             $dest = $match[1];
-            $allowExt = array('jpg', 'jpeg', 'gif', 'png');
+            $allowExt = ['jpg', 'jpeg', 'gif', 'png'];
             if (in_array(strtolower($match[2]), $allowExt)) {
-                $this->_ext = $match[2];
+                $this->ext = $match[2];
             }
         }
         if (!is_null($force)) {
-            $this->_ext = $force;
+            $this->ext = $force;
         }
-        $ext = (empty($this->_ext)) ? '' : '.'.$this->_ext;
+        $ext = (empty($this->ext)) ? '' : '.'.$this->ext;
 
         return "$dest$ext";
     }
@@ -500,7 +469,7 @@ class P5_Image
      */
     public function error()
     {
-        return $this->_error;
+        return $this->error;
     }
 
     /**
@@ -588,17 +557,17 @@ class P5_Image
         $width = imagesx($image);
         $height = imagesy($image);
         $flip = imagecreatetruecolor($width, $height);
-        if ($mode == IMG_FLIP_VERTICAL) {
+        if ($mode === IMG_FLIP_VERTICAL) {
             if (false === imagecopyresampled($flip, $image, 0, 0, 0, $height - 1, $width, $height, $width, -1 * $height)) {
                 return false;
             }
         }
-        if ($mode == IMG_FLIP_HORIZONTAL) {
+        if ($mode === IMG_FLIP_HORIZONTAL) {
             if (false === imagecopyresampled($flip, $image, 0, 0, $width - 1, 0, $width, $height, -1 * $width, $height)) {
                 return false;
             }
         }
-        if ($mode == IMG_FLIP_BOTH) {
+        if ($mode === IMG_FLIP_BOTH) {
             $flip = imagerotate($image, 180, 0);
         }
         $image = $flip;

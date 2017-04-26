@@ -2,181 +2,179 @@
 /**
  * This file is part of P5 Framework.
  *
- * Copyright (c)2016 PlusFive (http://www.plus-5.com)
+ * Copyright (c)2016 PlusFive (https://www.plus-5.com)
  *
  * This software is released under the MIT License.
- * http://www.plus-5.com/licenses/mit-license
+ * https://www.plus-5.com/licenses/mit-license
  */
-/**
- * Mail class.
- *
- * @license  http://www.plus-5.com/licenses/mit-license  MIT License
- * @author   Taka Goto <http://www.plus-5.com/>
- */
-class P5_Mail
-{
-    /**
-     * Current version.
-     */
-    const VERSION = '1.1.0';
 
+namespace P5;
+
+/**
+ * Send Mail class.
+ *
+ * @license  https://www.plus-5.com/licenses/mit-license  MIT License
+ * @author   Taka Goto <www.plus-5.com>
+ */
+class Mail
+{
     /**
      * SMTP hostname or IP address.
      *
      * @var string
      */
-    private $_smtp = '';
+    private $smtp = '';
 
     /**
      * Port number of SMTP server.
      *
      * @var string
      */
-    private $_port = '';
+    private $port = '';
 
     /**
      * SMTP-Auth username.
      *
      * @var string
      */
-    private $_user = '';
+    private $user = '';
 
     /**
      * SMTP-Auth password.
      *
      * @var string
      */
-    private $_passwd = '';
+    private $passwd = '';
 
     /**
      * Use TLS.
      *
      * @var bool
      */
-    private $_tls = false;
+    private $tls = false;
 
     /**
      * Authentication Types.
      *
      * @var array
      */
-    private $_authTypes = array();
+    private $auth_types = [];
 
     /**
      * Mail sender address.
      *
      * @var string
      */
-    private $_from = '';
+    private $from = '';
 
     /**
      * Mail envelope sender address.
      *
      * @var string
      */
-    private $_envfrom = '';
+    private $envfrom = '';
 
     /**
      * Mail subject.
      *
      * @var string
      */
-    private $_subject = '';
+    private $subject = '';
 
     /**
      * Plain text content.
      *
      * @var string
      */
-    private $_message = '';
+    private $message = '';
 
     /**
      * HTML content.
      *
      * @var string
      */
-    private $_html = '';
+    private $html = '';
 
     /**
      * Mailto Addresses.
      *
      * @var array
      */
-    private $_to = array();
+    private $to = [];
 
     /**
      * Carbon copy Addresses.
      *
      * @var array
      */
-    private $_cc = array();
+    private $cc = [];
 
     /**
      * Blind carbon copy Addresses.
      *
      * @var array
      */
-    private $_bcc = array();
+    private $bcc = [];
 
     /**
      * Mail headers.
      *
      * @var array
      */
-    private $_head = array();
+    private $head = [];
 
     /**
      * Mail attachments.
      *
      * @var array
      */
-    private $_attachment = array();
+    private $attachment = [];
 
     /**
      * SMTP stream.
      *
      * @var stream
      */
-    private $_socket;
+    private $socket;
 
     /**
      * log.
      *
      * @var string
      */
-    private $_log = '';
+    private $log = '';
 
     /**
      * Error message.
      *
      * @var string
      */
-    private $_error = '';
+    private $error = '';
 
     /**
      * Delimiter.
      *
      * @var string
      */
-    private $_delimiter = "\n";
+    private $delimiter = "\n";
 
     /**
      * encode.
      *
      * @var string
      */
-    private $_enc;
+    private $encoding;
 
     /**
      * Caracterset.
      *
      * @var array
      */
-    private $_charset = array(
+    private $charset = [
         'jis' => 'ISO-2022-JP',
         'sjis' => 'Shift_JIS',
         'utf-8' => 'UTF-8',
-    );
+    ];
 
     /**
      * Object constructor.
@@ -186,13 +184,13 @@ class P5_Mail
      * @param string $user
      * @param string $passwd
      */
-    public function __construct($host = '', $port = '', $user = '', $passwd = '', $enc = 'jis')
+    public function __construct($host = '', $port = '', $user = '', $passwd = '', $encoding = 'jis')
     {
-        $this->_smtp = $this->setHost($host);
-        $this->_port = $this->setPort($port);
-        $this->_user = $user;
-        $this->_passwd = $passwd;
-        $this->_enc = $enc;
+        $this->smtp = $this->setHost($host);
+        $this->port = $this->setPort($port);
+        $this->user = $user;
+        $this->passwd = $passwd;
+        $this->encoding = $encoding;
     }
 
     /**
@@ -211,7 +209,7 @@ class P5_Mail
         $host = (empty($defailt)) ? 'localhost' : $defailt;
         // Windows OS
         if (preg_match('/^WIN/i', PHP_OS)) {
-            if ($this->_smtp != 'localhost' && $host != ini_get('SMTP')) {
+            if ($this->smtp != 'localhost' && $host != ini_get('SMTP')) {
                 ini_set('SMTP', $host);
             }
         }
@@ -239,13 +237,13 @@ class P5_Mail
     /**
      * SET Encoding.
      *
-     * @param string $enc
+     * @param string $encoding
      *
      * @return string
      */
-    public function setEncoding($enc)
+    public function setEncoding($encoding)
     {
-        return $this->_enc = $enc;
+        return $this->encoding = $encoding;
     }
 
     /**
@@ -255,7 +253,7 @@ class P5_Mail
      */
     public function envfrom($envfrom)
     {
-        $this->_envfrom = $this->normalizeAddress($envfrom);
+        $this->envfrom = $this->normalizeAddress($envfrom);
     }
 
     /**
@@ -265,7 +263,7 @@ class P5_Mail
      */
     public function from($from)
     {
-        $this->_from = $this->normalizeAddress($from);
+        $this->from = $this->normalizeAddress($from);
     }
 
     /**
@@ -274,16 +272,19 @@ class P5_Mail
      * @param string $to
      * @param string $prop
      */
-    public function to($to = null, $prop = '_to')
+    public function to($to = null, $prop = 'to')
     {
+        if (is_null($this->$prop)) {
+            $this->$prop = [];
+        }
         if (is_null($to)) {
-            $this->$prop = array();
+            $this->$prop = [];
         } elseif (is_array($to)) {
             foreach ($to as $value) {
-                array_push($this->$prop, $this->normalizeAddress($value));
+                $this->{$prop}[] = $this->normalizeAddress($value);
             }
         } else {
-            array_push($this->$prop, $this->normalizeAddress($to));
+            $this->{$prop}[] = $this->normalizeAddress($to);
         }
     }
 
@@ -294,7 +295,7 @@ class P5_Mail
      */
     public function cc($cc = null)
     {
-        $this->to($cc, '_cc');
+        $this->to($cc, 'cc');
     }
 
     /**
@@ -304,7 +305,7 @@ class P5_Mail
      */
     public function bcc($bcc = null)
     {
-        $this->to($bcc, '_bcc');
+        $this->to($bcc, 'bcc');
     }
 
     /**
@@ -315,9 +316,9 @@ class P5_Mail
     public function attachment($attachment = null)
     {
         if (is_null($attachment)) {
-            $this->_attachment = array();
+            $this->attachment = [];
         } else {
-            $this->_attachment[] = $attachment;
+            $this->attachment[] = $attachment;
         }
     }
 
@@ -329,7 +330,7 @@ class P5_Mail
     public function subject($subject)
     {
         $str = preg_replace("/(\r\n|\r|\n)/", ' ', $subject);
-        $this->_subject = $this->encodeHeader($str);
+        $this->subject = $this->encodeHeader($str);
     }
 
     /**
@@ -339,8 +340,8 @@ class P5_Mail
      */
     public function message($message)
     {
-        $str = preg_replace("/(\r\n|\r)/", $this->_delimiter, $message);
-        $this->_message = $this->convertText($str);
+        $str = preg_replace("/(\r\n|\r)/", $this->delimiter, $message);
+        $this->message = $this->convertText($str);
     }
 
     /**
@@ -350,11 +351,11 @@ class P5_Mail
      */
     public function html($source)
     {
-        $str = preg_replace("/(\r\n|\r)/", $this->_delimiter, $source);
-        if (empty($this->_message)) {
-            $this->_message = strip_tags($str);
+        $str = preg_replace("/(\r\n|\r)/", $this->delimiter, $source);
+        if (empty($this->message)) {
+            $this->message = strip_tags($str);
         }
-        $this->_html = $this->convertText($str);
+        $this->html = $this->convertText($str);
     }
 
     /**
@@ -365,7 +366,7 @@ class P5_Mail
      */
     public function setHeader($key, $value)
     {
-        $this->_head[$key] = preg_replace("/[\s]+/", ' ', $value);
+        $this->head[$key] = preg_replace("/[\s]+/", ' ', $value);
     }
 
     /**
@@ -419,11 +420,11 @@ class P5_Mail
      */
     public function convertText($str)
     {
-        if ($this->_enc === 'utf-8') {
+        if ($this->encoding === 'utf-8') {
             return $str;
         }
 
-        return P5_Text::convert($str, $this->_enc);
+        return Text::convert($str, $this->encoding);
     }
 
     /**
@@ -436,23 +437,23 @@ class P5_Mail
     public function createHeader($boundary)
     {
         $cs = $this->getCharset();
-        $dlm = $this->_delimiter;
-        $header = 'From: '.$this->_from.$dlm;
-        if (!empty($this->_cc)) {
-            $header .= 'Cc: '.implode(',', $this->_cc).$dlm;
+        $dlm = $this->delimiter;
+        $header = 'From: '.$this->from.$dlm;
+        if (!empty($this->cc)) {
+            $header .= 'Cc: '.implode(',', $this->cc).$dlm;
         }
-        if (!empty($this->_bcc)) {
-            $header .= 'Bcc: '.implode(',', $this->_bcc).$dlm;
+        if (!empty($this->bcc)) {
+            $header .= 'Bcc: '.implode(',', $this->bcc).$dlm;
         }
-        foreach ($this->_head as $key => $value) {
+        foreach ($this->head as $key => $value) {
             $header .= "$key: $value".$dlm;
         }
         $header .= 'Mime-Version: 1.0'.$dlm;
-        if (empty($this->_attachment) && empty($this->_html)) {
+        if (empty($this->attachment) && empty($this->html)) {
             $header .= "Content-Type: text/plain; charset=$cs".$dlm;
             $header .= 'Content-Transfer-Encoding: 7bit'.$dlm;
         } else {
-            $multipart = (empty($this->_html)) ? 'mixed' : 'alternative';
+            $multipart = (empty($this->html)) ? 'mixed' : 'alternative';
             $header .= "Content-Type: multipart/$multipart; boundary=\"$boundary\"".$dlm;
         }
 
@@ -480,7 +481,7 @@ class P5_Mail
             $encoded = chunk_split(base64_encode(file_get_contents($file)));
         }
         if (!empty($encoded)) {
-            $dlm = $this->_delimiter;
+            $dlm = $this->delimiter;
             $message = $dlm.$dlm.
                         "--$boundary".$dlm.
                         "Content-Type: $mime; name=\"$basename\"".$dlm.
@@ -502,17 +503,17 @@ class P5_Mail
     public function createMessage($boundary)
     {
         $cs = $this->getCharset();
-        $dlm = $this->_delimiter;
-        if (empty($this->_attachment) && empty($this->_html)) {
-            $message = $this->_message;
+        $dlm = $this->delimiter;
+        if (empty($this->attachment) && empty($this->html)) {
+            $message = $this->message;
         } else {
             $message = "--$boundary".$dlm;
-            if (empty($this->_html)) {
+            if (empty($this->html)) {
                 $message .= "Content-Type: text/plain; charset=$cs".$dlm;
                 $message .= 'Content-Transfer-Encoding: 7bit'.$dlm;
                 $message .= $dlm;
-                $message .= $this->_message;
-                foreach ($this->_attachment as $file) {
+                $message .= $this->message;
+                foreach ($this->attachment as $file) {
                     $message .= $this->createAttachment($boundary, $file);
                 }
             } else {
@@ -521,7 +522,7 @@ class P5_Mail
                 $message .= 'Content-Disposition: inline;'.$dlm;
                 $message .= 'Content-Transfer-Encoding: quoted-printable'.$dlm;
                 $message .= $dlm;
-                $message .= quoted_printable_decode($this->_message);
+                $message .= quoted_printable_decode($this->message);
                 // HTML content
                 $message .= $dlm;
                 $message .= "--$boundary".$dlm;
@@ -529,7 +530,7 @@ class P5_Mail
                 $message .= 'Content-Disposition: inline;'.$dlm;
                 $message .= 'Content-Transfer-Encoding: quoted-printable'.$dlm;
                 $message .= $dlm;
-                $message .= quoted_printable_decode($this->_html);
+                $message .= quoted_printable_decode($this->html);
             }
             $message .= $dlm."--$boundary--";
         }
@@ -544,24 +545,25 @@ class P5_Mail
      */
     public function send()
     {
-        if (empty($this->_to)) {
-            $this->_error = 'Empty Rceipt to Email address.';
+        if (empty($this->to)) {
+            $this->error = 'Empty Rceipt to Email address.';
+            trigger_error($this->error);
 
             return false;
         }
-        $to = implode(',', $this->_to);
+        $to = implode(',', $this->to);
         $boundary = md5(uniqid(rand()));
         // header
         $header = $this->createHeader($boundary);
         // message
         $message = $this->createMessage($boundary);
 
-        if ($this->_smtp === 'localhost') {
-            $envfrom = ($this->_envfrom !== '') ? '-f'.$this->_envfrom : null;
+        if ($this->smtp === 'localhost') {
+            $envfrom = ($this->envfrom !== '') ? '-f'.$this->envfrom : null;
 
-            return mail($to, $this->_subject, $message, $header, $envfrom);
+            return mail($to, $this->subject, $message, $header, $envfrom);
         } else {
-            return $this->mail($to, $this->_subject, $message, $header);
+            return $this->mail($to, $this->subject, $message, $header);
         }
     }
 
@@ -577,24 +579,24 @@ class P5_Mail
      */
     public function mail($to, $subject, $message, $header)
     {
-        $server = $this->_smtp;
-        $from = $this->_from;
+        $server = $this->smtp;
+        $from = $this->from;
 
         if (false === $this->open()) {
             return false;
         }
 
-        if ($this->_tls === true) {
+        if ($this->tls === true) {
             $result = $this->command('STARTTLS');
             if (!preg_match('/^220.*$/', $result)) {
-                $this->_error = $result;
+                $this->error = $result;
 
                 return false;
             }
             if (false === $this->command("EHLO $server")) {
-                fclose($this->_socket);
-                $this->_smtp = "tls://$server";
-                $this->_port = 465;
+                fclose($this->socket);
+                $this->smtp = "tls://$server";
+                $this->port = 465;
                 if (false === $this->open()) {
                     return false;
                 }
@@ -611,7 +613,7 @@ class P5_Mail
             return false;
         }
 
-        $rcpt = array_merge($this->_to, $this->_cc, $this->_bcc);
+        $rcpt = array_merge($this->to, $this->cc, $this->bcc);
         foreach ($rcpt as $rcpt_to) {
             if (false === $this->command('RCPT TO: <'.$this->stripAddress($rcpt_to).'>')) {
                 return false;
@@ -622,7 +624,7 @@ class P5_Mail
             return false;
         }
 
-        $dlm = $this->_delimiter;
+        $dlm = $this->delimiter;
         $content = "Subject: $subject".$dlm.
                    "To: $to".$dlm.
                    "$header".$dlm.
@@ -632,12 +634,12 @@ class P5_Mail
             return false;
         }
         if (!preg_match('/^250 /', $result)) {
-            $this->_error = $result;
+            $this->error = $result;
 
             return false;
         }
 
-        return fclose($this->_socket);
+        return fclose($this->socket);
     }
 
     /**
@@ -649,39 +651,39 @@ class P5_Mail
      */
     public function command($command)
     {
-        fputs($this->_socket, $command.$this->_delimiter);
-        $this->_log .= $command.$this->_delimiter;
-        if (feof($this->_socket)) {
-            $this->_error = 'Lost connection...';
-            fclose($this->_socket);
+        fputs($this->socket, $command.$this->delimiter);
+        $this->log .= $command.$this->delimiter;
+        if (feof($this->socket)) {
+            $this->error = 'Lost connection...';
+            fclose($this->socket);
 
             return false;
         }
-        $result = fgets($this->_socket);
+        $result = fgets($this->socket);
         while (preg_match('/^([0-9]{3})-(.+)$/', $result, $match)) {
             $match[2] = preg_replace("/[\s]+$/", '', $match[2]);
             if ($match[1] === '250') {
-                if (empty($this->_authTypes) && preg_match('/AUTH[ =](.+)$/i', $match[2], $hit)) {
-                    $this->_authTypes = explode(' ', $hit[1]);
-                    if (is_array($this->_authTypes)) {
-                        sort($this->_authTypes);
+                if (empty($this->auth_types) && preg_match('/AUTH[ =](.+)$/i', $match[2], $hit)) {
+                    $this->auth_types = explode(' ', $hit[1]);
+                    if (is_array($this->auth_types)) {
+                        sort($this->auth_types);
                     }
                 }
                 if ($match[2] === 'STARTTLS') {
-                    $this->_tls = true;
+                    $this->tls = true;
                 }
             }
-            $this->_log .= $result;
+            $this->log .= $result;
             if ($match[1] >= 400) {
-                $this->_error = $match[2];
+                $this->error = $match[2];
 
                 return false;
             }
-            $result = fgets($this->_socket);
+            $result = fgets($this->socket);
         }
-        $this->_log .= $result;
+        $this->log .= $result;
         if (preg_match('/^[45][0-9]{2} (.+)$/', $result, $match)) {
-            $this->_error = $match[1];
+            $this->error = $match[1];
 
             return false;
         }
@@ -696,13 +698,13 @@ class P5_Mail
      */
     public function auth()
     {
-        $user = $this->_user;
-        $passwd = $this->_passwd;
-        if (empty($this->_authTypes) || empty($user)) {
+        $user = $this->user;
+        $passwd = $this->passwd;
+        if (empty($this->auth_types) || empty($user)) {
             return true;
         }
         $auth = false;
-        foreach ($this->_authTypes as $authType) {
+        foreach ($this->auth_types as $authType) {
             $result = $this->command("AUTH $authType");
             if (preg_match('/^334(.*)$/', $result, $ts)) {
                 if ($authType === 'CRAM-MD5') {
@@ -737,17 +739,17 @@ class P5_Mail
      */
     public function open()
     {
-        $server = $this->_smtp;
-        $port = $this->_port;
-        if (false === $this->_socket = fsockopen($server, $port, $errno, $errstr, 5)) {
+        $server = $this->smtp;
+        $port = $this->port;
+        if (false === $this->socket = fsockopen($server, $port, $errno, $errstr, 5)) {
             echo $errno.':'.$errstr;
             exit;
-            $this->_error = 'Connection failed SMTP Server ('.$server.')';
+            $this->error = 'Connection failed SMTP Server ('.$server.')';
 
             return false;
         }
-        $this->_log .= 'Start connection SMTP Server ('.$server.')'.$this->_delimiter;
-        $this->_log .= fgets($this->_socket);
+        $this->log .= 'Start connection SMTP Server ('.$server.')'.$this->delimiter;
+        $this->log .= fgets($this->socket);
         $server = preg_replace("/^.+:\/\//", '', $server);
 
         return $this->command("EHLO $server");
@@ -762,7 +764,7 @@ class P5_Mail
     {
         $result = $this->command('QUIT');
 
-        return fclose($this->_socket);
+        return fclose($this->socket);
     }
 
     /** 
@@ -772,7 +774,7 @@ class P5_Mail
      */
     public function getLog()
     {
-        return $this->_log;
+        return $this->log;
     }
 
     /** 
@@ -782,7 +784,7 @@ class P5_Mail
      */
     public function error()
     {
-        return $this->_error;
+        return $this->error;
     }
 
     /**
@@ -792,6 +794,6 @@ class P5_Mail
      */
     public function getCharset()
     {
-        return $this->_charset[$this->_enc];
+        return $this->charset[$this->encoding];
     }
 }

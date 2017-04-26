@@ -2,23 +2,59 @@
 /**
  * This file is part of P5 Framework.
  *
- * Copyright (c)2016 PlusFive (http://www.plus-5.com)
+ * Copyright (c)2016 PlusFive (https://www.plus-5.com)
  *
  * This software is released under the MIT License.
- * http://www.plus-5.com/licenses/mit-license
+ * https://www.plus-5.com/licenses/mit-license
  */
+
+namespace P5\Auto;
+
 /**
- * Auto loading class.
+ * Auto loader class.
  *
- * @license  http://www.plus-5.com/licenses/mit-license  MIT License
- * @author   Taka Goto <http://www.plus-5.com/>
+ * @license  https://www.plus-5.com/licenses/mit-license  MIT License
+ * @author   Taka Goto <www.plus-5.com>
  */
-class P5_Auto_Loader
+class Loader
 {
     /**
-     * Current version.
+     * Default file extension.
+     *
+     * @var string
      */
-    const VERSION = '1.1.0';
+    private static $fileExtension = '.php';
+
+    /**
+     * Include path.
+     *
+     * @var mixed
+     */
+    private static $includePath = null;
+
+    /**
+     * Default namespace.
+     *
+     * @var mixed
+     */
+    private static $namespace = null;
+
+    /**
+     * Namespace separator.
+     *
+     * @var string
+     */
+    private static $namespaceSeparator = '\\';
+
+    /**
+     * Set the namespace.
+     *
+     * @param string $ns
+     */
+    public static function setNameSpace($ns)
+    {
+        self::$namespace = $ns;
+    }
 
     /**
      * Register given function as __autoload() implementation.
@@ -27,17 +63,17 @@ class P5_Auto_Loader
      */
     public static function register()
     {
-        return spl_autoload_register(array('P5_Auto_Loader', '_autoLoad'));
+        return spl_autoload_register('self::autoLoad');
     }
 
     /**
-     * class auto load.
+     * auto loader.
      *
      * @param string $className
      *
      * @return mixed
      */
-    private static function _autoLoad($className)
+    private static function autoLoad($className)
     {
         if (empty($className)) {
             return;
@@ -48,7 +84,7 @@ class P5_Auto_Loader
         if (false === self::isIncludable($className)) {
             return;
         }
-        if (false !== $path = self::convertNameToPath($className, true)) {
+        if ($path = self::convertNameToPath($className, true)) {
             include_once $path;
 
             return;
@@ -85,31 +121,25 @@ class P5_Auto_Loader
      */
     public static function convertNameToPath($name, $fullpath = false)
     {
-        // Plugin path
-        if (false !== strpos($name, 'Plugin_')) {
-            $arr = explode('_', $name);
-            $index = array_search('Plugin', $arr) + 1;
-            array_splice($arr, 0, $index);
-            array_push($arr, preg_replace("/^.+\-/", '', end($arr)));
-            if (in_array('Lang', $arr)) {
-                $index = array_search('Lang', $arr) - 1;
-                array_splice($arr, $index, 1);
-            }
-            array_unshift($arr, 'plugins');
-            $name = implode('_', $arr);
+        $path = '';
+        $namespace = '';
+        if (false !== ($lastNsPos = strripos($name, self::$namespaceSeparator))) {
+            $namespace = substr($name, 0, $lastNsPos);
+            $name = substr($name, $lastNsPos + 1);
+            $path = str_replace(self::$namespaceSeparator, DIRECTORY_SEPARATOR, $namespace).DIRECTORY_SEPARATOR;
         }
-        $path = preg_replace('/[_\\\]/', DIRECTORY_SEPARATOR, $name).'.php';
+        $path .= str_replace('_', DIRECTORY_SEPARATOR, $name).self::$fileExtension;
 
         // Search include path.
         if ($fullpath !== false) {
             $dirs = explode(PATH_SEPARATOR, ini_get('include_path'));
             foreach ($dirs as $dir) {
                 $file = $dir.DIRECTORY_SEPARATOR.$path;
-                if (file_exists($file)) {
+                if (realpath($file)) {
                     return $file;
                 }
                 $file = preg_replace('/\.php$/', '.class.php', $file);
-                if (file_exists($file)) {
+                if (realpath($file)) {
                     return $file;
                 }
             }

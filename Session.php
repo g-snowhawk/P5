@@ -2,145 +2,137 @@
 /**
  * This file is part of P5 Framework.
  *
- * Copyright (c)2016 PlusFive (http://www.plus-5.com)
+ * Copyright (c)2016 PlusFive (https://www.plus-5.com)
  *
  * This software is released under the MIT License.
- * http://www.plus-5.com/licenses/mit-license
+ * https://www.plus-5.com/licenses/mit-license
  */
-/**
- * Session class.
- *
- * @license  http://www.plus-5.com/licenses/mit-license  MIT License
- * @author   Taka Goto <http://www.plus-5.com/>
- */
-class P5_Session
-{
-    /** 
-     * Current version.
-     */
-    const VERSION = '1.1.0';
 
+namespace P5;
+
+/**
+ * Session Class.
+ *
+ * @license  https://www.plus-5.com/licenses/mit-license  MIT License
+ * @author   Taka Goto <www.plus-5.com>
+ */
+class Session
+{
     /** 
      * Session save path.
      *
      * @var string
      */
-    private $_savePath = '/tmp';
+    private $save_path = '/tmp';
 
     /** 
      * Session ID.
      *
      * @var string
      */
-    private $_sid;
+    private $sid;
 
     /** 
      * Session Cookie Name.
      *
      * @var string
      */
-    private $_sessname = 'PHPSESSID';
-
-    /** 
-     * Session Data encoding.
-     *
-     * @var string
-     */
-    private $_enc = 'UTF-8';
+    private $session_name = 'PHPSESSID';
 
     /** 
      * Session Cache Limitter.
      *
      * @var string
      */
-    private $_cachelimiter;
+    private $cachelimiter;
 
     /** 
      * Session Life time.
      *
      * @var string
      */
-    private $_lifetime;
+    private $lifetime;
 
     /** 
      * Session valid path.
      *
      * @var string
      */
-    private $_path;
+    private $path;
 
     /** 
      * Session valid domain.
      *
      * @var string
      */
-    private $_domain;
+    private $domain;
 
     /** 
      * Session only secure connection.
      *
      * @var string
      */
-    private $_secure;
+    private $secure;
 
     /** 
      * Session only http connection.
      *
      * @var bool
      */
-    private $_httponly;
+    private $httponly;
 
     /** 
      * Session status.
      *
      * @var bool
      */
-    private $_status = false;
+    private $status = false;
 
     /**
      * Use Database storage.
      *
      * @var bool
      */
-    private $_usedb = false;
+    private $usedb = false;
 
     /**
      * Object constructor.
      *
      * @param string $cacheLimiter
-     * @param string $savePath
+     * @param string $save_path
      * @param int    $lifetime
      * @param string $path
      * @param string $domain
      * @param bool   $secure
      * @param bool   $httponly
      */
-    public function __construct($cacheLimiter = 'nocache', $savePath = null,
+    public function __construct($cacheLimiter = 'nocache', $save_path = null,
                                 $lifetime = 0, $path = '/', $domain = '',
                                 $secure = false, $httponly = true
     ) {
-        $this->_cachelimiter = $cacheLimiter;
-        $this->_savePath = P5_File::realpath($savePath);
-        $this->_lifetime = $lifetime;
-        $this->_path = preg_replace("/[\/]+$/", '/', $path);
-        $this->_domain = $domain;
-        $this->_secure = $secure;
-        $this->_httponly = $httponly;
+        $this->cachelimiter = $cacheLimiter;
+        $this->save_path = File::realpath($save_path);
+        $this->lifetime = $lifetime;
+        $this->path = rtrim($path, '/');
+        $this->domain = $domain;
+        $this->secure = $secure;
+        $this->httponly = $httponly;
 
-        if (!empty($this->_savePath)) {
-            if (!file_exists($this->_savePath)) {
-                if (false === P5_File_Path::mkpath($this->_savePath, 0777)) {
-                    // Resume routine.
-                    trigger_error('Directory is not exists '.$this->_savePath, E_USER_ERROR);
+        if (!empty($this->save_path)) {
+            if (!file_exists($this->save_path)) {
+                if (false === mkdir($this->save_path, 0777, true)) {
+                    throw new \Exception('Session save path is not exists '.$this->save_path);
                 }
             }
-            if (is_dir($this->_savePath)) {
-                session_save_path($this->_savePath);
+            if (!is_dir($this->save_path)) {
+                throw new \Exception("Session save path `{$this->save_path}' is not directory");
             }
+            session_save_path($this->save_path);
         }
-        if (!empty($this->_sid)) {
-            $this->_sid = session_id($this->_sid);
+        if (!empty($this->sid)) {
+            $this->sid = session_id($this->sid);
         }
+        session_register_shutdown();
     }
 
     /**
@@ -150,11 +142,11 @@ class P5_Session
      *
      * @return string
      */
-    public function setSessionId($id)
+    public function setID($id)
     {
-        $this->_sid = $id;
+        $this->sid = $id;
 
-        return session_id($this->_sid);
+        return session_id($this->sid);
     }
 
     /**
@@ -164,9 +156,9 @@ class P5_Session
      *
      * @return string
      */
-    public function setSessionName($name)
+    public function setName($name)
     {
-        $this->_sessname = $name;
+        $this->session_name = $name;
 
         return session_name($name);
     }
@@ -178,10 +170,10 @@ class P5_Session
      * @param string $host
      * @param string $port
      */
-    public function useDatabase($driver, $host, $source, $user, $password, $port = 3306, $enc = '')
+    public function useDatabase($driver, $host, $source, $user, $password, $port = 3306, $encoding = '')
     {
-        $this->_usedb = true;
-        session_save_path("$driver/$host/$source/$user/$password/$port/$enc");
+        $this->usedb = true;
+        session_save_path("$driver/$host/$source/$user/$password/$port/$encoding");
     }
 
     /**
@@ -191,26 +183,26 @@ class P5_Session
      */
     public function start()
     {
-        session_set_cookie_params($this->_lifetime, $this->_path, $this->_domain, $this->_secure, $this->_httponly);
-        session_cache_limiter($this->_cachelimiter);
-        if (empty($this->_sid)) {
-            $this->_sid = session_id();
+        session_set_cookie_params($this->lifetime, $this->path, $this->domain, $this->secure, $this->httponly);
+        session_cache_limiter($this->cachelimiter);
+        if (empty($this->sid)) {
+            $this->sid = session_id();
         }
-        if (empty($this->_sessname)) {
-            $this->_sessname = session_name();
+        if (empty($this->session_name)) {
+            $this->session_name = session_name();
         }
-        if ($this->_usedb === true) {
-            $handler = new P5_Session_Db();
-            session_set_save_handler(array($handler, 'open'),
-                                     array($handler, 'close'),
-                                     array($handler, 'read'),
-                                     array($handler, 'write'),
-                                     array($handler, 'destroy'),
-                                     array($handler, 'gc'));
+        if ($this->usedb === true) {
+            $handler = new \P5\Session\Db();
+            session_set_save_handler([$handler, 'open'],
+                                     [$handler, 'close'],
+                                     [$handler, 'read'],
+                                     [$handler, 'write'],
+                                     [$handler, 'destroy'],
+                                     [$handler, 'gc']);
             register_shutdown_function('session_write_close');
         }
 
-        return $this->_status = session_start();
+        return $this->status = session_start();
     }
 
     /**
@@ -218,13 +210,13 @@ class P5_Session
      */
     public function destroy()
     {
-        $_SESSION = array();
-        if (isset($_COOKIE[$this->_sessname])) {
+        $_SESSION = [];
+        if (isset($_COOKIE[$this->session_name])) {
             $params = session_get_cookie_params();
-            setcookie($this->_sessname, '', time() - 3600, $params['path'], $params['domain'], $params['secure'], $params['httponly']);
+            setcookie($this->session_name, '', time() - 3600, $params['path'], $params['domain'], $params['secure'], $params['httponly']);
         }
         $sessId = session_id();
-        if ($this->_status !== true) {
+        if ($this->status !== true) {
             return true;
         }
 
@@ -245,7 +237,7 @@ class P5_Session
             $_SESSION[$name] = $value;
         }
 
-        return (isset($_SESSION[$name])) ? $_SESSION[$name] : null;
+        return (array_key_exists($name, $_SESSION)) ? $_SESSION[$name] : null;
     }
 
     /**
@@ -255,7 +247,7 @@ class P5_Session
      */
     public function setSavePath($path)
     {
-        $this->_savePath = $path;
+        $this->save_path = $path;
     }
 
     /**
@@ -265,7 +257,17 @@ class P5_Session
      */
     public function setCookiePath($path)
     {
-        $this->_path = $path;
+        $this->path = $path;
+    }
+
+    /**
+     * Set session cookiepath.
+     *
+     * @param mixed $path
+     */
+    public function getCookiePath($path)
+    {
+        return $this->path;
     }
 
     /**
@@ -275,7 +277,17 @@ class P5_Session
      */
     public function setCookieDomain($domain)
     {
-        $this->_domain = $domain;
+        $this->domain = $domain;
+    }
+
+    /**
+     * Get session save domain.
+     *
+     * @param string $domain
+     */
+    public function getCookieDomain($domain)
+    {
+        return $this->domain;
     }
 
     /**
@@ -285,7 +297,7 @@ class P5_Session
      */
     public function expire($time)
     {
-        $this->_lifetime = $time;
+        $this->lifetime = $time;
     }
 
     /**
@@ -295,7 +307,7 @@ class P5_Session
      */
     public function setChacheLimiter($limiter)
     {
-        $this->_cachelimiter = $limiter;
+        $this->cachelimiter = $limiter;
     }
 
     /**
@@ -305,7 +317,7 @@ class P5_Session
      */
     public function setSessionSecure($secure)
     {
-        $this->_secure = $secure;
+        $this->secure = $secure;
     }
 
     /**
@@ -315,7 +327,7 @@ class P5_Session
      */
     public function clear($key = null)
     {
-        if (isset($_SESSION[$key])) {
+        if (array_key_exists($key, $_SESSION)) {
             unset($_SESSION[$key]);
         }
     }
@@ -327,16 +339,16 @@ class P5_Session
      */
     public function delay($time = 0)
     {
-        if (isset($_COOKIE[$this->_sessname])) {
+        if (isset($_COOKIE[$this->session_name])) {
             $params = session_get_cookie_params();
-            $this->_lifetime = $time;
-            $this->_path = $params['path'];
-            $this->_domain = $params['domain'];
-            $this->_secure = $params['secure'];
-            $this->_httponly = $params['httponly'];
+            $this->lifetime = $time;
+            $this->path = $params['path'];
+            $this->domain = $params['domain'];
+            $this->secure = $params['secure'];
+            $this->httponly = $params['httponly'];
 
             return setcookie(
-                $this->_sessname, $_COOKIE[$this->_sessname], $time,
+                $this->session_name, $_COOKIE[$this->session_name], $time,
                 $params['path'], $params['domain'],
                 $params['secure'], $params['httponly']
             );

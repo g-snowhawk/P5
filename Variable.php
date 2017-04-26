@@ -11,22 +11,26 @@
 namespace P5;
 
 /**
- * Custom Exception.
+ * Complement the variable processing.
  *
  * @license  https://www.plus-5.com/licenses/mit-license  MIT License
  * @author   Taka Goto <www.plus-5.com>
  */
-class Exception extends \Exception
+class Variable
 {
     /**
-     * object constructer.
+     * Check hash.
      *
-     * @param string    $message
-     * @param int       $code
-     * @param Exception $previous
+     * @param array $var
+     *
+     * @return bool
      */
-    public function __construct($message, $code = 0, $previous = null)
+    public static function isHash(&$var)
     {
-        parent::__construct($message, $code, $previous);
+        if (is_null($var)) {
+            return false;
+        }
+
+        return $var !== array_values($var);
     }
 }

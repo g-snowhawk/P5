@@ -2,24 +2,22 @@
 /**
  * This file is part of P5 Framework.
  *
- * Copyright (c)2016 PlusFive (http://www.plus-5.com)
+ * Copyright (c)2016 PlusFive (https://www.plus-5.com)
  *
  * This software is released under the MIT License.
- * http://www.plus-5.com/licenses/mit-license
+ * https://www.plus-5.com/licenses/mit-license
  */
-/**
- * HTTP protocol class.
- *
- * @license  http://www.plus-5.com/licenses/mit-license  MIT License
- * @author   Taka Goto <http://www.plus-5.com/>
- */
-class P5_Http
-{
-    /**
-     * Current version.
-     */
-    const VERSION = '1.1.0';
 
+namespace P5;
+
+/**
+ * Methods for HTTP.
+ *
+ * @license  https://www.plus-5.com/licenses/mit-license  MIT License
+ * @author   Taka Goto <www.plus-5.com>
+ */
+class Http
+{
     /**
      * Responce header no cache controls.
      */
@@ -71,7 +69,7 @@ class P5_Http
      */
     public static function getMethod()
     {
-        return (strtolower($_SERVER{'REQUEST_METHOD'}) == 'post') ? 'POST' : 'GET';
+        return (strtolower($_SERVER['REQUEST_METHOD']) === 'post') ? 'POST' : 'GET';
     }
 
     /**
@@ -88,11 +86,6 @@ class P5_Http
     {
         $url = str_replace('&amp;', '&', urldecode(trim($url)));
         $ua = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; rv:1.7.3) Gecko/20041001 Firefox/0.10.1';
-
-        if (!function_exists('curl_init')) {
-            return 'unknown';
-        }
-
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_USERAGENT,      $ua);
         curl_setopt($ch, CURLOPT_URL,            $url);
@@ -116,21 +109,11 @@ class P5_Http
     /**
      * Redirect.
      *
-     * @param string $href
+     * @param string $uri
      */
-    public static function redirect($href)
+    public static function redirect($uri)
     {
-        header('Location: '.$href);
+        header('Location: '.$uri);
         exit;
-    }
-
-    /**
-     * Security headers.
-     */
-    public static function secureHeaders()
-    {
-        header('X-Frame-Options: SAMEORIGIN');
-        header('X-Content-Type-Options: nosniff');
-        header('X-XSS-Protection: 1; mode=block');
     }
 }

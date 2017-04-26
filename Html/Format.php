@@ -2,793 +2,750 @@
 /**
  * This file is part of P5 Framework.
  *
- * Copyright (c)2016 PlusFive (http://www.plus-5.com)
+ * Copyright (c)2016 PlusFive (https://www.plus-5.com)
  *
  * This software is released under the MIT License.
- * http://www.plus-5.com/licenses/mit-license
+ * https://www.plus-5.com/licenses/mit-license
  */
+
+namespace P5\Html;
+
 /**
- * HTML source format class.
+ * Methods for form management.
  *
- * @license  http://www.plus-5.com/licenses/mit-license  MIT License
- * @author   Taka Goto <http://www.plus-5.com/>
+ * @license  https://www.plus-5.com/licenses/mit-license  MIT License
+ * @author   Taka Goto <www.plus-5.com>
  */
-class P5_Html_Format extends P5_Html
+class Format extends Tags
 {
-    /**
-     * Current version.
-     */
-    const VERSION = '1.1.0';
-
-    /**
-     * XML Parser object.
-     *
-     * @var resource
-     */
-    private $_parser;
-
-    /**
-     * Formatted Source.
-     *
-     * @var string
-     */
-    private $_formatted = '';
-
-    /**
-     * Preformatted Source.
-     *
-     * @var string
-     */
-    private $_preformatted = 0;
-
-    /**
-     * return code.
-     *
-     * @var string
-     */
-    private $_lineBreak = '';
-
-    /**
-     * Indent character.
-     *
-     * @var string
-     */
-    private $_tabSpace = ' ';
-
-    /**
-     * Tab size.
-     *
-     * @var int
-     */
-    private $_tabSize = 2;
-
-    /**
-     * indent level.
-     *
-     * @var int
-     */
-    private $_level = 0;
-
-    /**
-     * which whitespace.
-     *
-     * @var bool
-     */
-    private $_skipWrap = false;
-
-    /**
-     * Preformatting.
-     *
-     * @var number
-     */
-    private $_preformated = 0;
-
-    /**
-     * CDATA?
-     *
-     * @var bool
-     */
-    private $_isCdata = false;
-
-    /**
-     * Current tag name or content.
-     *
-     * @var string
-     */
-    private $_currentContent = '';
-
-    /**
-     * Current element type.
-     *
-     * @var string
-     */
-    private $_currentType = '';
-
-    /**
-     * XHTML Closer.
-     *
-     * @ver string
-     */
-    private $_xhtmlCloser = '';
-
-    /**
-     * No Decl.
-     *
-     * @var string
-     */
-    private $_pi = null;
-
-    /**
-     * No Doctype.
-     *
-     * @var bool
-     */
-    private $_dtd = null;
-
-    /**
-     * Start Doctype.
-     *
-     * @var bool
-     */
-    private $_startdtd = false;
-
-    /**
-     * Always wrap Tags.
-     *
-     * @var array
-     */
-    private $_wrapAlways = array(
-        'html' => '', 'head' => '', 'body' => '', 'meta' => '', 'link' => '', 'form' => '', 'map' => '',
-        'center' => '', 'frameset' => '',
-        'table' => '', 'caption' => '', 'tr' => '', 'thead' => '', 'tbody' => '', 'tfoot' => '',
-        'ul' => '', 'ol' => '', 'dl' => '', 'hr' => '', 'noscript' => '', 'optgroup' => '',
-        'article' => '', 'header' => '', 'hgroup' => '', 'footer' => '', 'section' => '', 'nav' => '',
-        'main' => '', 'template' => '',
-    );
-
-    /**
-     * Always wrap Open Tags.
-     *
-     * @var array
-     */
-    private $_wrapOpen = array(
-        'h1' => '', 'h2' => '', 'h3' => '', 'h4' => '', 'h5' => '', 'h6' => '',
-        'p' => '', 'li' => '', 'dt' => '', 'dd' => '',
-        'title' => '', 'script' => '', 'style' => '', 'div' => '', 'th' => '', 'td' => '',
-        'pre' => '', 'address' => '', 'blockquote' => '', 'option' => '',
-        'object' => '', 'params' => '', 'embed' => '',
-    );
-
-    /**
-     * Always wrap Close Tags.
-     *
-     * @var array
-     */
-    private $_wrapClose = array('select' => '');
-
-    /**
-     * Leaving Open Tags.
-     *
-     * @var array
-     */
-    private $_leaveOpen = array(
-        'input' => '', 'select' => '', 'label' => '', 'span' => '', 'a' => '', 'br' => '', 'hr' => '',
-        'svg' => '',
-    );
-
-    /**
-     * Leaving Close Tags.
-     *
-     * @var array
-     */
-    private $_leaveClose = array(
-        'div' => '', 'span' => '', 'li' => '', 'td' => '',
-    );
-
-    /**
-     * Preformatted Tags.
-     *
-     * @var array
-     */
-    private $_preformatTags = array('pre' => '', 'textarea' => '');
-
-    /**
-     * Script Tags.
-     *
-     * @var array
-     */
-    private $_scriptTags = array('script' => '', 'style' => '');
-
-    /**
-     * CDATA Tags.
-     *
-     * @var array
-     */
-    //private $_cdataTags = array('script'=>'', 'style'=>'');
-
-    /**
-     * Empty Tags.
-     *
-     * @var array
-     */
-    private $_emptyTags = array();
-    private $_xmlTags = array('svg' => '');
-    private $inXML = false;
-
-    /**
-     * Page splitter.
-     * 
-     * @var array
-     */
-    private $_splitter = array();
+    private $level = 0;
+    private $levels = [];
+    private $parents = [];
+    private $source = '';
+    private $formatted = '';
+    private $nl = false;
+    private $prev = null;
+    private $type = null;
+    private $text = '';
+    private $flg = '"';
+    private $tab = '  ';
+    private $omit = false;
 
     /**
      * Object constructor.
      *
+     * @param string $tab
+     * @param bool   $omit
+     */
+    public function __construct($tab = null, $omit = false)
+    {
+        if (!is_null($tab)) {
+            $this->tab = $tab;
+        }
+        $this->omit = filter_var($omit, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    /**
+     * Start format.
+     *
      * @param string $source
-     */
-    public function __construct($source, $pi = null, $dtd = null, $splitter = null)
-    {
-        if (!is_null($splitter)) {
-            $this->_splitter = $splitter;
-        }
-        $this->_emptyTags = parent::$emptyTags;
-
-        $this->_orgSource = $source;
-        $this->_pi = $pi;
-        $this->_dtd = $dtd;
-
-        $this->_lineBreak = $this->_getLineBreak();
-
-        $this->_escapeEntityReference();
-        $this->_escapeCdata();
-
-        $this->_processingInstruction();
-        $this->_doctype();
-
-        $this->_parser = xml_parser_create();
-        //
-        xml_set_object($this->_parser, $this);
-        //
-        xml_set_element_handler($this->_parser, '_handleStart', '_handleEnd');
-        xml_set_character_data_handler($this->_parser, '_handleChar');
-        xml_set_notation_decl_handler($this->_parser, '_handleDoctype');
-        xml_set_processing_instruction_handler($this->_parser, '_handleXmldecl');
-        xml_set_external_entity_ref_handler($this->_parser, '_externalEntityRef');
-        xml_set_unparsed_entity_decl_handler($this->_parser, '_unparsedEntityDecl');
-        xml_set_default_handler($this->_parser, '_handleDefault');
-        //
-        xml_parser_set_option($this->_parser, XML_OPTION_CASE_FOLDING, 0);
-        xml_parser_set_option($this->_parser, XML_OPTION_SKIP_WHITE,   0);
-        //
-        if (1 !== xml_parse($this->_parser, $this->_orgSource)) {
-            $this->_formatted = $this->_orgSource;
-        }
-
-        if (empty($this->_formatted)) {
-            $this->_formatted = $this->_orgSource;
-        }
-
-        xml_parser_free($this->_parser);
-    }
-
-    /**
-     * get linebreak character.
-     * 
+     *
      * @return string
      */
-    private function _getLineBreak()
+    public function start($source)
     {
-        return (preg_match("/(\r\n|\r|\n)/", $this->_orgSource, $lb)) ? $lb[0] : '';
+        $this->formatted = '';
+        $this->level = 0;
+        $this->source = preg_replace("/(\r\n|\r|\n)/", PHP_EOL, $source);
+        while ($this->source) {
+            $this->parse();
+        }
+
+        return $this->formatted;
     }
 
     /**
-     * XML Parsing default handler.
+     * HTML parser.
      *
-     * @param resource $parser
-     * @param string   $data
+     * @return string
      */
-    private function _handleDefault($parser, $data)
+    private function parse()
     {
-        if (isset($this->_splitter['id']) && !isset($this->_splitter['level'])) {
-            return;
+        $pattern_comment = '/^([\s]*)(<!--.*?-->)([\s]*)/s';
+        $pattern_dtd = '/^[\s]*<!([^\s]+)([^>]*)>([\s]*)/s';
+        $pattern_end_tag = '/^[\s]*<\/([^\s>]+)([^>]*)>([\s]*)/s';
+        $pattern_start_tag = '/^[\s]*<([^\s>\/!]+)([^>]*)>([\s]*)/s';
+        $pattern_text_node = '/^([\s]*)([^<>]+)/s';
+
+        // Comment
+        if (preg_match($pattern_comment, $this->source, $match)) {
+            $nl = '';
+            $indent = '';
+            if (!preg_match('/['.preg_quote(PHP_EOL, '/').']+/', $match[1])) {
+                $nl = PHP_EOL;
+                $indent = $this->indent();
+            }
+            $this->formatted .= $nl.$indent.$match[2];
+            $this->type = 'comment';
+            $this->source = preg_replace($pattern_comment, '', $this->source, 1);
         }
 
-        // Decl
-        if (stripos($data, '<?xml') !== false) {
-            return;
-        }
         // DTD
-        if ($data === '<!DOCTYPE' && !is_null($this->_dtd)) {
-            $this->_startdtd = true;
-        }
-        if ($this->_startdtd === true) {
-            return;
-        }
-        if (preg_match("/(<!\[CDATA\[|\]\]>)/i", $data)) {
-            return;
-        }
-        if ($this->_currentType === 'linebreak' && strpos($data, '<!--') === 0) {
-            $this->_insertLinebreak();
-        }
-        if (strpos($data, '<!--nowrap[') === 0) {
-            $this->_skipWrap = true;
-        } else {
-            $this->_formatted .= $data;
-        }
-        $this->_currentType = 'default';
-        $this->_currentContent = $data;
-    }
+        elseif (preg_match($pattern_dtd, $this->source, $match)) {
+            $this->formatted .= '<!'.strtoupper($match[1]).$match[2].'>';
+            $this->type = 'dtd';
 
-    /**
-     * XML Parsing XML Decl handler.
-     *
-     * @param resource $parser
-     * @param string   $target
-     * @param string   $data
-     */
-    private function _handleXmldecl($parser, $target, $data)
-    {
-        if (isset($this->_splitter['id']) && !isset($this->_splitter['level'])) {
-            return;
+            $this->nl = $this->checkTail($match[3]);
+
+            $this->source = preg_replace($pattern_dtd, '', $this->source, 1);
         }
 
-        if (!is_null($this->_pi)) {
-            return;
-        }
-        $this->_formatted .= '<?xml'.
-                             ' varsion="'.$target.'"'.
-                             ' encoding="'.$data.'"'.
-                             ' ?'.'>';
-        $this->_currentType = 'decl';
-        $this->_currentContent = null;
-    }
-
-    /**
-     * XML Parsing DTD handler.
-     *
-     * @param resource $parser
-     * @param string   $notation_name
-     * @param string   $base
-     * @param string   $system_id
-     * @param string   $public_id
-     */
-    private function _handleDoctype($parser, $notation_name, $base, $system_id, $public_id)
-    {
-        if (isset($this->_splitter['id']) && !isset($this->_splitter['level'])) {
-            return;
+        // Preformatted Text
+        elseif ($this->type === 'start' && isset($this->preformatted_tags[$this->prev])) {
+            $pos = strpos($this->source, '</'.$this->prev);
+            $substr = substr($this->source, 0, $pos);
+            $this->formatted .= $substr;
+            $this->prev = 'preformatted';
+            $this->type = 'source';
+            $this->source = substr($this->source, $pos);
         }
 
-        if (!is_null($this->_dtd)) {
-            return;
-        }
-        if ($this->_currentType === 'decl') {
-            $this->_insertLinebreak();
-        }
-        $this->_formatted .= '<!DOCTYPE';
-        $this->_formatted .= ' '.$notation_name;
-        if ($public_id) {
-            $this->_formatted .= ' PUBLIC';
-        }
-        if ($public_id) {
-            $this->_formatted .= ' "'.$public_id.'"';
-        }
-        if ($public_id) {
-            $this->_formatted .= ' "'.$system_id.'"';
-        }
-        $this->_formatted .= '>';
-        $this->_currentType = 'dtd';
-        $this->_currentContent = null;
-    }
-
-    /**
-     * XML Parsing opentag handler.
-     *
-     * @param resource $parser
-     * @param string   $name    Tag name
-     * @param array    $attribs Attributes
-     */
-    private function _handleStart($parser, $name, $attribs)
-    {
-        if (isset($this->_splitter['id'])) {
-            //
-            if (!isset($this->_splitter['level'])) {
-                if ($attribs['id'] === $this->_splitter['id']) {
-                    $this->_splitter['level'] = $this->_level;
-                    ++$this->_level;
-                }
-                if (isset($this->_splitter['ischildren']) && $this->_splitter['ischildren'] === true) {
-                    return;
-                }
-            } else {
-                if ($this->_splitter['level'] === $this->_level) {
-                    unset($this->_splitter['level']);
-                }
-            }
-        }
-        if (isset($this->_splitter['id']) && !isset($this->_splitter['level'])) {
-            return;
+        // Script source
+        elseif ($this->type === 'start' && in_array($this->prev, ['script', 'style'])) {
+            $pos = strpos($this->source, '</'.$this->prev);
+            $substr = substr($this->source, 0, $pos);
+            $this->text .= $substr;
+            $this->type = 'source';
+            $this->source = substr($this->source, $pos);
         }
 
-        $name = strtolower($name);
-        if (isset($this->_wrapAlways[$name]) || $this->inXML) {
-            $this->_insertLinebreak();
-        }
-        if (isset($this->_wrapOpen[$name])) {
-            if ($this->_skipWrap) {
-                $this->_skipWrap = false;
-            } else {
-                $this->_insertLinebreak();
-            }
-        }
-        if ($this->_currentType === 'linebreak' && isset($this->_leaveOpen[$name])) {
-            $this->_insertLinebreak();
-        }
+        // Start tag
+        elseif (preg_match($pattern_start_tag, $this->source, $match)) {
+            $tag = strtolower($match[1]);
+            $nl = '';
 
-        if ($this->_startdtd === true) {
-            $this->_startdtd = false;
-            $this->_formatted = rtrim($this->_formatted, "\r\n");
-            $this->_insertLinebreak();
-        }
-        $this->_formatted .= '<'.$name;
-        foreach ($attribs as $key => $value) {
-            // skip P5 namespace
-            if (strtolower($key) === 'xmlns:p5') {
-                continue;
-            }
-            $value = str_replace("\n", '%0A', $value);
-            $value = str_replace("\r", '%0D', $value);
-            if ($key === $value) {
-                $this->_formatted .= ' '.$key;
-            } else {
-                $this->_formatted .= ' '.$key.'="'.$value.'"';
-            }
-        }
-        $slash = (isset($this->_emptyTags[$name])) ? $this->_xhtmlCloser : '';
-        $this->_formatted .= $slash.'>';
-
-        if (isset($this->_preformatTags[$name])) {
-            $this->_preformatted = 1;
-        }
-        if (isset($this->_scriptTags[$name])) {
-            $this->_preformatted = 2;
-        }
-        if ($this->_preformatted === 2) {
-            $this->_scriptCode = '';
-        }
-        $this->_currentType = 'open';
-        $this->_currentContent = $name;
-        if ($this->_preformatted === 0) {
-            ++$this->_level;
-        }
-
-        if (isset($this->_xmlTags[$name])) {
-            $this->inXML = true;
-        }
-    }
-
-    /**
-     * XML Parsing closetag handler.
-     *
-     * @param resource $parser
-     * @param string   $name   Tag name
-     */
-    private function _handleEnd($parser, $name)
-    {
-        if (isset($this->_splitter['id'])) {
-            //
-            if ($this->_splitter['level'] === $this->_level - 1) {
-                unset($this->_splitter['level']);
-            }
-        }
-        if (isset($this->_splitter['id']) && !isset($this->_splitter['level'])) {
-            return;
-        }
-
-        $name = strtolower($name);
-
-        if ($this->_preformatted === 2) {
-            if (preg_match("/(\n+[ ]*)/s", $this->_scriptCode, $match)) {
-                $ws = $this->_indent(1);
-                $pattern = '/'.preg_quote($match[1], '/').'/s';
-                $this->_scriptCode = preg_replace($pattern, "\n$ws", $this->_scriptCode);
-            }
-            if (preg_match("/(\n+[ ]*)$/s", $this->_scriptCode, $match)) {
-                $ws = $this->_indent();
-                $pattern = '/'.preg_quote($match[1], '/').'$/s';
-                $this->_scriptCode = preg_replace($pattern, "\n$ws", $this->_scriptCode);
-            }
-            $this->_formatted .= $this->_scriptCode;
-            $this->_scriptCode = null;
-        }
-
-        // node is empty
-        $nowrap = ($this->_currentType === 'open' && $this->_currentContent === $name);
-
-        if ($this->_preformatted === 0) {
-            --$this->_level;
-        }
-
-        if ($this->_currentType === 'linebreak' && isset($this->_leaveOpen[$name])) {
-            $this->_insertLinebreak($nowrap);
-        }
-
-        if (isset($this->_wrapClose[$name])) {
-            $this->_insertLinebreak($nowrap);
-        }
-        if (!isset($this->_emptyTags[$name])) {
-            if (isset($this->_wrapAlways[$name])) {
-                $this->_insertLinebreak($nowrap);
-            }
-            if (isset($this->_leaveClose[$name])) {
-                if ($this->_currentType === 'linebreak' ||
-                    isset($this->_wrapAlways[$this->_currentContent]) ||
-                    (isset($this->_wrapOpen[$this->_currentContent]) && $name !== 'td')
-                ) {
-                    $this->_insertLinebreak($nowrap);
-                }
-            }
-            if ($this->inXML && $nowrap) {
-                $this->_formatted = preg_replace('/>$/', '/>', $this->_formatted);
-            } else {
-                $this->_formatted .= "</$name>";
-            }
-        }
-        if (isset($this->_preformatTags[$name])) {
-            $this->_preformatted = 0;
-        }
-        if (isset($this->_scriptTags[$name])) {
-            $this->_preformatted = 0;
-        }
-        $this->_currentType = 'close';
-        $this->_currentContent = $name;
-
-        if (isset($this->_xmlTags[$name])) {
-            $this->inXML = false;
-        }
-    }
-
-    /**
-     * XML Parsing character data handler.
-     *
-     * @param resource $parser
-     * @param string   $data
-     */
-    private function _handleChar($parser, $data)
-    {
-        if (isset($this->_splitter['id']) && !isset($this->_splitter['level'])) {
-            return;
-        }
-
-        $data = str_replace("\t", str_repeat($this->_tabSpace, $this->_tabSize), $data);
-        $data = str_replace(array("\r\n", "\r"), "\n", $data);
-
-        if ($this->_preformatted === 2) {
-            $this->_scriptCode .= $data;
-
-            return;
-        }
-
-        // Escape Line Break
-        if (preg_match("/^[\n]+\s*$/", $data) && $this->_preformatted === 0) {
-            $this->_currentType = 'linebreak';
-            $this->_currentContent = $data;
-
-            return;
-        }
-
-        if (preg_match("/^[\n]+\s*/", $data) && $this->_preformatted === 0) {
-            if (($this->_currentType === 'open' || $this->_currentType === 'close') &&
-                isset($this->_leaveOpen[$this->_currentContent])
+            // 常に改行するタグに指定されていれば改行する
+            if (isset($this->always_indention_start_tags[$tag])
+                || ($this->type === 'start' && isset($this->always_wrap_start_tags[$this->prev]))
+                || ($this->type === 'end' && isset($this->always_wrap_end_tags[$this->prev]))
             ) {
-                $data = preg_replace("/^[\n]+\s*/", "\n".$this->_indent(), $data);
+                $nl = PHP_EOL;
             }
-        }
+            // ソースコードのままに...
+            elseif (isset($this->entrust_indention_by_source[$tag])) {
+                $nl = ($this->nl) ? PHP_EOL : '';
+            }
 
-        // Escape White Spaces.
-        if ($this->_currentType !== 'char' &&
-            preg_match("/^[\s]+$/", $data) &&
-            $this->_preformatted === 0
-        ) {
-            return;
-        }
+            $this->wrappedStartTag($nl);
 
-        if ($data === '&' || $data === '<' || $data === '>' ||
-            $data === '"' || $data === "'") {
-            $data = htmlspecialchars($data, ENT_QUOTES);
-        } else {
-            if ($this->_currentType === 'linebreak' || $this->_currentType === 'leavelinebreak') {
-                if (!$this->_preformatted) {
-                    $data = preg_replace("/^[\s]+/", '', $data);
+            // omitting start tags
+            if ($match[2] || $this->startTagOmitting($tag) !== true) {
+                $indent = ($nl === PHP_EOL) ?  $indent = $this->indent() : '';
+                $this->formatted .= $nl.$indent.'<'.$tag.$match[2].'>';
+                if (!isset($this->empty_tags[$tag])) {
+                    $this->append($match[1].':'.$this->level);
+                    ++$this->level;
                 }
             }
+
+            $this->setParent($tag, 'down');
+            $this->prev = $tag;
+            $this->type = 'start';
+
+            if (in_array($tag, ['script', 'style'])) {
+                $this->text .= $match[3];
+            }
+
+            $this->nl = $this->checkTail($match[3]);
+
+            $this->source = preg_replace($pattern_start_tag, '', $this->source);
         }
 
-        if (preg_match("/[\n]+\s*$/", $data, $ws) && $this->_preformatted === 0) {
-            $data = preg_replace("/([\n]+\s*)$/", '', $data);
-            $this->_currentType = 'linebreak';
-            $this->_currentContent = $ws[0];
-        } else {
-            $this->_currentType = 'char';
-            $this->_currentContent = $data;
-        }
-        $this->_formatted .= $data;
-    }
+        // End tag
+        elseif (preg_match($pattern_end_tag, $this->source, $match)) {
+            $tag = strtolower($match[1]);
 
-    /**
-     * XML Parsing external entity reference handler.
-     *
-     * @param resource $parser
-     * @param string   $open_entity_names
-     * @param string   $base
-     * @param string   $system_id
-     * @param string   $public_id
-     */
-    private function _externalEntityRef($parser, $open_entity_names, $base, $system_id, $public_id)
-    {
-        if (isset($this->_splitter['id']) && !isset($this->_splitter['level'])) {
-            return;
-        }
-
-        $this->_formatted .= $open_entity_names;
-        $this->_currentType = 'entity';
-        $this->_currentContent = $open_entity_names;
-    }
-
-    /**
-     * XML Parsing unparsed entity reference handler.
-     *
-     * @param resource $parser
-     * @param string   $entity_name
-     * @param string   $base
-     * @param string   $system_id
-     * @param string   $public_id
-     * @param string   $notation_name
-     */
-    private function _unparsedEntityDecl($parser, $entity_name, $base, $system_id, $public_id, $notation_name)
-    {
-        if (isset($this->_splitter['id']) && !isset($this->_splitter['level'])) {
-            return;
-        }
-
-        $this->_formatted .= $entity_name;
-        $this->_currentType = 'entity';
-        $this->_currentContent = $entity_names;
-    }
-
-    /**
-     * dropping original indent.
-     *
-     * @param string $data
-     *
-     * @return array
-     */
-    private function _dropIndent($data)
-    {
-        $min = 0;
-        if (preg_match_all("/((\r\n|\r|\n)[\t ]*)/", $data, $ws)) {
-            foreach ($ws[1] as $str) {
-                $len = strlen($str);
-                if (empty($min)) {
-                    $min = $len;
+            if (isset($this->preformatted_tags[$tag])) {
+                if (preg_match('/^.+(code|var|kbd)>[\s]*$/s', $this->formatted)) {
+                    $this->rtrim();
                 }
-                if ($min <= $len) {
-                    $regex = preg_quote($str, '/');
+            } else {
+                if ($this->type === 'textnode'
+                    || ($this->type === 'start' && $this->prev === $tag)
+                    || ($this->type === 'end' && isset($this->inline_tags[$this->prev]))
+                ) {
+                    $this->rtrim();
                 }
             }
-            $data = preg_replace("/$regex/", $this->_lineBreak, $data);
-            $isset = true;
+            if ($tag === 'script' || $tag === 'style') {
+                if (preg_match('/\S+/', $this->text)) {
+                    $indent = $this->indent();
+                    $tx = $this->text;
+
+                    // Script code indention
+                    if (preg_match_all("/^([ \t]*)/m", $tx, $matches)) {
+                        $tmp = array_unique($matches[1]);
+                        sort($tmp);
+                        $src_indent = array_shift($tmp);
+                    }
+                    $tx = preg_replace('/'.preg_quote(PHP_EOL.$src_indent, '/').'/s', PHP_EOL.$indent, $tx);
+
+                    $this->formatted .= preg_replace('/[\s]+$/', '', $tx);
+                } else {
+                    $this->type = '';
+                }
+                $this->text = '';
+            }
+
+            $decrement = 1;
+            $parent = $this->getParent();
+            if (isset($this->valid_parents[$tag])) {
+                $myset = $this->valid_parents[$tag];
+
+                if (!isset($this->inline_tags[$tag])) {
+                    $myset['html'] = 0;
+                }
+
+                while (!isset($myset[$parent]) && $tag !== $parent) {
+                    $this->setParent($parent, 'up');
+                    $parent = $this->getParent();
+                    ++$decrement;
+                    if (!$parent) {
+                        break;
+                    }
+                }
+            }
+            $this->decrement($decrement);
+
+            // omitting end tags
+            if ($this->endTagOmitting($tag) !== true) {
+                $nl = '';
+                $key = $tag.':'.$this->level;
+                if (isset($this->always_indention_end_tags[$tag])
+                    || ($this->type === 'end' && isset($this->always_wrap_end_tags[$this->prev]))
+                    || $this->levels[$key] === 1
+                    || $this->type === 'source'
+                ) {
+                    $nl = PHP_EOL;
+                }
+
+                if ($tag === 'textarea') {
+                    $nl = '';
+                }
+
+                $indent = ($nl === PHP_EOL) ? $this->indent() : '';
+                $this->formatted .= $nl.$indent.'</'.$tag.$match[2].'>';
+            }
+
+            $this->setParent($tag, 'up');
+            $this->prev = $tag;
+            $this->type = 'end';
+            $e = $tag.':'.$this->level;
+            if (isset($this->levels[$e])) {
+                $this->remove($e);
+            }
+
+            $this->nl = $this->checkTail($match[3]);
+
+            $this->source = preg_replace($pattern_end_tag, '', $this->source);
         }
 
-        return array($data, isset($isset));
+        // Text
+        elseif (preg_match($pattern_text_node, $this->source, $match)) {
+            $nl = ($this->nl) ? PHP_EOL : '';
+            if (preg_match('/['.preg_quote(PHP_EOL, '/').']+/', $match[1])) {
+                $nl = PHP_EOL;
+            }
+            if ($this->type === 'start') {
+                if (isset($this->always_wrap_start_tags[$this->prev])) {
+                    $nl = PHP_EOL;
+                }
+                $this->wrappedStartTag($nl);
+            }
+            if (!in_array($this->type, ['start', 'end']) || !preg_match('/^[\s]+</', $this->source)) {
+                $indent = ($nl === PHP_EOL) ? $this->indent() : '';
+                $this->formatted .= $nl.$indent.$match[2];
+                $this->type = 'textnode';
+            }
+
+            $this->nl = $this->checkTail($match[2]);
+
+            $this->source = preg_replace($pattern_text_node, '', $this->source);
+        }
     }
 
     /**
-     * indent.
-     *
-     * @param int $offset
+     * Indent source.
      *
      * @return string
      */
-    private function _indent($offset = 0)
+    private function indent()
     {
-        $offset += $this->_level;
-        if ($offset < 0) {
-            $offset = 0;
-        }
-
-        return str_repeat(str_repeat($this->_tabSpace, $this->_tabSize), $offset);
+        return str_repeat($this->tab, $this->level);
     }
 
     /**
-     * getter HTML source.
+     * Decrement nested level.
+     *
+     * @param int $n
      *
      * @return string
      */
-    public function toString()
+    private function decrement($n = 1)
     {
-        $this->_rewindEntityReference();
-
-        return $this->_formatted;
-    }
-
-    /**
-     * escape HTML entities.
-     */
-    private function _escapeEntityReference()
-    {
-        $this->_orgSource = parent::escapeEntityReference($this->_orgSource);
-    }
-
-    /**
-     * rewind escaped HTML entities.
-     */
-    private function _rewindEntityReference()
-    {
-        $this->_formatted = parent::rewindEntityReference($this->_formatted);
-    }
-
-    /**
-     * append XML Document type.
-     */
-    private function _doctype()
-    {
-        if (is_object($this->_dtd)) {
-            if (!empty($this->_formatted)) {
-                $this->_formatted .= $this->_lineBreak;
-            }
-            $this->_formatted .= '<!DOCTYPE';
-            if (!empty($this->_dtd->name)) {
-                $this->_formatted .= ' '.$this->_dtd->name;
-            }
-            if (!empty($this->_dtd->publicId)) {
-                $this->_formatted .= ' PUBLIC';
-                if (preg_match('/XHTML/i', $this->_dtd->publicId)) {
-                    $this->_xhtmlCloser = ' /';
-                }
-                $this->_formatted .= ' "'.$this->_dtd->publicId.'"';
-            }
-            if (!empty($this->_dtd->systemId)) {
-                $this->_formatted .= ' "'.$this->_dtd->systemId.'"';
-            }
-            $this->_formatted .= '>';
+        $this->level -= $n;
+        if ($this->level < 0) {
+            $this->level = 0;
         }
     }
 
     /**
-     * append XML Processing Instruction.
+     * Append to level array.
+     *
+     * @param string $value
      */
-    private function _processingInstruction()
+    private function append($value)
     {
-        if (is_object($this->_pi)) {
-            $this->_formatted .= '<?xml';
-            $this->_formatted .= ' version="'.$this->_pi->version.'"';
-            if (isset($this->_pi->encoding)) {
-                $this->_formatted .= ' encoding="'.$this->_pi->encoding.'"';
-            }
-            $this->_formatted .= ' ?'.'>';
+        $this->levels[$value] = 0;
+    }
+
+    /**
+     * Remove from level array.
+     *
+     * @param string $value
+     */
+    private function remove($value)
+    {
+        unset($this->levels[$value]);
+        //if (false !== $index = array_search($value, $this->levels)) {
+        //    $this->levels = array_splice($this->levels, $index, 1);
+        //}
+    }
+
+    /**
+     * Right trim source code.
+     *
+     * @param string $replace
+     */
+    private function rtrim($replace = null)
+    {
+        if (is_null($replace)) {
+            $this->formatted = rtrim($this->formatted);
+        } else {
+            $this->formatted = preg_replace('/[\s]+$/s', $replace, $this->formatted);
         }
     }
 
     /**
-     * Insert line break.
+     * Set the parent array.
+     *
+     * @param string $tag
+     * @param string $level
      */
-    private function _insertLinebreak($nowrap = false)
+    private function setParent($tag, $level)
     {
-        if ($nowrap) {
+        if (isset($this->empty_tags[$tag])) {
             return;
         }
-        $this->_formatted .= $this->_lineBreak;
-        $this->_formatted .= $this->_indent();
+        if ($level === 'down') {
+            $this->parents[] = $tag;
+        } elseif ($level === 'up') {
+            array_pop($this->parents);
+        }
     }
 
     /**
-     * Tag Closer.
+     * Get the parent array.
      *
-     * @return mixed
+     * @return string
      */
-    public function getTagCloser()
+    private function getParent()
     {
-        return $this->_xhtmlCloser;
+        if (count($this->parents) > 0) {
+            return end($this->parents);
+        }
+    }
+
+    /**
+     * Omitting the start tags.
+     *
+     * @param string $tag
+     *
+     * @return string
+     */
+    private function startTagOmitting($tag)
+    {
+        if (!$this->omit) {
+            return false;
+        }
+        if (!isset($this->omit_start_tags[$tag])) {
+            return false;
+        }
+
+        /*
+         * An html element is start tag may be omitted 
+         * if the first thing inside the html element is not a comment.
+         */
+        if ($tag === 'html') {
+            if (preg_match('/<\/html>[\s]*<!--.*?-->/is', $this->source)) {
+                return false;
+            }
+            if (!preg_match('/^[\s]*<!--.*?-->/s', $this->source)) {
+                return true;
+            }
+        }
+
+        /*
+         * A head element is start tag may be omitted 
+         * if the element is empty, or 
+         * if the first thing inside the head element is an element.
+         */
+        elseif ($tag === 'head') {
+            if (preg_match('/^[\s]*<([^!\?].+|\/head)>/is', $this->source)) {
+                return true;
+            }
+        }
+
+        /*
+         * A body element is start tag may be omitted 
+         * if the element is empty, or 
+         * if the first thing inside the body element 
+         * is not a space character or a comment, except 
+         * if the first thing inside the body element is a meta, 
+         * link, script, style, or template element.
+         */
+        elseif ($tag === 'body') {
+            if (preg_match('/<\/body>[\s]*<!--.*?-->/is', $this->source)
+                || preg_match('/^[\s]*<(meta|link|script|style|template).*?>/is', $this->source)
+            ) {
+                return false;
+            }
+
+            if (preg_match('/^[\s]*<\/body>/is', $this->source)) {
+                return true;
+            }
+
+            return $this->followedWhitespaceOrComments();
+        }
+
+        /*
+         * A colgroup element is start tag may be omitted 
+         * if the first thing inside the colgroup element 
+         * is a col element, and if the element is not immediately
+         * preceded by another colgroup element 
+         * whose end tag has been omitted. 
+         * (It can't be omitted if the element is empty.)
+         */
+        elseif ($tag === 'colgroup') {
+            if (preg_match('/^.+<(colgroup).*?>(((?!<\/\1>).)*)$/is', $this->formatted)) {
+                return false;
+            }
+            if (preg_match('/^[\s]*<col.*?>/is', $this->source)) {
+                return true;
+            }
+        }
+
+        /*
+         * A tbody element is start tag may be omitted 
+         * if the first thing inside the tbody element 
+         * is a tr element, and if the element is not immediately 
+         * preceded by a tbody, thead, or tfoot element 
+         * whose end tag has been omitted. 
+         * (It can't be omitted if the element is empty.)
+         */
+        elseif ($tag === 'tbody') {
+            if (preg_match('/^.+<(tbody|thead|tfoot).*?>(((?!<\/\1>).)+)$/is', $this->formatted)) {
+                return false;
+            }
+            if (preg_match('/^[\s]*<tr>/is', $this->source)) {
+                return true;
+            }
+        }
+    }
+
+    /**
+     * Omitting the end tags.
+     *
+     * @param string $tag
+     *
+     * @return string
+     */
+    private function endTagOmitting($tag)
+    {
+        if (!$this->omit) {
+            return false;
+        }
+        if (!isset($this->omit_end_tags[$tag])) {
+            return false;
+        }
+
+        /*
+         * An html element is end tag may be omitted 
+         * if the html element is not immediately followed by a comment.
+         *
+         * A body element is end tag may be omitted 
+         * if the body element is not immediately followed by a comment.
+         */
+        if (in_array($tag, ['html', 'body'])) {
+            if (!preg_match('/^[\s]*<!--.*?-->/s', $this->source)) {
+                return true;
+            }
+        }
+
+        /*
+         * A head element is end tag may be omitted 
+         * if the head element is not immediately 
+         * followed by a space character or a comment.
+         */
+        elseif ($tag === 'head') {
+            return $this->followedWhitespaceOrComments();
+        }
+
+        /*
+         * A p element is end tag may be omitted 
+         * if the p element is immediately followed by an address,
+         * article, aside, blockquote, div, dl, fieldset, footer, 
+         * form, h1, h2, h3, h4, h5, h6, header, hgroup, hr, main,
+         * nav, ol, p, pre, section, table, or ul, element, or 
+         * if there is no more content in the parent element and
+         * the parent element is not an a element.
+         */
+        elseif ($tag === 'p') {
+            if (preg_match('/^[\s]*<\/a>/is', $this->source)) {
+                return false;
+            }
+            if (preg_match('/^[\s]*<(address|article|aside|blockquote|div|dl|fieldset|footer|form|h[1-6]|header|hgroup|hr|main|nav|ol|p|pre|section|table|ul)[^>]*>/is', $this->source)
+                || preg_match('/^[\s]*<\/.+?>/s', $this->source)
+            ) {
+                return true;
+            }
+        }
+
+        /*
+         * An li element is end tag may be omitted
+         * if the li element is immediately followed by another li element or
+         * if there is no more content in the parent element.
+         */
+        elseif ($tag === 'li') {
+            if (preg_match('/^[\s]*<\/?(ul|ol|li).*?>/is', $this->source)) {
+                return true;
+            }
+        }
+
+        /*
+         * A dt element is end tag may be omitted 
+         * if the dt element is immediately followed by another dt element or
+         * a dd element.
+
+         * A dd element is end tag may be omitted
+         * if the dd element is immediately followed by another dd element or
+         * a dt element, or if there is no more content in the parent element.
+         */
+        elseif (in_array($tag, ['dt', 'dd'])) {
+            if (preg_match('/^[\s]*<\/?(dl|d[dt]).*?>/is', $this->source)) {
+                return true;
+            }
+        }
+
+        /*
+         * A thead element is end tag may be omitted 
+         * if the thead element is immediately 
+         * followed by a tbody or tfoot element.
+         *
+         * A tbody element is end tag may be omitted 
+         * if the tbody element is immediately 
+         * followed by a tbody or tfoot element, or 
+         * if there is no more content in the parent element.
+         */
+        elseif (in_array($tag, ['thead', 'tbody'])) {
+            if (preg_match('/^[\s]*<(tfoot|tbody).*?>/is', $this->source)) {
+                return true;
+            }
+            if ($tag === 'tbody') {
+                if (preg_match('/^[\s]*<\/table>/is', $this->source)) {
+                    return true;
+                }
+            }
+        }
+
+        /*
+         * A tfoot element is end tag may be omitted 
+         * if the tfoot element is immediately followed by a tbody element, 
+         * or if there is no more content in the parent element.
+         */
+        elseif ($tag === 'tfoot') {
+            if (preg_match('/^[\s]*<\/table>/is', $this->source)) {
+                return true;
+            }
+        }
+
+        /*
+         * A colgroup element is end tag may be omitted 
+         * if the colgroup element is not immediately 
+         * followed by a space character or a comment.
+         */
+        elseif ($tag === 'colgroup') {
+            return $this->followedWhitespaceOrComments();
+        }
+
+        /*
+         * A tr element is end tag may be omitted 
+         * if the tr element is immediately followed by another tr element,
+         * or if there is no more content in the parent element.
+         */
+        elseif ($tag === 'tr') {
+            if (preg_match('/^[\s]*<(tr|\/table|\/tbody|\/thead|\/tfoot).*?>/is', $this->source)) {
+                return true;
+            }
+        }
+
+        /*
+         * A td element is end tag may be omitted 
+         * if the td element is immediately followed by a td or th element, 
+         * or if there is no more content in the parent element.
+         *
+         * A th element is end tag may be omitted 
+         * if the th element is immediately followed by a td or th element, 
+         * or if there is no more content in the parent element.
+         */
+        elseif (in_array($tag, ['th', 'td'])) {
+            if (preg_match('/^[\s]*<\/?(t[dhr]|table|tbody|thead|tfoot).*?>/is', $this->source)) {
+                return true;
+            }
+        }
+
+        /*
+         * An optgroup element is end tag may be omitted 
+         * if the optgroup element is immediately followed by another optgroup element,
+         * or if there is no more content in the parent element.
+         */
+        elseif ($tag === 'optgroup') {
+            if (preg_match('/^[\s]*<\/?(select|optgroup).*?>/is', $this->source)) {
+                return true;
+            }
+        }
+
+        /*
+         * An option element is end tag may be omitted 
+         * if the option element is immediately 
+         * followed by another option element, or 
+         * if it is immediately followed by an optgroup element, or
+         * if there is no more content in the parent element.
+         */
+        elseif ($tag === 'option') {
+            if (preg_match('/^[\s]*<\/?(select|optgroup|option).*?>/is', $this->source)) {
+                return true;
+            }
+        }
+
+        /*
+         * An rb element is end tag may be omitted 
+         * if the rb element is immediately 
+         * followed by an rb, rt, rtc or rp element, or 
+         * if there is no more content in the parent element.
+         *
+         * An rt element is end tag may be omitted 
+         * if the rt element is immediately 
+         * followed by an rb, rt, rtc, or rp element, or 
+         * if there is no more content in the parent element.
+         *
+         * An rp element is end tag may be omitted 
+         * if the rp element is immediately 
+         * followed by an rb, rt, rtc or rp element, or 
+         * if there is no more content in the parent element.
+         */
+        elseif (in_array($tag, ['rb', 'rt', 'rtc', 'rp'])) {
+            if (preg_match('/^[\s]*<(rb|rt|rtc|rp|\/ruby).*?>/is', $this->source)) {
+                return true;
+            }
+        }
+
+        /*
+         * An rtc element is end tag may be omitted 
+         * if the rtc element is immediately 
+         * followed by an rb, rtc or rp element, or 
+         * if there is no more content in the parent element.
+         */
+        elseif ($tag === 'rtc') {
+            if (preg_match('/^[\s]*<(rb|rtc|rp|\/ruby).*?>/is', $this->source)) {
+                return true;
+            }
+        }
+    }
+
+    /**
+     * Shift the level.
+     *
+     * @param string $tag
+     *
+     * @return string
+     */
+    private function shiftLevel($tag)
+    {
+        $shift_count = 0;
+        $parent = $this->getParent();
+        if (isset($this->valid_parents[$tag])) {
+            $myset = $this->valid_parents[$tag];
+
+            if (!isset($this->inline_tags[$tag])) {
+                $myset['html'] = 0;
+            }
+
+            while (!isset($myset[$parent])) {
+                $this->setParent($parent, 'up');
+                $this->decrement();
+                $this->rtrim();
+                $parent = $this->getParent();
+                ++$shift_count;
+                if (!$parent) {
+                    break;
+                }
+            }
+        }
+
+        return $shift_count;
+    }
+
+    /**
+     * Followed whitespace or comments.
+     *
+     * @return string
+     */
+    private function followedWhitespaceOrComments()
+    {
+        if (preg_match('/^([\s]+)/s', $this->source, $match)) {
+            if (preg_match("/[\f\v]+/", $match[1])
+                || substr_count(PHP_EOL, $match[1]) > 1
+            ) {
+                return false;
+            }
+        }
+        if (!preg_match('/^[\s]*<!--.*?-->/s', $this->source)) {
+            return true;
+        }
+    }
+
+    /**
+     * Check tail of source code.
+     *
+     * @return string
+     */
+    private function checkTail($str)
+    {
+        return preg_match('/['.preg_quote(PHP_EOL, '/').']+[\t ]*$/s', $str);
+    }
+
+    /**
+     * Wrapped start tag.
+     *
+     * @param string $nl
+     */
+    private function wrappedStartTag($nl)
+    {
+        if ($this->type === 'start' && $nl === PHP_EOL) {
+            end($this->levels);
+            $key = key($this->levels);
+            $this->levels[$key] = 1;
+        }
     }
 }

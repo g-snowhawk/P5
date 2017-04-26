@@ -2,24 +2,22 @@
 /**
  * This file is part of P5 Framework.
  *
- * Copyright (c)2016 PlusFive (http://www.plus-5.com)
+ * Copyright (c)2016 PlusFive (https://www.plus-5.com)
  *
  * This software is released under the MIT License.
- * http://www.plus-5.com/licenses/mit-license
+ * https://www.plus-5.com/licenses/mit-license
  */
-/**
- * Validation class.
- *
- * @license  http://www.plus-5.com/licenses/mit-license  MIT License
- * @author   Taka Goto <http://www.plus-5.com/>
- */
-class P5_Validator
-{
-    /**
-     * Current version.
-     */
-    const VERSION = '1.1.0';
 
+namespace P5;
+
+/**
+ * Data validation class.
+ *
+ * @license  https://www.plus-5.com/licenses/mit-license  MIT License
+ * @author   Taka Goto <www.plus-5.com>
+ */
+class Validator
+{
     /**
      * Validate.
      *
@@ -28,11 +26,11 @@ class P5_Validator
      *
      * @return bool
      */
-    public function check($chk, $value)
+    public static function check($chk, $value)
     {
         $result = false;
         $type = $chk['type'];
-        if (preg_match('/:/', $type)) {
+        if (strpos($type, ':') !== false) {
             list($type, $stype, $svalue) = explode(':', $type);
         }
 
@@ -82,7 +80,7 @@ class P5_Validator
                 }
                 break;
             case 'array' :
-                if ($stype == 'any') {
+                if ($stype === 'any') {
                     if (is_array($value) && count($value) > 0) {
                         foreach ($value as $val) {
                             if (!empty($val)) {
@@ -91,7 +89,7 @@ class P5_Validator
                             }
                         }
                     }
-                } elseif ($stype == 'all') {
+                } elseif ($stype === 'all') {
                     $result = true;
                     if (is_array($value) && count($value) > 0) {
                         foreach ($value as $val) {
@@ -108,17 +106,17 @@ class P5_Validator
                 }
                 break;
             case 'equal' :
-                if ($value == $stype) {
+                if ($value === $stype) {
                     $result = true;
                 }
                 break;
             case 'retype' :
                 eval('
-                    if (array_key_exists($stype, $_'.strtoupper($_SERVER['REQUEST_METHOD']).')) {
-                        $condition = $_'.strtoupper($_SERVER['REQUEST_METHOD']).'[$stype];
+                    if (array_key_exists($stype, $_'.strtoupper(filter_input(INPUT_SERVER, 'REQUEST_METHOD')).')) {
+                        $condition = $_'.strtoupper(filter_input(INPUT_SERVER, 'REQUEST_METHOD')).'[$stype];
                     }
                 ');
-                if ($condition == $value) {
+                if ($condition === $value) {
                     $result = true;
                 }
                 break;
@@ -126,11 +124,11 @@ class P5_Validator
                 $result = true;
                 $condition = '';
                 eval('
-                    if (array_key_exists($stype, $_'.strtoupper($_SERVER['REQUEST_METHOD']).')) {
-                        $condition = $_'.strtoupper($_SERVER['REQUEST_METHOD']).'[$stype];
+                    if (array_key_exists($stype, $_'.strtoupper(filter_input(INPUT_SERVER, 'REQUEST_METHOD')).')) {
+                        $condition = $_'.strtoupper(filter_input(INPUT_SERVER, 'REQUEST_METHOD')).'[$stype];
                     }
                 ');
-                if ($condition == $svalue) {
+                if ($condition === $svalue) {
                     $result = !empty($value);
                 }
                 break;

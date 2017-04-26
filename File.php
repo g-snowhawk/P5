@@ -2,24 +2,22 @@
 /**
  * This file is part of P5 Framework.
  *
- * Copyright (c)2016 PlusFive (http://www.plus-5.com)
+ * Copyright (c)2016 PlusFive (https://www.plus-5.com)
  *
  * This software is released under the MIT License.
- * http://www.plus-5.com/licenses/mit-license
+ * https://www.plus-5.com/licenses/mit-license
  */
-/**
- * File class.
- *
- * @license  http://www.plus-5.com/licenses/mit-license  MIT License
- * @author   Taka Goto <http://www.plus-5.com/>
- */
-class P5_File
-{
-    /** 
-     * Current version.
-     */
-    const VERSION = '1.1.0';
 
+namespace P5;
+
+/**
+ * Methods for file management.
+ *
+ * @license  https://www.plus-5.com/licenses/mit-license  MIT License
+ * @author   Taka Goto <www.plus-5.com>
+ */
+class File
+{
     /**
      * Writting File.
      *
@@ -101,15 +99,16 @@ class P5_File
      *
      * @param string $dir
      * @param string $dest
-     * @param number $mode
      * @param bool   $recursive
+     * @param number $dir_mode
+     * @param number $file_mode
      *
      * @return bool
      */
-    public static function copydir($dir, $dest, $mode = 0777, $recursive = false)
+    public static function copydir($dir, $dest, $recursive = false, $dir_mode = 0755, $file_mode = 0644)
     {
         if (!is_dir($dest)) {
-            if (false === P5_File_Path::mkpath($dest, $mode)) {
+            if (false === self::mkdir($dest, $dir_mode)) {
                 return false;
             }
         }
@@ -119,11 +118,12 @@ class P5_File
                     $path = $dir.'/'.$file;
                     $new = $dest.'/'.$file;
                     if (is_dir($path)) {
-                        self::copydir($path, $new, $mode, $recursive);
+                        self::copydir($path, $new, $recursive, $dir_mode, $file_mode);
                     } else {
                         if (false === copy($path, $new)) {
                             return false;
                         }
+                        @chmod($new, $file_mode);
                     }
                 }
             }
@@ -291,7 +291,7 @@ class P5_File
     {
         $tmp = explode('.', $path);
         $ext = array_pop($tmp);
-        $mime = P5_File_Mime::type(strtolower($ext));
+        $mime = self::mimetype(strtolower($ext));
 
         return (empty($mime)) ? 'application/octet-stream' : $mime;
     }
@@ -335,5 +335,76 @@ class P5_File
         }
 
         return $dir;
+    }
+
+    /**
+     * Create new direstory.
+     * 
+     * @param string $path
+     * @param mixed  $mode
+     *
+     * @return bool
+     */
+    public static function mkdir($path, $mode = 0777)
+    {
+        $path = self::replaceDirectorySeparator($path);
+        if (file_exists($path)) {
+            return is_dir($path);
+        }
+        $base = rtrim($path, DIRECTORY_SEPARATOR);
+        $dirs = [];
+        while (!file_exists($base)) {
+            array_unshift($dirs, basename($base));
+            $prev = $base;
+            $base = dirname($base);
+            if ($prev == $base) {
+                return false;
+            }
+            if (file_exists($base) && !is_writable($base)) {
+                return false;
+            }
+        }
+        if ($base === DIRECTORY_SEPARATOR) {
+            $base = '';
+        }
+        foreach ($dirs as $dir) {
+            $base .= DIRECTORY_SEPARATOR.$dir;
+            try {
+                @mkdir($base);
+                @chmod($base, $mode);
+            } catch (ErrorException $e) {
+                if (preg_match('/File exists/', $e->getMessage())) {
+                    continue;
+                }
+            }
+        }
+
+        return is_dir($path);
+    }
+
+    /**
+     * Check mime type by extension.
+     *
+     * @param string $key
+     *
+     * @return string
+     */
+    public static function mimetype($key)
+    {
+        $types = [
+            'bmp' => 'image/bmp',
+            'css' => 'text/css',
+            'gif' => 'image/gif',
+            'jpeg' => 'image/jpeg',
+            'jpg' => 'image/jpeg',
+            'js' => 'text/javascript',
+            'pdf' => 'application/pdf',
+            'png' => 'image/png',
+            'swf' => 'application/x-shockwave-flash',
+            'tiff' => 'image/tiff',
+            'txt' => 'text/plain',
+        ];
+
+        return (isset($types[$key])) ? $types[$key] : '';
     }
 }
