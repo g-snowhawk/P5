@@ -70,16 +70,12 @@ class P5_Text
         $defaultSetting = mb_detect_order();
         mb_detect_order('ASCII, JIS, UTF-16, UTF-8, EUC-JP, SJIS-WIN, SJIS');
         if (is_array($str)) {
-            try {
-                mb_convert_variables($encodingTo, mb_detect_order(), $str);
-            } catch (ErrorException $e) {
-                // Fixed PHP7.0 Bugs
-                if (stripos($e->getMessage(), 'Cannot handle recursive references') === false) {
-                    return false;
-                }
+            if (version_compare(PHP_VERSION, '7.0.0') >= 0) {
                 foreach ($str as $n => $value) {
                     $str[$n] = self::convert($value, $encodingTo, $encodingFrom);
                 }
+            } else {
+                mb_convert_variables($encodingTo, mb_detect_order(), $str);
             }
         } else {
             if (is_null($encodingFrom)) {
