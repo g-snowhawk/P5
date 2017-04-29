@@ -85,13 +85,17 @@ class Error
      */
     public function errorHandler($errno, $errstr, $errfile, $errline, $errcontext)
     {
-        if (error_reporting() === 0) {
+        if (error_reporting() === 0 && DEBUG_MODE === 0) {
             return false;
         }
 
         $message = "$errstr in $errfile on line $errline.";
         self::feedback($message, $errno);
         self::log($message, $errno);
+
+        if (DEBUG_MODE === 1 && ($errno === E_USER_ERROR || $errno === E_USER_WARNING)) {
+            self::displayError($message, $errno);
+        }
 
         if (DEBUG_MODE > 1 || ($errno !== E_NOTICE && $errno !== E_USER_NOTICE)) {
             throw new \ErrorException($message, 0, $errno, $errfile, $errline);

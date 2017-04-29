@@ -120,7 +120,9 @@ class Session
 
         if (!empty($this->save_path)) {
             if (!file_exists($this->save_path)) {
-                if (false === mkdir($this->save_path, 0777, true)) {
+                try {
+                    mkdir($this->save_path, 0777, true);
+                } catch (\ErrorException $e) {
                     throw new \Exception('Session save path is not exists '.$this->save_path);
                 }
             }
@@ -183,6 +185,9 @@ class Session
      */
     public function start()
     {
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            return;
+        }
         session_set_cookie_params($this->lifetime, $this->path, $this->domain, $this->secure, $this->httponly);
         session_cache_limiter($this->cachelimiter);
         if (empty($this->sid)) {
