@@ -26,6 +26,8 @@ require_once 'P5/Environment.php';
  */
 class P5_Error
 {
+    const FEEDBACK_INTERVAL = 10800;
+
     /**
      * Custom error handler.
      *
@@ -197,6 +199,29 @@ class P5_Error
         if (!defined('FEEDBACK_ADDR')) {
             return;
         }
+
+        if ($fh = fopen(ERROR_LOG_DESTINATION, 'r')) {
+            $final = '';
+            for ($i = -2;; $i--) {
+                if (fseek($fh, $i, SEEK_END) === -1) {
+                    break;
+                }
+                $line = rtrim(fgets($fh, 8192));
+                if (empty($line)) {
+                    break;
+                }
+                $final = $line;
+            }
+            if (preg_match("/^\[(.+?)\].*?\[.+?\]\s*(.+$)/", $final, $match)) {
+                if ($match[2] === preg_replace("/^\[(.+?)\].*?\[.+?\]\s*/", "", $message)
+                 && time() - strtotime($match[1]) < self::FEEDBACK_INTERVAL
+                ) {
+                    return;
+                }
+            }
+            fclose($fh);
+        }
+
         $configuration = P5_Text::explode(',', FEEDBACK_ADDR);
         $feedbacks = array();
         foreach ($configuration as $feedback_addr) {
