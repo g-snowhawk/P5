@@ -28,6 +28,8 @@ class P5_Error
 {
     const FEEDBACK_INTERVAL = 10800;
 
+    protected $error_reporting;
+
     /**
      * Custom error handler.
      *
@@ -74,6 +76,7 @@ class P5_Error
         register_shutdown_function(array('P5_Error', 'unloadHandler'));
         $this->_oldErrorHandler = set_error_handler(array($this, 'errorHandler'));
         $this->_oldExceptionHandler = set_exception_handler(array($this, 'exceptionHandler'));
+        $this->error_reporting = error_reporting();
 
         if (!empty($template) && !defined('ERROR_DOCUMENT')) {
             $src = file_get_contents($template, FILE_USE_INCLUDE_PATH);
@@ -94,17 +97,18 @@ class P5_Error
      */
     public function errorHandler($errno, $errstr, $errfile, $errline, $errcontext)
     {
-        if (error_reporting() === 0) {
+        if ($this->error_reporting === 0) {
             return false;
         }
 
         $msg = "$errstr in $errfile on $errline.";
-        self::feedback($msg, $errno);
-        self::log($msg, $errno);
 
         if (DEBUG_MODE > 1 || ($errno !== E_NOTICE && $errno !== E_USER_NOTICE)) {
             throw new ErrorException($msg, 0, $errno, $errfile, $errline);
         }
+
+        self::feedback($msg, $errno);
+        self::log($msg, $errno);
 
         return false;
     }
@@ -122,6 +126,7 @@ class P5_Error
         $code = $ex->getCode();
         self::feedback($msg, $code);
         self::log($msg, $code);
+        self::displayError($msg, $code);
     }
 
     /**
