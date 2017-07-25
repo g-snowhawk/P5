@@ -309,6 +309,10 @@ class P5_Html_Source extends P5_Xml_Dom
         }
         $attr = implode(' ', $classes);
 
+        if (empty($attr)) {
+            return $element->removeAttribute('class');
+        }
+
         return $element->setAttribute('class', $attr);
     }
 
