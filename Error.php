@@ -149,7 +149,7 @@ class P5_Error
      * @param string $msg
      * @param int    $errno
      */
-    public static function displayError($msg, $errno)
+    public function displayError($msg, $errno)
     {
         // POST Size Over.
         if (preg_match("/POST Content\-Length of ([0-9]+) bytes exceeds the limit of ([0-9]+) bytes/i", $msg, $match)) {
@@ -161,7 +161,9 @@ class P5_Error
         if (in_array($errno, array(E_NOTICE, E_USER_NOTICE, E_STRICT))) {
             return;
         }
-        if (defined('ERROR_DOCUMENT')) {
+        if (!is_null($this->_temporaryTemplate)) {
+            $src = file_get_contents($this->_temporaryTemplate, FILE_USE_INCLUDE_PATH);
+        } elseif (defined('ERROR_DOCUMENT')) {
             if (file_exists(ERROR_DOCUMENT)) {
                 $src = file_get_contents(ERROR_DOCUMENT);
             } else {
