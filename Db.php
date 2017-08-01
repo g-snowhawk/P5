@@ -584,6 +584,25 @@ class P5_Db
     }
 
     /**
+     * Return the PDOStatement.
+     *
+     * @param string $columns
+     * @param string $table
+     * @param string $statement
+     * @param array  $options
+     *
+     * @return mixed
+     */
+    public function getStatement($columns, $table, $statement = '', $options = array())
+    {
+        $sql = "SELECT $columns FROM $table";
+        if (!empty($statement) && is_array($options)) {
+            $sql .= ' '.$this->prepareStatement($statement, $options);
+        }
+        return $this->query($sql);
+    }
+
+    /**
      * Exists Records.
      *
      * @param string $table
