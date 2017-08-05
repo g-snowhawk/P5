@@ -220,7 +220,7 @@ class P5_Error
                 $final = $line;
             }
             if (preg_match("/^\[(.+?)\].*?\[.+?\]\s*(.+$)/", $final, $match)) {
-                if ($match[2] === preg_replace("/^\[(.+?)\].*?\[.+?\]\s*/", "", $message)
+                if ($match[2] === preg_replace("/^\[(.+?)\].*?\[.+?\]\s*/", "", $msg)
                  && time() - strtotime($match[1]) < self::FEEDBACK_INTERVAL
                 ) {
                     return;
