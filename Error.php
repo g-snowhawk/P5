@@ -207,6 +207,10 @@ class P5_Error
             return;
         }
 
+        if ($errno === E_NOTICE) {
+            return;
+        }
+
         if ($fh = fopen(ERROR_LOG_DESTINATION, 'r')) {
             $final = '';
             for ($i = -2;; $i--) {
