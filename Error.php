@@ -249,6 +249,7 @@ class P5_Error
         $feedbacks = array_values(array_filter($feedbacks, 'strlen'));
         if (count($feedbacks) > 0) {
             $msg .= PHP_EOL;
+            $msg .= PHP_EOL.'User: '.P5_Environment::server('remote_addr');
             $msg .= PHP_EOL.'Host: '.P5_Environment::server('server_name');
             $msg .= PHP_EOL.'Time: '.date('Y-m-d H:i:s');
             foreach ($feedbacks as $to) {
