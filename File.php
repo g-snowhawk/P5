@@ -181,8 +181,11 @@ class P5_File
         $path = preg_replace('/[\/\\\]/', '/', $path);
         $path = preg_replace('/\/+/', '/', $path);
         $path = preg_replace('/\/\.\//', '/', $path);
-        $path = preg_replace('/\/[^\/]+\/\.\.\//', '/', $path);
-        if (DIRECTORY_SEPARATOR == '/') {  // UNIX
+        $pattern = '/\/(\.*)?[^\/\.]+((\.*)?([^\/\.]+)?)*?\/\.\.\//';
+        while (preg_match($pattern, $path)) {
+            $path = preg_replace($pattern, '/', $path);
+        }
+        if (DIRECTORY_SEPARATOR === '/') {  // UNIX
             $path = preg_replace('/^[a-z]{1}:/i', '', $path);
         } else {  // Windows
             if ($isunc === true) {
