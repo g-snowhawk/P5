@@ -299,20 +299,40 @@ class P5_Html
             $source = preg_replace_callback("/<([A-Z]+)(([\s]+[^>]+)?)>/", 'self::_opTag', $source);
             $source = preg_replace_callback("/<\/([A-Z]+)>/", 'self::_clTag', $source);
         }
+
+        $enc = 'UTF-8';
         foreach (self::$emptyTags as $tag => $value) {
-            // continue when finded close tags.
-            $pattern = "/<\/".preg_quote($tag, '/').'>/i';
-            if (preg_match($pattern, $source)) {
-                continue;
+            $quoted = preg_quote($tag, '/');
+            $pattern = '/<('.$quoted.'(\s+[^>]*)?)>/i';
+            $source = preg_replace($pattern, '<$1/>', $source);
+
+            $offset = 0;
+            $matched = array();
+            $needle = "</$tag>";
+            $shift = mb_strlen($needle, $enc);
+            while (false !== $pos = mb_strpos($source, $needle, $offset, $enc)) {
+                $offset = $pos + $shift;
+                $matched[] = $pos;
             }
-            // No Attributes
-            $pattern = '/<('.preg_quote($tag, '/').')>/i';
-            $source = preg_replace($pattern, '<$1 />', $source);
-            // has Attributes
-            $pattern = '/<('.preg_quote($tag, '/').")[\s]+([^>]*)>/i";
-            $source = preg_replace($pattern, '<$1 $2/>', $source);
+
+            $diff = 0;
+            foreach ($matched as $match) {
+                $len = mb_strlen($source, $enc);
+                $offset = ($match - $diff) - $len;
+                $sep = mb_strrpos($source, "<$tag", $offset, $enc);
+
+                $front = mb_substr($source, 0, $sep, $enc);
+                $back = mb_substr($source, $sep, NULL, $enc);
+
+                $pattern = '/<('.$quoted.')([^>]*)?\/>/is';
+                $back = preg_replace($pattern, '<$1$2>', $back, 1);
+
+                $source = $front.$back;
+
+                $diff += $len - mb_strlen($source, $enc);
+            }
         }
-        $source = preg_replace("/\/\/>/", '/>', $source);
+        $source = preg_replace("/[\/]+>/", '/>', $source);
 
         return $source;
     }
