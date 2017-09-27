@@ -49,6 +49,13 @@ class P5_Html_Source extends P5_Xml_Dom
     protected $xssProtection = 1;
 
     /**
+     * Template file path
+     *
+     * @var string
+     */
+    public $template_path;
+
+    /**
      * Object constructor.
      *
      * @param mixed $template
