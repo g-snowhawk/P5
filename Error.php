@@ -28,6 +28,18 @@ class P5_Error
 {
     const FEEDBACK_INTERVAL = 10800;
 
+    /**
+     * not sending feedback flag
+     *
+     * @var bool
+     */
+    protected $not_feedback = false;
+
+    /**
+     * Error reporting level
+     *
+     * @var int
+     */
     protected $error_reporting;
 
     /**
@@ -107,7 +119,7 @@ class P5_Error
             throw new ErrorException($msg, 0, $errno, $errfile, $errline);
         }
 
-        self::feedback($msg, $errno);
+        self::feedback($msg, $errno, $this->not_feedback);
         self::log($msg, $errno);
 
         return false;
@@ -124,7 +136,7 @@ class P5_Error
     {
         $msg = $ex->getMessage().' in '.$ex->getFile().' on '.$ex->getLine();
         $code = $ex->getCode();
-        self::feedback($msg, $code);
+        self::feedback($msg, $code, $this->not_feedback);
         self::log($msg, $code);
         self::displayError($msg, $code);
     }
@@ -194,16 +206,18 @@ class P5_Error
         exit($errno);
     }
 
-    /*
+    /**
      * Feedback to administrators
      *
      * @param string $msg
      * @param int    $errno
+     * @param bool   $not_feedback
+     *
      * @return void
      */
-    public static function feedback($msg, $errno)
+    public static function feedback($msg, $errno, $not_feedback = false)
     {
-        if (!defined('FEEDBACK_ADDR')) {
+        if ($not_feedback === true || !defined('FEEDBACK_ADDR')) {
             return;
         }
 
