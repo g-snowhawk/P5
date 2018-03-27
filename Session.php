@@ -113,7 +113,7 @@ class Session
         $this->cachelimiter = $cacheLimiter;
         $this->save_path = File::realpath($save_path);
         $this->lifetime = $lifetime;
-        $this->path = rtrim($path, '/');
+        $this->path = $path;
         $this->domain = $domain;
         $this->secure = $secure;
         $this->httponly = $httponly;

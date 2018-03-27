@@ -181,7 +181,10 @@ class File
         $path = preg_replace('/[\/\\\]/', '/', $path);
         $path = preg_replace('/\/+/', '/', $path);
         $path = preg_replace('/\/\.\//', '/', $path);
-        $path = preg_replace('/\/[^\/]+\/\.\.\//', '/', $path);
+        $pattern = '/\/(\.*)?[^\/\.]+((\.*)?([^\/\.]+)?)*?\/\.\.\//';
+        while (preg_match($pattern, $path)) {
+            $path = preg_replace($pattern, '/', $path);
+        }
         if (DIRECTORY_SEPARATOR == '/') {  // UNIX
             $path = preg_replace('/^[a-z]{1}:/i', '', $path);
         } else {  // Windows
@@ -372,7 +375,7 @@ class File
             try {
                 @mkdir($base);
                 @chmod($base, $mode);
-            } catch (ErrorException $e) {
+            } catch (\ErrorException $e) {
                 if (preg_match('/File exists/', $e->getMessage())) {
                     continue;
                 }

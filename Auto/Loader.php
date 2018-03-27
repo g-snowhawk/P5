@@ -108,7 +108,7 @@ class Loader
              return false;
          }
 
-         return true;
+         return $path;
      }
 
     /**
@@ -135,12 +135,18 @@ class Loader
             $dirs = explode(PATH_SEPARATOR, ini_get('include_path'));
             foreach ($dirs as $dir) {
                 $file = $dir.DIRECTORY_SEPARATOR.$path;
-                if (realpath($file)) {
-                    return $file;
+                if (false !== $realpath = realpath($file)) {
+                    return $realpath;
                 }
+
+                $dest = preg_replace("/(([^\." . preg_quote(DIRECTORY_SEPARATOR, '/') . "]+)" . preg_quote(self::$fileExtension, '/') . ")$/", "$2/$1", $file);
+                if (false !== $realpath = realpath($dest)) {
+                    return $realpath;
+                }
+
                 $file = preg_replace('/\.php$/', '.class.php', $file);
-                if (realpath($file)) {
-                    return $file;
+                if (false !== $realpath = realpath($file)) {
+                    return $realpath;
                 }
             }
 

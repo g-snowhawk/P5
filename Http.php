@@ -107,6 +107,23 @@ class Http
     }
 
     /**
+     * Full request URI
+     *
+     * @return string
+     */
+    public static function getURI()
+    {
+        $protocol = 'http';
+        if (\P5\Environment::server('https') === 'on') {
+            $protocol .= 's';
+        }
+        $host = \P5\Environment::server('http_host');
+        $request = \P5\Environment::server('request_uri');
+        
+        return "$protocol://$host$request";
+    }
+
+    /**
      * Redirect.
      *
      * @param string $uri

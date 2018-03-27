@@ -27,27 +27,46 @@ class Environment
 
     public static function cookie($key)
     {
-        return filter_input(INPUT_COOKIE, $key);
+        return filter_input(INPUT_COOKIE, $key, FILTER_SANITIZE_STRING);
     }
 
-    public static function env($key)
+    public static function get($key, $filter = FILTER_SANITIZE_STRING)
     {
-        $value = filter_input(INPUT_ENV, $key, FILTER_SANITIZE_STRING);
+        return filter_input(INPUT_GET, $key, $filter);
+    }
+
+    public static function post($key, $filter = FILTER_SANITIZE_STRING, $options = null)
+    {
+        return filter_input(INPUT_POST, $key, $filter, $options);
+    }
+
+    public static function env($key, $filter = FILTER_SANITIZE_STRING)
+    {
+        $value = filter_input(INPUT_ENV, $key, $filter);
         if (is_null($value) && isset($_ENV[$key])) {
-            $value = filter_var($_ENV[$key], FILTER_SANITIZE_STRING);
+            $value = filter_var($_ENV[$key], $filter);
         }
 
         return $value;
     }
 
-    public static function server($key)
+    public static function server($key, $filter = FILTER_SANITIZE_STRING)
     {
         $key = strtoupper($key);
-        $value = filter_input(INPUT_SERVER, $key, FILTER_SANITIZE_STRING);
+        $value = filter_input(INPUT_SERVER, $key, $filter);
         if (is_null($value) && isset($_SERVER[$key])) {
-            $value = filter_var($_SERVER[$key], FILTER_SANITIZE_STRING);
+            $value = filter_var($_SERVER[$key], $filter);
         }
 
         return $value;
+    }
+
+    public static function session($key, $filter = FILTER_UNSAFE_RAW)
+    {
+        if (!isset($_SESSION[$key])) {
+            return null;
+        }
+
+        return filter_var($_SESSION[$key], $filter);
     }
 }

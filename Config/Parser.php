@@ -37,10 +37,6 @@ class Parser
      */
     public function __construct($inifile)
     {
-        $inifile = realpath($inifile);
-        if (!file_exists($inifile)) {
-            throw new \ErrorException('Not found configurarion file.', 90990);
-        }
         $this->configurations = parse_ini_file($inifile, true);
     }
 
@@ -143,8 +139,8 @@ class Parser
 
     private static function quote($str)
     {
-        if (preg_match('/[\s]+/', $str)) {
-            $str = '"'.$str.'"';
+        if (preg_match('/[\W_]+/', $str)) {
+            $str = '"' . $str . '"';
         }
 
         return $str;

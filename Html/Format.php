@@ -223,7 +223,7 @@ class Format extends Tags
                 $key = $tag.':'.$this->level;
                 if (isset($this->always_indention_end_tags[$tag])
                     || ($this->type === 'end' && isset($this->always_wrap_end_tags[$this->prev]))
-                    || $this->levels[$key] === 1
+                    || (isset($this->levels[$key]) && $this->levels[$key] === 1)
                     || $this->type === 'source'
                 ) {
                     $nl = PHP_EOL;

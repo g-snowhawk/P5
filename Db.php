@@ -842,11 +842,11 @@ class Db
         if (!is_null($force)) {
             $parameter_type = (int) $force;
         } elseif (is_null($value)) {
-            $parameter_type = PDO::PARAM_NULL;
+            $parameter_type = \PDO::PARAM_NULL;
         } elseif (preg_match('/^[0-9]+$/', $value)) {
-            $parameter_type = PDO::PARAM_INT;
+            $parameter_type = \PDO::PARAM_INT;
         } else {
-            $parameter_type = PDO::PARAM_STR;
+            $parameter_type = \PDO::PARAM_STR;
         }
         if (get_magic_quotes_gpc()) {
             $value = stripslashes($value);

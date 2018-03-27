@@ -2,7 +2,7 @@
 /**
  * This file is part of P5 Framework.
  *
- * Copyright (c)2016 PlusFive (https://www.plus-5.com)
+ * Copyright (c)2016-2017 PlusFive (https://www.plus-5.com)
  *
  * This software is released under the MIT License.
  * https://www.plus-5.com/licenses/mit-license
@@ -18,19 +18,21 @@ namespace P5;
  */
 class Error
 {
-    /**
-     * Custom error handler.
-     *
-     * @var mixed
-     */
-    protected $old_error_handler;
+    const FEEDBACK_INTERVAL = 10800;
 
     /**
-     * Custom exception handler.
+     * Debug mode.
      *
-     * @var mixed
+     * @var int
      */
-    protected $old_exception_handler;
+    private $debug_mode = 0;
+
+    /**
+     * logfile save path.
+     *
+     * @var string
+     */
+    private $logdir;
 
     /**
      * Template file path.
@@ -53,25 +55,31 @@ class Error
      */
     public function __construct($template = null)
     {
-        ini_set('display_errors', 'On');
+        $this->template = $template;
+        if (defined('DEBUG_MODE')) {
+            $this->debug_mode = DEBUG_MODE;
+        }
+
+        register_shutdown_function([$this, 'unloadHandler']);
+        set_error_handler([$this, 'errorHandler']);
+        set_exception_handler([$this, 'exceptionHandler']);
+
         if (defined('ERROR_LOG_DESTINATION') && !self::isEmail(ERROR_LOG_DESTINATION)) {
             $dir = dirname(ERROR_LOG_DESTINATION);
             if (!empty($dir)) {
-                if (!is_dir($dir)) {
-                    if (false === @mkdir($dir, 0777, true)) {
-                        trigger_error("$dir is not found.", E_USER_ERROR);
+                try {
+                    if (!is_dir($dir)) {
+                        mkdir($dir, 0777, true);
                     }
-                }
-                if (false === @touch(ERROR_LOG_DESTINATION)) {
-                    trigger_error(ERROR_LOG_DESTINATION.' Permission denied.', E_USER_ERROR);
+                    if (!file_exists(ERROR_LOG_DESTINATION)) {
+                        touch(ERROR_LOG_DESTINATION);
+                    }
+                } catch (\ErrorException $e) {
+                    trigger_error(ERROR_LOG_DESTINATION.' is no such file', E_USER_ERROR);
                 }
             }
+            $this->logdir = $dir;
         }
-        ini_set('display_errors', 'Off');
-        register_shutdown_function([$this, 'unloadHandler']);
-        $this->old_error_handler = set_error_handler([$this, 'errorHandler']);
-        $this->old_exception_handler = set_exception_handler([$this, 'exceptionHandler']);
-        $this->template = $template;
     }
 
     /**
@@ -85,36 +93,43 @@ class Error
      */
     public function errorHandler($errno, $errstr, $errfile, $errline, $errcontext)
     {
-        if (error_reporting() === 0 && DEBUG_MODE === 0) {
+        if (error_reporting() === 0 && $this->debug_mode === 0) {
             return false;
         }
 
-        $message = "$errstr in $errfile on line $errline.";
-        self::feedback($message, $errno);
-        self::log($message, $errno);
+        if ($errno === E_USER_ERROR
+         || $errno === E_USER_NOTICE
+         || $errno === E_STRICT
+         || $errno === E_NOTICE
+        ) {
+            $message = "$errstr in $errfile on line $errline.";
+            self::log($message, $errno);
+            if ($errno === E_USER_ERROR) {
+                self::feedback($message, $errno);
+                self::displayError($message, $errno);
+            }
 
-        if (DEBUG_MODE === 1 && ($errno === E_USER_ERROR || $errno === E_USER_WARNING)) {
-            self::displayError($message, $errno);
+            return false;
         }
-
-        if (DEBUG_MODE > 1 || ($errno !== E_NOTICE && $errno !== E_USER_NOTICE)) {
-            throw new \ErrorException($message, 0, $errno, $errfile, $errline);
-        }
-
-        return false;
+        throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
     }
 
     /**
      * Custom exception handler.
      *
-     * @param Exception $ex
+     * @param object $ex
      */
     public function exceptionHandler($ex)
     {
-        $message = $ex->getMessage();
-        $errno = $ex->getCode();
+        $errno = method_exists($ex, 'getSeverity') ? $ex->getSeverity() : $ex->getCode();
+        $errstr = $ex->getMessage();
+        $errfile = $ex->getFile();
+        $errline = $ex->getLine();
+        $message = "$errstr in $errfile on line $errline.";
+        self::log($message, $errno, $errfile, $errline);
         self::feedback($message, $errno);
-        self::log($message, $errno, $ex->getFile(), $ex->getLine());
+        $message .= PHP_EOL.$ex->getTraceAsString();
+        self::displayError($message, $errno);
     }
 
     /**
@@ -151,15 +166,15 @@ class Error
             $this->temporary_template = null;
         }
         $message = htmlspecialchars($message, ENT_COMPAT, mb_internal_encoding(), false);
-        if (defined('DEBUG_MODE') && DEBUG_MODE !== 0) {
+        if ($this->debug_mode > 0) {
             $debugger = '';
             foreach ((array) $tracer as $trace) {
-                $debugger .= '<br>'.$trace['file'].' on line '.$trace['line'];
+                $debugger .= PHP_EOL.$trace['file'].' on line '.$trace['line'];
             }
             $src = preg_replace(
                 '/<!--ERROR_DESCRIPTION-->/',
                 '<p id="P5-errormessage">'.
-                    htmlentities($message, ENT_QUOTES, 'UTF-8', false).$debugger.
+                    nl2br(htmlentities($message, ENT_QUOTES, 'UTF-8', false).$debugger).
                 '</p>', $src
             );
         }
@@ -188,6 +203,29 @@ class Error
         if (!defined('FEEDBACK_ADDR')) {
             return;
         }
+
+        if ($fh = fopen(ERROR_LOG_DESTINATION, 'r')) {
+            $final = '';
+            for ($i = -2;; $i--) {
+                if (fseek($fh, $i, SEEK_END) === -1) {
+                    break;
+                }
+                $line = rtrim(fgets($fh, 8192));
+                if (empty($line)) {
+                    break;
+                }
+                $final = $line;
+            }
+            if (preg_match("/^\[(.+?)\].*?\[.+?\]\s*(.+$)/", $final, $match)) {
+                if ($match[2] === preg_replace("/^\[(.+?)\].*?\[.+?\]\s*/", "", $message)
+                 && time() - strtotime($match[1]) < self::FEEDBACK_INTERVAL
+                ) {
+                    return;
+                }
+            }
+            fclose($fh);
+        }
+
         $configuration = Text::explode(',', FEEDBACK_ADDR);
         $feedbacks = array();
         foreach ($configuration as $feedback_addr) {
@@ -204,6 +242,7 @@ class Error
         $feedbacks = array_values(array_filter($feedbacks, 'strlen'));
         if (count($feedbacks) > 0) {
             $message .= PHP_EOL;
+            $message .= PHP_EOL.'User: '.Environment::server('remote_addr');
             $message .= PHP_EOL.'Host: '.Environment::server('server_name');
             $message .= PHP_EOL.'Time: '.date('Y-m-d H:i:s');
             foreach ($feedbacks as $to) {
@@ -220,7 +259,7 @@ class Error
      */
     public function log($message, $errno)
     {
-        if (defined('DEBUG_MODE') && DEBUG_MODE === 0) {
+        if ($this->debug_mode === 0) {
             if (in_array($errno, [8, 1024, 2048])) {
                 return;
             }
@@ -228,7 +267,7 @@ class Error
         if (defined('ERROR_LOG_DESTINATION')) {
             if (self::isEmail(ERROR_LOG_DESTINATION)) {
                 error_log($message, 1, ERROR_LOG_DESTINATION);
-            } elseif (is_dir(dirname(ERROR_LOG_DESTINATION))) {
+            } elseif (!is_null($this->logdir)) {
                 $client = '['.filter_input(INPUT_SERVER, 'REMOTE_ADDR').'] ';
                 error_log(date('[Y-m-d H:i:s] ')."$client$message\n", 3, ERROR_LOG_DESTINATION);
             } else {
