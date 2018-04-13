@@ -159,6 +159,12 @@ class Error
         if (in_array($errno, [E_NOTICE, E_USER_NOTICE, E_STRICT])) {
             return;
         }
+
+        if (php_sapi_name() === 'cli') {
+            echo $message;
+            exit($errno);
+        }
+
         $src = (is_null($this->template)) ? self::htmlSource()
                                           : file_get_contents($this->template);
         if (!empty($this->temporary_template)) {

@@ -49,7 +49,8 @@ class Form
     {
         switch ($key) {
             case 'method' :
-                return strtolower(\P5\Environment::server('REQUEST_METHOD'));
+                $method = strtolower(\P5\Environment::server('REQUEST_METHOD'));
+                return (empty($method)) ? 'get' : $method;
                 break;
         }
     }

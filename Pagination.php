@@ -16,7 +16,7 @@ namespace P5;
  * @license  https://www.plus-5.com/licenses/mit-license  MIT License
  * @author   Taka Goto <www.plus-5.com>
  */
-class Pagenation
+class Pagination
 {
     private $current_page;
     private $max_per_page;
@@ -33,6 +33,22 @@ class Pagenation
      */
     public function __construct()
     {
+    }
+
+    /**
+     * Clone this class.
+     */
+    public function __clone()
+    {
+        $this->current_page = null;
+        $this->max_per_page = null;
+        $this->total_pages = null;
+        $this->link_count = null;
+        $this->link_format = null;
+        $this->link_start = null;
+        $this->link_end = null;
+        $this->suffix_separator = '';
+        $this->inited = false;
     }
 
     /**
@@ -58,13 +74,12 @@ class Pagenation
 
     /**
      * Update initialized flag.
+     *
+     * @param bool $flag
      */
-    public function setInit($flg)
+    public function setInited($boolean)
     {
-        if (!is_bool($flg)) {
-            trigger_error('Argument 1 not boolean given', E_USER_ERROR);
-        }
-        $this->inited = $flg;
+        $this->inited = (bool)$boolean;
     }
 
     /**
@@ -221,13 +236,13 @@ class Pagenation
     /**
      * Page suffix for filename.
      *
-     * @param int $p   Page number
-     * @param int $min suffix filter
+     * @param int $page_number  Page number
+     * @param int $min          suffix filter
      *
      * @return string
      */
-    public function suffix($p, $min = 1)
+    public function suffix($page_number, $min = 1)
     {
-        return ($p > $min) ? $this->suffix_separator.$p : '';
+        return ($page_number > $min) ? $this->suffix_separator.$page_number : '';
     }
 }
