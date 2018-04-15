@@ -359,4 +359,42 @@ class Session
             );
         }
     }
+
+    /**
+     * Status of session
+     *
+     * @param bool $verbose
+     *
+     * @return string
+     */
+    public static function status($verbose = false)
+    {
+        if ($verbose === false) {
+            return session_status();
+        }
+        $status = '';
+        switch (session_status()) {
+            case PHP_SESSION_DISABLED:
+                $status = 'Session is disabled. ';
+                break;
+            case PHP_SESSION_NONE:
+                $status = 'Session is active (empty). ';
+                break;
+            case PHP_SESSION_ACTIVE:
+                $status = 'Session is active. '.PHP_EOL
+                        . '  session ID    : '.session_id().PHP_EOL
+                        . '  save name     : '.session_name().PHP_EOL
+                        . '  save path     : '.session_save_path().PHP_EOL
+                        . '  cookie params : '.PHP_EOL;
+                foreach (session_get_cookie_params() as $key => $value) {
+                    $status .= "    - $key : $value".PHP_EOL;
+                }
+                $status .= 'session value : '.PHP_EOL;
+                foreach ($_SESSION as $key => $value) {
+                    $status .= "    - $key : ".(string)$value.PHP_EOL;
+                }
+                break;
+        }
+        return $status;
+    }
 }
