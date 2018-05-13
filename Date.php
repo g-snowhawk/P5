@@ -83,4 +83,13 @@ class Date
         $datestr = date($wareki, $timestamp);
         return str_replace(['Q','q'], ["$gengo$year","$gengo_short$year"], $datestr);
     }
+
+    public static function quote($format)
+    {
+        $characters = str_split('dDjlNSwzWFmMntLoYyaABgGhHisuveIOPTZcrU');
+        foreach ($characters as $character) {
+            $format = str_replace($character, '\\'.$character, $format);
+        }
+        return $format;
+    }
 }
