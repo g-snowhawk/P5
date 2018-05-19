@@ -136,7 +136,7 @@ class File
     }
 
     /**
-     * Removing directories.
+     * Alias to self::rmdir.
      *
      * @param string $dir
      * @param bool   $recursive
@@ -145,6 +145,19 @@ class File
      */
     public static function rmdirs($dir, $recursive = false)
     {
+        return self::rmdir($dir, $recursive);
+    }
+
+    /**
+     * Removing directories.
+     *
+     * @param string $dir
+     * @param bool   $recursive
+     *
+     * @return bool
+     */
+    public static function rmdir($dir, $recursive = false)
+    {
         if (is_dir($dir)) {
             if ($recursive === true) {
                 $dh = opendir($dir);
@@ -152,7 +165,7 @@ class File
                     if ($file != '.' && $file != '..') {
                         $path = $dir.'/'.$file;
                         if (is_dir($path)) {
-                            self::rmdirs($path, $recursive);
+                            self::rmdir($path, $recursive);
                         } else {
                             unlink($path);
                         }
