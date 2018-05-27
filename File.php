@@ -94,8 +94,52 @@ class File
         return closedir($dh);
     }
 
+    public static function copy($src, $dest, $recurse = false, $link = null, $dirmode = 0777, $filemode = 0666)
+    {
+        $src = rtrim($src, '/');
+
+        if (is_dir($src)) {
+            if (is_dir($dest)) {
+                $path = rtrim($dest, '/') . '/' . basename($src);
+            } else {
+                $path = $dest;
+            }
+
+            if ($link === 'symbolic') {
+                return symlink($src, rtrim($dest, '/'));
+            }
+
+            $result = mkdir($path, $dirmode, true);
+
+            if (false !== $recurse) {
+                $files = glob("$src/*");
+                foreach ($files as $file) {
+                    if (false === $result = self::copy($file, "$path/" . basename($file), $recurse, $link, $dirmode, $filemode)) {
+                        return false;
+                    }
+                }
+            }
+
+            return $result;
+        }
+
+        switch ($link) {
+            case 'hard':
+                return link($src, $dest);
+                break;
+            case 'symbolic':
+                return symlink($src, $dest);
+                break;
+            default:
+                return copy($src, $dest);
+                break;
+        }
+    }
+
     /**
      * Copying directories.
+     *
+     * @deprecated
      *
      * @param string $dir
      * @param string $dest
