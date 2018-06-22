@@ -33,6 +33,13 @@ class Loader
     private static $includePath = null;
 
     /**
+     * Ignore namespace.
+     *
+     * @var array
+     */
+    private static $ignoreNameSpaceToPath = [];
+
+    /**
      * Default namespace.
      *
      * @var mixed
@@ -54,6 +61,26 @@ class Loader
     public static function setNameSpace($ns)
     {
         self::$namespace = $ns;
+    }
+
+    /**
+     * Set ignore namespace.
+     *
+     * @param array $ignore
+     */
+    public static function setIgnoreNameSpaceToPath(array $ignore)
+    {
+        self::$ignoreNameSpaceToPath = $ignore;
+    }
+
+    /**
+     * Get ignore namespace.
+     *
+     * @param array $ignore
+     */
+    public static function getIgnoreNameSpaceToPath()
+    {
+        return self::$ignoreNameSpaceToPath;
     }
 
     /**
@@ -121,6 +148,10 @@ class Loader
      */
     public static function convertNameToPath($name, $fullpath = false)
     {
+        if (!empty(self::$ignoreNameSpaceToPath)) {
+            $name = preg_replace('/^\\\?('. preg_quote(implode('|',self::$ignoreNameSpaceToPath),'/') .')/', '', $name);
+        }
+
         $path = '';
         $namespace = '';
         if (false !== ($lastNsPos = strripos($name, self::$namespaceSeparator))) {
