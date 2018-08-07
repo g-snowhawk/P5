@@ -189,6 +189,17 @@ class P5_Html_Source extends P5_Xml_Dom
         return $this->dom->getElementById($id);
     }
 
+    public function querySelectorAll($query, $parent = null)
+    {
+        $xpath = new DOMXPath($this->dom);
+
+        if (!is_null($parent)) {
+            return $xpath->query($query, $parent);
+        }
+
+        return $xpath->query($query);
+    }
+
     /**
      * Getting HTML element by tag name.
      *
