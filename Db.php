@@ -564,6 +564,7 @@ class Db
      */
     public function select($columns, $table, $statement = '', $options = [])
     {
+        $columns = self::verifyColumns($columns);
         $sql = "SELECT $columns FROM $table";
         if (!empty($statement) && is_array($options)) {
             $sql .= ' '.$this->prepareStatement($statement, $options);
@@ -630,6 +631,7 @@ class Db
      */
     public function get($column, $table, $statement = '', $options = [])
     {
+        $column = self::verifyColumns($column);
         $sql = "SELECT $column FROM $table";
         if (!empty($statement) && !empty($options)) {
             $sql .= ' WHERE '.$this->prepareStatement($statement, $options);
@@ -1295,5 +1297,31 @@ class Db
         $sql = preg_replace("/LIMIT[\s]+([0-9]+)[\s]*,[\s]*([0-9]+)/i", 'LIMIT $2 OFFSET $1', $sql);
 
         return $sql;
+    }
+
+    /**
+     * Requote column name
+     *
+     * @param string $columns
+     *
+     * @return string
+     */
+    private static function verifyColumns($columns)
+    {
+        $columns = array_map([__CLASS__, 'quoteColumn'], explode(',', $columns));
+        return implode(',', array_filter($columns));
+    }
+
+    private static function quoteColumn($column, $quote = '"')
+    {
+        $column = trim($column);
+        if ($column === '*') {
+            return $column;
+        }
+        elseif (preg_match('/^(.+)\.\*$/', $column, $match)) {
+            return $quote . str_replace($quote, '', $match[1]) . $quote . '.*';
+        }
+
+        return $quote . str_replace($quote, '', $column) . $quote;
     }
 }
