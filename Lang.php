@@ -41,21 +41,16 @@ class P5_Lang
             return self::words($key, "Lang_$lc");
         }
 
-        if (preg_match('/^.*_Plugin_(.+)$/', $pkg, $match)) {
-            $name = $match[1];
-            $path = 'plugins/'.preg_replace('/_/', '/', $name).'/Lang/'.$lc.'.php';
-            $package = $pkg.'_Lang_'.$lc;
-
-            return ($result = self::words($key, $package)) ? $result : '';
-        }
-
         $dirs = explode('_', $pkg);
         while ($dirs) {
+            if (end($dirs) === 'Plugin') {
+                $dir = array_pop($dirs);
+            }
             $package = implode('_', $dirs).'_Lang_'.$lc;
             if ($result = self::words($key, $package)) {
                 return $result;
             }
-            array_pop($dirs);
+            $dir = array_pop($dirs);
         }
 
         return '';
@@ -95,16 +90,11 @@ class P5_Lang
             }
         }
 
-        if (preg_match('/^.*_Plugin_(.+)$/', $pkg, $match)) {
-            $name = $match[1];
-            $path = 'plugins/'.preg_replace('/_/', '/', $name).'/Lang/'.$lc.'.php';
-            $package = $pkg.'_Lang_'.$lc;
-
-            return ($result = self::words($key, $package)) ? $result : '';
-        }
-
         $dirs = explode('_', $pkg);
         while ($dirs) {
+            if (end($dirs) === 'Plugin') {
+                $dir = array_pop($dirs);
+            }
             $package = implode('_', $dirs).'_Lang_'.$lc;
             if ($result = self::words($key, $package)) {
                 if (is_array($result)) {

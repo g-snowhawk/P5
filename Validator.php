@@ -134,6 +134,38 @@ class P5_Validator
                     $result = !empty($value);
                 }
                 break;
+            case 'lt':
+                if ((int)$stype > (int)$value) {
+                    $result = true;
+                }
+                if (empty($value) && $value !== '0') {
+                    $result = true;
+                }
+                break;
+            case 'le':
+                if ((int)$stype >= (int)$value) {
+                    $result = true;
+                }
+                if (empty($value) && $value !== '0') {
+                    $result = true;
+                }
+                break;
+            case 'gt':
+                if ((int)$stype < (int)$value) {
+                    $result = true;
+                }
+                if (empty($value) && $value !== '0') {
+                    $result = true;
+                }
+                break;
+            case 'ge':
+                if ((int)$stype <= (int)$value) {
+                    $result = true;
+                }
+                if (empty($value) && $value !== '0') {
+                    $result = true;
+                }
+                break;
             default :
                 $result = !empty($value);
         }

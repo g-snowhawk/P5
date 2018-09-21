@@ -90,11 +90,7 @@ class P5_Auto_Loader
             $arr = explode('_', $name);
             $index = array_search('Plugin', $arr) + 1;
             array_splice($arr, 0, $index);
-            array_push($arr, preg_replace("/^.+\-/", '', end($arr)));
-            if (in_array('Lang', $arr)) {
-                $index = array_search('Lang', $arr) - 1;
-                array_splice($arr, $index, 1);
-            }
+            array_unshift($arr, preg_replace("/^.+\-/", '', $arr[0]));
             array_unshift($arr, 'plugins');
             $name = implode('_', $arr);
         }

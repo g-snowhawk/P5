@@ -173,9 +173,7 @@ class P5_Error
         if (in_array($errno, array(E_NOTICE, E_USER_NOTICE, E_STRICT))) {
             return;
         }
-        if (is_object($this) && !is_null($this->_temporaryTemplate)) {
-            $src = file_get_contents($this->_temporaryTemplate, FILE_USE_INCLUDE_PATH);
-        } elseif (defined('ERROR_DOCUMENT')) {
+        if (defined('ERROR_DOCUMENT')) {
             if (file_exists(ERROR_DOCUMENT)) {
                 $src = file_get_contents(ERROR_DOCUMENT);
             } else {
