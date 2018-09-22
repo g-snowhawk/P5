@@ -107,14 +107,14 @@ class Mail
      *
      * @var array
      */
-    private $cc = [];
+    private $cc_addr = [];
 
     /**
      * Blind carbon copy Addresses.
      *
      * @var array
      */
-    private $bcc = [];
+    private $bcc_addr = [];
 
     /**
      * Mail headers.
@@ -295,7 +295,7 @@ class Mail
      */
     public function cc($cc = null)
     {
-        $this->to($cc, 'cc');
+        $this->to($cc, 'cc_addr');
     }
 
     /**
@@ -305,7 +305,7 @@ class Mail
      */
     public function bcc($bcc = null)
     {
-        $this->to($bcc, 'bcc');
+        $this->to($bcc, 'bcc_addr');
     }
 
     /**
@@ -439,11 +439,11 @@ class Mail
         $cs = $this->getCharset();
         $dlm = $this->delimiter;
         $header = 'From: '.$this->from.$dlm;
-        if (!empty($this->cc)) {
-            $header .= 'Cc: '.implode(',', $this->cc).$dlm;
+        if (!empty($this->cc_addr)) {
+            $header .= 'Cc: '.implode(',', $this->cc_addr).$dlm;
         }
-        if (!empty($this->bcc)) {
-            $header .= 'Bcc: '.implode(',', $this->bcc).$dlm;
+        if (!empty($this->bcc_addr)) {
+            $header .= 'Bcc: '.implode(',', $this->bcc_addr).$dlm;
         }
         foreach ($this->head as $key => $value) {
             $header .= "$key: $value".$dlm;
@@ -613,7 +613,7 @@ class Mail
             return false;
         }
 
-        $rcpt = array_merge($this->to, $this->cc, $this->bcc);
+        $rcpt = array_merge($this->to, $this->cc_addr, $this->bcc_addr);
         foreach ($rcpt as $rcpt_to) {
             if (false === $this->command('RCPT TO: <'.$this->stripAddress($rcpt_to).'>')) {
                 return false;
