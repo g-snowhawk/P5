@@ -1318,6 +1318,10 @@ class Db
         if ($column === '*') {
             return $column;
         }
+        elseif (preg_match('/^\s*(\w+)\s+as\s+(\w+)\s*$/i', $column, $match)) {
+            return $quote . str_replace($quote, '', $match[1]) . $quote . ' AS '
+                 . $quote . str_replace($quote, '', $match[2]) . $quote;
+        }
         elseif (preg_match('/^(.+)\.\*$/', $column, $match)) {
             return $quote . str_replace($quote, '', $match[1]) . $quote . '.*';
         }
