@@ -135,6 +135,11 @@ class Loader
              return false;
          }
 
+         // self judgement
+         if (strtolower($path) === strtolower($_SERVER['SCRIPT_FILENAME'])) {
+             return false;
+         }
+
          return $path;
      }
 
