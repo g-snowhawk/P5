@@ -29,13 +29,6 @@ class P5_Error
     const FEEDBACK_INTERVAL = 10800;
 
     /**
-     * not sending feedback flag
-     *
-     * @var bool
-     */
-    protected $not_feedback = false;
-
-    /**
      * Error reporting level
      *
      * @var int
@@ -61,7 +54,14 @@ class P5_Error
      *
      * @var string
      */
-    protected $_temporaryTemplate;
+    protected static $_temporaryTemplate;
+
+    /**
+     * not sending feedback flag
+     *
+     * @var bool
+     */
+    protected static $not_feedback = false;
 
     /**
      * Object Constructor.
@@ -119,7 +119,7 @@ class P5_Error
             throw new ErrorException($msg, 0, $errno, $errfile, $errline);
         }
 
-        self::feedback($msg, $errno, $this->not_feedback);
+        self::feedback($msg, $errno, self::$not_feedback);
         self::log($msg, $errno);
 
         return false;
@@ -136,7 +136,7 @@ class P5_Error
     {
         $msg = $ex->getMessage().' in '.$ex->getFile().' on '.$ex->getLine();
         $code = $ex->getCode();
-        self::feedback($msg, $code, $this->not_feedback);
+        self::feedback($msg, $code, self::$not_feedback);
         self::log($msg, $code);
         self::displayError($msg, $code);
     }
@@ -161,7 +161,7 @@ class P5_Error
      * @param string $msg
      * @param int    $errno
      */
-    public function displayError($msg, $errno)
+    public static function displayError($msg, $errno)
     {
         // POST Size Over.
         if (preg_match("/POST Content\-Length of ([0-9]+) bytes exceeds the limit of ([0-9]+) bytes/i", $msg, $match)) {
@@ -173,8 +173,8 @@ class P5_Error
         if (in_array($errno, array(E_NOTICE, E_USER_NOTICE, E_STRICT))) {
             return;
         }
-        if (is_object($this) && !is_null($this->_temporaryTemplate)) {
-            $src = file_get_contents($this->_temporaryTemplate, FILE_USE_INCLUDE_PATH);
+        if (!is_null(self::$_temporaryTemplate)) {
+            $src = file_get_contents(self::$_temporaryTemplate, FILE_USE_INCLUDE_PATH);
         } elseif (defined('ERROR_DOCUMENT')) {
             if (file_exists(ERROR_DOCUMENT)) {
                 $src = file_get_contents(ERROR_DOCUMENT);
@@ -203,6 +203,7 @@ class P5_Error
 
         header('HTTP/1.1 500 Internal Server Error');
         echo $src;
+        self::$_temporaryTemplate = null;
         exit($errno);
     }
 
@@ -339,7 +340,7 @@ class P5_Error
      *
      * @return string
      */
-    private function htmlSource()
+    private static function htmlSource()
     {
         return <<<_HERE_
 <html>
