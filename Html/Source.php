@@ -189,9 +189,18 @@ class P5_Html_Source extends P5_Xml_Dom
         return $this->dom->getElementById($id);
     }
 
+    public function querySelector($query, $parent = null)
+    {
+        $node_list = $this->querySelectorAll($query, $parent);
+
+        return $node_list->item(0);
+    }
+
     public function querySelectorAll($query, $parent = null)
     {
         $xpath = new DOMXPath($this->dom);
+        //$xpath->registerNamespace('php', 'http://php.net/xpath');
+        //$xpath->registerPHPFunctions('P5_Html_Source::ends_with');
 
         if (!is_null($parent)) {
             return $xpath->query($query, $parent);
@@ -209,18 +218,7 @@ class P5_Html_Source extends P5_Xml_Dom
      */
     public function getElementByName($name, $parent = null)
     {
-        if (is_null($parent)) {
-            $parent = $this->dom;
-        }
-
-        $nodelist = $parent->getElementsByTagName('*');
-        for ($i = 0; $i < $nodelist->length; ++$i) {
-            if ($nodelist->item($i)->getAttribute('name') == $name) {
-                return $nodelist->item($i);
-            }
-        }
-
-        return;
+        return $this->querySelector('.//*[@name="'.$name.'"]' , $parent);
     }
 
     /**
@@ -232,13 +230,7 @@ class P5_Html_Source extends P5_Xml_Dom
      */
     public function getElementsByName($name, $parent = null)
     {
-        if (is_null($parent)) {
-            $parent = $this->dom;
-        }
-        $nodes = array();
-        $this->getElementsByAttr($parent, 'name', $name, $nodes);
-
-        return new P5_Xml_Dom_NodeList($nodes);
+        return $this->querySelectorAll('.//*[@name="'.$name.'"]' , $parent);
     }
 
     /**
@@ -250,6 +242,8 @@ class P5_Html_Source extends P5_Xml_Dom
      */
     public function getElementsByClassName($class, $parent = null)
     {
+        //$query = sprintf('.//*[starts-with(@class,"%s")] | .//*[php:function("P5_Html_Source::ends_with",@class,"%s")] | .//*[contains(@class," %s ")]',$class,$class,$class);
+        //return $this->querySelectorAll($query, $parent);
         if (!is_object($parent)) {
             $parent = $this->dom;
         }
@@ -895,5 +889,10 @@ class P5_Html_Source extends P5_Xml_Dom
     public function html()
     {
         return $this->dom->documentElement;
+    }
+
+    public static function ends_with($node, $value)
+    {
+        return substr($node[0]->nodeValue, -strlen($value)) === $value;
     }
 }
