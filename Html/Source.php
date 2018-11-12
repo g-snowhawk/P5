@@ -199,14 +199,12 @@ class P5_Html_Source extends P5_Xml_Dom
     public function querySelectorAll($query, $parent = null)
     {
         $xpath = new DOMXPath($this->dom);
-        //$xpath->registerNamespace('php', 'http://php.net/xpath');
-        //$xpath->registerPHPFunctions('P5_Html_Source::ends_with');
 
-        if (!is_null($parent)) {
-            return $xpath->query($query, $parent);
+        if (empty($parent)) {
+            $parent = $this->dom->documentElement;
         }
 
-        return $xpath->query($query);
+        return $xpath->query($query, $parent);
     }
 
     /**
@@ -242,13 +240,16 @@ class P5_Html_Source extends P5_Xml_Dom
      */
     public function getElementsByClassName($class, $parent = null)
     {
-        //$query = sprintf('.//*[starts-with(@class,"%s")] | .//*[php:function("P5_Html_Source::ends_with",@class,"%s")] | .//*[contains(@class," %s ")]',$class,$class,$class);
-        //return $this->querySelectorAll($query, $parent);
-        if (!is_object($parent)) {
-            $parent = $this->dom;
-        }
+        $query = sprintf('.//*[contains(@class,"%s")]',$class);
+        $tmp = $this->querySelectorAll($query, $parent);
         $nodes = array();
-        $this->getElementsByAttr($parent, 'class', $class, $nodes);
+        foreach ($tmp as $node) {
+            $attribute = $node->getAttribute('class');
+            $classes = explode(' ', $attribute);
+            if (in_array($class, $classes)) {
+                $nodes[] = $node;
+            }
+        }
 
         return new P5_Xml_Dom_NodeList($nodes);
     }
@@ -263,24 +264,7 @@ class P5_Html_Source extends P5_Xml_Dom
      */
     private function getElementsByAttr($node, $attr, $value, &$arr)
     {
-        if (method_exists($node, 'hasAttribute') && $node->hasAttribute($attr)) {
-            $attribute = $node->getAttribute($attr);
-            if ($attr === 'class') {
-                $classes = explode(' ', $attribute);
-                if (in_array($value, $classes)) {
-                    $arr[] = $node;
-                }
-            } else {
-                if ($attribute === $value) {
-                    $arr[] = $node;
-                }
-            }
-        }
-        if ($node->hasChildNodes()) {
-            foreach ($node->childNodes as $cn) {
-                self::getElementsByAttr($cn, $attr, $value, $arr);
-            }
-        }
+        return $this->querySelectorAll('.//*[@'.$attr.'="'.$value.'"]' , $node);
     }
 
     /**
@@ -889,10 +873,5 @@ class P5_Html_Source extends P5_Xml_Dom
     public function html()
     {
         return $this->dom->documentElement;
-    }
-
-    public static function ends_with($node, $value)
-    {
-        return substr($node[0]->nodeValue, -strlen($value)) === $value;
     }
 }
