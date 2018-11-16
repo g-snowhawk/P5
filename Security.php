@@ -74,17 +74,18 @@ class Security
      * @param string $uname
      * @param string $upass
      * @param string $secret
+     * @param string $expire
      *
      * @return bool
      */
-    public function authentication($uname, $upass, $secret = '')
+    public function authentication($uname, $upass, $secret = '', $expire = null)
     {
         if (empty($uname) || empty($upass)) {
             return false;
         }
         $method = (file_exists($this->source)) ? 'byFile' : 'byDb';
         try {
-            $this->$method($uname, $upass, $secret);
+            $this->$method($uname, $upass, $secret, $expire);
         } catch (\Exception $e) {
             return false;
         }
@@ -98,10 +99,11 @@ class Security
      * @param string $uname
      * @param string $upass
      * @param string $secret
+     * @param string $expire
      *
      * @return bool
      */
-    private function byFile($uname, $upass, $secret)
+    private function byFile($uname, $upass, $secret, $expire = null)
     {
         $inc = file_get_contents($this->source);
         $pattern = "/(^|[\s]+)".$uname.":([^:\s]+)/s";
@@ -121,13 +123,19 @@ class Security
      * @param string $uname
      * @param string $upass
      * @param string $secret
+     * @param string $expire
      */
-    private function byDb($uname, $upass, $secret)
+    private function byDb($uname, $upass, $secret, $expire = null)
     {
         $user_column = 'uname';
         $passwd_column = 'upass';
 
-        $check = $this->db->get($passwd_column, $this->source, "$user_column = ?", [$uname]);
+        $statement = "$user_column = ?";
+        if (!empty($expire)) {
+            $statement .= " AND ($expire IS NULL OR $expire >= CURRENT_TIMESTAMP)";
+        }
+
+        $check = $this->db->get($passwd_column, $this->source, $statement, [$uname]);
 
         if ($check) {
             if (false === $this->compare($check, $upass, $secret)) {

@@ -1059,16 +1059,20 @@ class Db
     /**
      * Get field list.
      *
-     * @param string $table    Table Name
+     * @param string $table     Table Name
      * @param bool   $property
      * @param bool   $comment
+     * @param string $statement
      *
      * @return mixed
      */
-    public function getFields($table, $property = false, $comment = false)
+    public function getFields($table, $property = false, $comment = false, $statement = '')
     {
         if ($this->driver === 'mysql') {
-            $sql = ($comment === true) ? "SHOW FULL COLUMNS FROM \"$table\"" : "DESCRIBE \"$table\";";
+            $sql = ($comment === true) ? "SHOW FULL COLUMNS FROM \"$table\"" : "SHOW COLUMNS FROM \"$table\"";
+            if (!empty($statement)) {
+                $sql .= " $statement";
+            }
         } elseif ($this->driver === 'pgsql') {
             $primary = [];
             $comments = [];
@@ -1113,11 +1117,15 @@ class Db
                 }
             }
 
-            $sql = 'SELECT * 
+            if (!empty($statement)) {
+                $statement = "AND column_name $statement";
+            }
+
+            $sql = sprintf('SELECT * 
                       FROM information_schema.columns
                      WHERE table_catalog = '.$this->quote($this->source).'
-                       AND table_name = '.$this->quote($table).'
-                     ORDER BY ordinal_position';
+                       AND table_name = '.$this->quote($table).' %s
+                     ORDER BY ordinal_position', $statement);
         } elseif ($this->driver === 'sqlite' || $this->driver === 'sqlite2') {
             $sql = "PRAGMA table_info($table);";
         }
