@@ -116,7 +116,7 @@ class P5_Session
      * @param bool   $httponly
      */
     public function __construct($cacheLimiter = 'nocache', $savePath = null,
-                                $lifetime = 0, $path = '/', $domain = '',
+                                $lifetime = 0, $path = '', $domain = '',
                                 $secure = false, $httponly = true
     ) {
         $this->_cachelimiter = $cacheLimiter;
