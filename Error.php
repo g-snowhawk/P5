@@ -103,9 +103,11 @@ class Error
          || $errno === E_NOTICE
         ) {
             $message = "$errstr in $errfile on line $errline.";
-            self::log($message, $errno);
             if ($errno === E_USER_ERROR) {
                 self::feedback($message, $errno);
+            }
+            self::log($message, $errno);
+            if ($errno === E_USER_ERROR) {
                 self::displayError($message, $errno);
             }
 
@@ -126,8 +128,8 @@ class Error
         $errfile = $ex->getFile();
         $errline = $ex->getLine();
         $message = "$errstr in $errfile on line $errline.";
-        self::log($message, $errno, $errfile, $errline);
         self::feedback($message, $errno);
+        self::log($message, $errno, $errfile, $errline);
         $message .= PHP_EOL.$ex->getTraceAsString();
         self::displayError($message, $errno);
     }
