@@ -91,9 +91,8 @@ class P5_Error
         $this->error_reporting = error_reporting();
 
         if (!empty($template) && !defined('ERROR_DOCUMENT')) {
-            $src = file_get_contents($template, FILE_USE_INCLUDE_PATH);
-            if (!empty($src)) {
-                define('ERROR_DOCUMENT', $src);
+            if (false !== $fh = fopen($template, 'r', FILE_USE_INCLUDE_PATH)) {
+                define('ERROR_DOCUMENT', $template);
             }
         }
     }
@@ -176,8 +175,8 @@ class P5_Error
         if (!is_null(self::$_temporaryTemplate)) {
             $src = file_get_contents(self::$_temporaryTemplate, FILE_USE_INCLUDE_PATH);
         } elseif (defined('ERROR_DOCUMENT')) {
-            if (file_exists(ERROR_DOCUMENT)) {
-                $src = file_get_contents(ERROR_DOCUMENT);
+            if (false !== $fh = fopen(ERROR_DOCUMENT, 'r', FILE_USE_INCLUDE_PATH)) {
+                $src = stream_get_contents($fh);
             } else {
                 $src = ERROR_DOCUMENT;
             }
