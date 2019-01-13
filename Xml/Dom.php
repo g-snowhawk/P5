@@ -100,11 +100,11 @@ class P5_Xml_Dom
             }
             $source = P5_Html::escapeEntityReference($source);
             // if source is plain text
-            if (!preg_match("/^[\s]*</", $source)) {
+            if (!preg_match("/^[\s]*</", $source) || !empty($firstline_format)) {
                 $source = "<dummy>$source</dummy>";
             }
-            if (!empty($firstline_format)) {
-                $source = "<dummy>$source</dummy>";
+            elseif (!preg_match("/<.+?>/", $source)) {
+                return $dom->createTextNode($source);
             }
             $old_error_handler = set_error_handler(array($this, 'errorHandler'));
             try {
@@ -341,7 +341,7 @@ class P5_Xml_Dom
      */
     public function appendChild($node, $refNode)
     {
-        if (is_string($node)) {
+        if (is_scalar($node)) {
             $node = $this->importChild($node);
         }
         if (is_array($node) || method_exists($node, 'item')) {
@@ -456,7 +456,7 @@ class P5_Xml_Dom
      */
     public function importChild($node)
     {
-        if (is_string($node)) {
+        if (is_scalar($node)) {
             $node = $this->load($node);
             $node = $node->childNodes;
         }
