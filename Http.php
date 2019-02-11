@@ -25,9 +25,9 @@ class P5_Http
      */
     public static function nocache()
     {
-        self::responceHeader('Pragma', 'no-cache');
-        self::responceHeader('Cache-Control', 'private, no-store, no-cache, must-revalidate');
-        self::responceHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT');
+        self::responseHeader('Pragma', 'no-cache');
+        self::responseHeader('Cache-Control', 'private, no-store, no-cache, must-revalidate');
+        self::responseHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT');
     }
 
     /**
@@ -37,7 +37,7 @@ class P5_Http
      * @param string $value
      * @param string $option
      */
-    public static function responceHeader($key, $value, $option = '')
+    public static function responseHeader($key, $value, $option = '')
     {
         $val = (empty($value) && $value !== '0')  ? '' : ": $value";
         $opt = (empty($option)) ? '' : "; $option";

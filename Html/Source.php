@@ -112,7 +112,7 @@ class P5_Html_Source extends P5_Xml_Dom
             if ($meta == true) {
                 $this->insertMetaData('', $content, 'X-UA-Compatible');
             } else {
-                P5_Http::responceHeader('X-UA-Compatible', $content);
+                P5_Http::responseHeader('X-UA-Compatible', $content);
             }
         }
     }

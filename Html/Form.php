@@ -71,8 +71,8 @@ class P5_Html_Form
     {
         switch ($key) {
             case 'method' :
-                return strtolower(P5_Environment::server('REQUEST_METHOD'));
-                break;
+                $method = strtolower(P5_Environment::server('REQUEST_METHOD'));
+                return (empty($method)) ? 'get' : $method;
         }
     }
 

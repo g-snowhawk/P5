@@ -172,35 +172,42 @@ class P5_Error
         if (in_array($errno, array(E_NOTICE, E_USER_NOTICE, E_STRICT))) {
             return;
         }
-        if (!is_null(self::$_temporaryTemplate)) {
-            $src = file_get_contents(self::$_temporaryTemplate, FILE_USE_INCLUDE_PATH);
-        } elseif (defined('ERROR_DOCUMENT')) {
-            if (false !== $fh = fopen(ERROR_DOCUMENT, 'r', FILE_USE_INCLUDE_PATH)) {
-                $src = stream_get_contents($fh);
+
+        if (php_sapi_name() === 'cli') {
+            $src = $msg . PHP_EOL;
+        }
+        else {
+            if (!is_null(self::$_temporaryTemplate)) {
+                $src = file_get_contents(self::$_temporaryTemplate, FILE_USE_INCLUDE_PATH);
+            } elseif (defined('ERROR_DOCUMENT')) {
+                if (false !== $fh = fopen(ERROR_DOCUMENT, 'r', FILE_USE_INCLUDE_PATH)) {
+                    $src = stream_get_contents($fh);
+                } else {
+                    $src = ERROR_DOCUMENT;
+                }
             } else {
-                $src = ERROR_DOCUMENT;
+                $src = self::htmlSource();
             }
-        } else {
-            $src = self::htmlSource();
+
+            $msg = htmlspecialchars($msg, ENT_COMPAT, mb_internal_encoding(), false);
+            if (defined('DEBUG_MODE') && DEBUG_MODE !== 0) {
+                $src = preg_replace(
+                    '/<!--ERROR_DESCRIPTION-->/',
+                    '<p id="P5-errormessage">'.
+                        htmlentities($msg, ENT_QUOTES, 'UTF-8', false).
+                    '</p>', $src
+                );
+            }
+            if (defined('LINK_TO_HOMEPAGE')) {
+                $src = preg_replace(
+                    '/<!--LINK_TO_HOMEPAGE-->/',
+                    '<a href="'.LINK_TO_HOMEPAGE.'" class="P5-errorhomelink">Back</a>', $src
+                );
+            }
+
+            header('HTTP/1.1 500 Internal Server Error');
         }
 
-        $msg = htmlspecialchars($msg, ENT_COMPAT, mb_internal_encoding(), false);
-        if (defined('DEBUG_MODE') && DEBUG_MODE !== 0) {
-            $src = preg_replace(
-                '/<!--ERROR_DESCRIPTION-->/',
-                '<p id="P5-errormessage">'.
-                    htmlentities($msg, ENT_QUOTES, 'UTF-8', false).
-                '</p>', $src
-            );
-        }
-        if (defined('LINK_TO_HOMEPAGE')) {
-            $src = preg_replace(
-                '/<!--LINK_TO_HOMEPAGE-->/',
-                '<a href="'.LINK_TO_HOMEPAGE.'" class="P5-errorhomelink">Back</a>', $src
-            );
-        }
-
-        header('HTTP/1.1 500 Internal Server Error');
         echo $src;
         self::$_temporaryTemplate = null;
         exit($errno);
@@ -289,8 +296,8 @@ class P5_Error
             if (self::_isEmail(ERROR_LOG_DESTINATION)) {
                 error_log($msg, 1, ERROR_LOG_DESTINATION);
             } elseif (is_dir(dirname(ERROR_LOG_DESTINATION))) {
-                $client = '['.$_SERVER['REMOTE_ADDR'].'] ';
-                error_log(date('[Y-m-d H:i:s] ')."$client$msg\n", 3, ERROR_LOG_DESTINATION);
+                $remote_addr = (isset($_SERVER['REMOTE_ADDR'])) ? $_SERVER['REMOTE_ADDR'] : '127.0.0.1';
+                error_log(date('[Y-m-d H:i:s] ')."[$remote_addr] $msg\n", 3, ERROR_LOG_DESTINATION);
             } else {
                 error_log($msg, 0, ERROR_LOG_DESTINATION);
             }
