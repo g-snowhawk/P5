@@ -1,0 +1,19 @@
+{
+    "name": "g-snowhawk/p5",
+    "version": "dev-master",
+    "type": "library",
+    "description": "PlusFive framework.",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "P5\\" : ""
+        }
+    },
+    "require": {
+        "php": ">=5.6.0"
+    },
+    "author": {
+        "name": "PlusFive",
+        "homepage": "https://www.plus-5.com"
+    }
+}
