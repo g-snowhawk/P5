@@ -982,13 +982,21 @@ class Db
      *
      * @return int
      */
-    public function recordCount($sql = '')
+    public function recordCount($sql = '', $options = null)
     {
         if (empty($sql)) {
             $sql = $this->sql;
         }
-        $this->query('SELECT COUNT(*) AS rec FROM ('.$sql.') AS rc');
+
         try {
+            $sql = 'SELECT COUNT(*) AS rec FROM ('.$sql.') AS rc';
+            if (is_array($options)) {
+                $this->prepare($sql);
+                $this->execute($options);
+            } else {
+                $this->query($sql);
+            }
+
             return $this->statement->fetchColumn();
         } catch (\PDOException $e) {
             $this->error_code = $e->getCode();
