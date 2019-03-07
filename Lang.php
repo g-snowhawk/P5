@@ -84,9 +84,6 @@ class Lang
      */
     public static function words($package, $key)
     {
-        if (!Auto\Loader::isIncludable($package)) {
-            return false;
-        }
         if (!class_exists($package, true)) {
             return false;
         }
