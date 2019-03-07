@@ -13,7 +13,8 @@
         "php": ">=5.6.0"
     },
     "author": {
-        "name": "PlusFive",
-        "homepage": "https://www.plus-5.com"
+        "name": "Taka G",
+        "email": "githave@p5on.net",
+        "homepage": "https://www.p5on.net"
     }
 }
