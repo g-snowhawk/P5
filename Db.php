@@ -295,11 +295,16 @@ class Db
      *
      * @return mixed
      */
-    public function query($sql)
+    public function query($sql, $options = null)
     {
         $this->sql = $this->normalizeSQL($sql);
         try {
-            $this->statement = $this->handler->query($this->sql);
+            if (is_array($options)) {
+                $this->prepare($this->sql);
+                $this->execute($options);
+            } else {
+                $this->statement = $this->handler->query($this->sql);
+            }
         } catch (\PDOException $e) {
             $this->error_code = $e->getCode();
             $this->error_message = $e->getMessage();
