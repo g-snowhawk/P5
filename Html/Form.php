@@ -21,6 +21,8 @@ class Form
     private $post = [];
     private $get = [];
 
+    private $request_method_via_cli = 'post';
+
     /**
      * Object constructer.
      */
@@ -49,6 +51,9 @@ class Form
     {
         switch ($key) {
             case 'method' :
+                if (php_sapi_name() === 'cli') {
+                    return $this->request_method_via_cli;
+                }
                 $method = strtolower(\P5\Environment::server('REQUEST_METHOD'));
                 return (empty($method)) ? 'get' : $method;
                 break;
@@ -190,10 +195,24 @@ class Form
      */
     public function keyExists($key, $method = 'post')
     {
-        if (strtolower($method) != 'post') {
+        if (strtolower($method) !== 'post') {
             return array_key_exists($key, $_GET);
         }
 
         return array_key_exists($key, $_POST);
+    }
+
+    /**
+     * Emulate request method via CLI
+     *
+     * @param string $method
+     *
+     * @return void
+     */
+    public function setRequestMethodViaCli($method)
+    {
+        if (in_array(strtolower($method), ['post','get'])) {
+            $this->request_method_via_cli = $method;
+        }
     }
 }
