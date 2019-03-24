@@ -10,6 +10,8 @@
 
 namespace P5;
 
+use ErrorException;
+
 /**
  * Methods for file management.
  *
@@ -125,7 +127,11 @@ class File
 
         switch ($link) {
             case 'hard':
-                return link($src, $dest);
+                try {
+                    return link($src, $dest);
+                } catch (ErrorException $e) {
+                    return copy($src, $dest);
+                }
                 break;
             case 'symbolic':
                 return symlink($src, $dest);
@@ -432,7 +438,7 @@ class File
             try {
                 @mkdir($base);
                 @chmod($base, $mode);
-            } catch (\ErrorException $e) {
+            } catch (ErrorException $e) {
                 if (preg_match('/File exists/', $e->getMessage())) {
                     continue;
                 }
