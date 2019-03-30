@@ -26,9 +26,7 @@ class P5_Lang
      */
     public static function translate($key, $package = null, $locale = null)
     {
-        if (is_null($locale)) {
-            $locale = (isset($_ENV['P5_LOCALE'])) ? $_ENV['P5_LOCALE'] : getenv('P5_LOCALE');
-        }
+        $locale = self::localeFromEnv($locale);
         $lc = (!empty($locale)) ? $locale : 'En';
 
         $caller = debug_backtrace();
@@ -53,6 +51,12 @@ class P5_Lang
             $dir = array_pop($dirs);
         }
 
+        // Top Level Package
+        $package = 'Lang_'.$lc;
+        if ($result = self::words($key, $package)) {
+            return $result;
+        }
+
         return '';
     }
 
@@ -65,11 +69,9 @@ class P5_Lang
      *
      * @return string
      */
-    public static function transarray($key, $subkey = null, $package = null)
+    public static function transarray($key, $subkey = null, $package = null, $locale = null)
     {
-        if (is_null($locale)) {
-            $locale = (isset($_ENV['P5_LOCALE'])) ? $_ENV['P5_LOCALE'] : getenv('P5_LOCALE');
-        }
+        $locale = self::localeFromEnv($locale);
         $lc = (!empty($locale)) ? $locale : 'En';
 
         $caller = debug_backtrace();
@@ -151,5 +153,30 @@ class P5_Lang
         }
 
         return $this->$key;
+    }
+
+    private static function localeFromEnv($locale)
+    {
+        if (is_null($locale)) {
+            $locale = (isset($_ENV['P5_LOCALE'])) ? $_ENV['P5_LOCALE'] : getenv('P5_LOCALE');
+        }
+
+        return self::UpperCamelCase($locale);
+    }
+
+    private static function lowerCamelCase($str)
+    {
+        return preg_replace_callback(
+            '/[-_]([a-z])/',
+            function($matches) {
+                return strtoupper($matches[1]);
+            },
+            strtolower($str)
+        );
+    }
+
+    private static function upperCamelCase($str)
+    {
+        return ucfirst(self::lowerCamelCase($str));
     }
 }
