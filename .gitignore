@@ -1,0 +1,12 @@
+._*
+.DS_Store
+.DAV
+.php_cs.*
+.svn
+_notes
+Desktop.ini
+Thumbs.DB
+*.bak
+*.old
+*.org
+plugins/*

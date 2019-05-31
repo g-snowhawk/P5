@@ -7,8 +7,10 @@
  * This software is released under the MIT License.
  * https://www.plus-5.com/licenses/mit-license
  */
-
 namespace P5;
+
+use PDO;
+use PDOException;
 
 /**
  * Database connection class.
@@ -139,7 +141,7 @@ class Db
             $this->dsn = "$driver:host=$host;port=$port;dbname=$source";
             if ($enc !== '') {
                 if (file_exists($enc)) {
-                    $this->options[\PDO::MYSQL_ATTR_READ_DEFAULT_FILE] = $enc;
+                    $this->options[PDO::MYSQL_ATTR_READ_DEFAULT_FILE] = $enc;
                     $content = str_replace('#', ';', file_get_contents($enc));
                     $init = parse_ini_string($content, true);
                     if (isset($init['client']['default-character-set'])) {
@@ -150,10 +152,10 @@ class Db
                 }
             }
             if ($this->driver === 'mysql') {
-                $this->options[\PDO::MYSQL_ATTR_LOCAL_INFILE] = true;
-                $this->options[\PDO::MYSQL_ATTR_INIT_COMMAND] = "SET SQL_MODE='ANSI_QUOTES';";
+                $this->options[PDO::MYSQL_ATTR_LOCAL_INFILE] = true;
+                //$this->options[PDO::MYSQL_ATTR_INIT_COMMAND] = "SET SQL_MODE='ANSI_QUOTES';";
             }
-            $this->options[\PDO::ATTR_ERRMODE] = \PDO::ERRMODE_EXCEPTION;
+            $this->options[PDO::ATTR_ERRMODE] = PDO::ERRMODE_EXCEPTION;
         } else {
             if (!file_exists($host)) {
                 mkdir($host, 0777, true);
@@ -206,8 +208,8 @@ class Db
                 $db_name = $this->source;
             }
             $dsn = "{$this->driver}:{$this->host};port={$this->port}";
-            $this->handler = new \PDO($dsn, $this->user, $this->password);
-            $this->handler->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+            $this->handler = new PDO($dsn, $this->user, $this->password);
+            $this->handler->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             if ($this->driver === 'mysql') {
                 $sql = "CREATE DATABASE $db_name";
                 if (!empty($this->encoding)) {
@@ -220,7 +222,7 @@ class Db
                     "CREATE DATABASE {$db_name} ENCODING '{$this->encoding}'"
                 );
             }
-        } catch (\PDOException $e) {
+        } catch (PDOException $e) {
             $this->error_code = $e->getCode();
             $this->error_message = $e->getMessage();
 
@@ -246,39 +248,87 @@ class Db
      * Open database connection.
      *
      * @param int $timeout
+     * @param array $optional_modes
      *
      * @return bool
      */
-    public function open($timeout = null)
+    public function open($timeout = null, array $optional_modes = array())
     {
         try {
             if (!is_null($timeout)) {
-                $this->options[\PDO::ATTR_TIMEOUT] = $timeout;
+                $this->options[PDO::ATTR_TIMEOUT] = $timeout;
             }
-            $this->handler = new \PDO($this->dsn, $this->user, $this->password, $this->options);
-        } catch (\PDOException $e) {
+            $this->handler = new PDO($this->dsn, $this->user, $this->password, $this->options);
+        } catch (PDOException $e) {
             $this->error_code = $e->getCode();
             $this->error_message = $e->getMessage();
 
             return false;
         }
 
+        $this->addSQLMode(array_merge(array('ANSI_QUOTES'), $optional_modes));
+
         return true;
+    }
+
+    /**
+     * Close database connection.
+     *
+     * @return bool
+     */
+    public function close()
+    {
+        $this->handler = null;
+    }
+
+    public function addSQLMode(array $user_mode)
+    {
+        $this->query('SELECT @@SESSION.sql_mode');
+        $default_mode = explode(',', $this->fetchColumn());
+        $modes = array_merge($default_mode, $user_mode);
+        $ret = $this->exec(
+            "SET SESSION sql_mode=?",
+            array(implode(',', array_unique($modes)))
+        );
+    }
+
+    public function removeSQLMode(array $user_mode)
+    {
+        $this->query('SELECT @@SESSION.sql_mode');
+        $default_mode = explode(',', $this->fetchColumn());
+        $modes = array_diff($default_mode, $user_mode);
+        $this->exec(
+            "SET SESSION sql_mode=?",
+            array(implode(',', array_unique($modes)))
+        );
+    }
+
+    public function getSQLMode()
+    {
+        $this->query('SELECT @@SESSION.sql_mode');
+
+        return explode(',', $this->fetchColumn());
     }
 
     /**
      * Execute SQL.
      *
      * @param string $sql
+     * @param array $options
      *
      * @return mixed
      */
-    public function exec($sql)
+    public function exec($sql, array $options = null)
     {
         $this->sql = $this->normalizeSQL($sql);
         try {
-            $this->ecount = $this->handler->exec($this->sql);
-        } catch (\PDOException $e) {
+            if (is_null($options)) {
+                $this->ecount = $this->handler->exec($this->sql);
+            } else {
+                $this->prepare($this->sql);
+                $this->ecount = $this->execute($options);
+            }
+        } catch (PDOException $e) {
             $this->error_code = $e->getCode();
             $this->error_message = $e->getMessage();
 
@@ -305,7 +355,7 @@ class Db
             } else {
                 $this->statement = $this->handler->query($this->sql);
             }
-        } catch (\PDOException $e) {
+        } catch (PDOException $e) {
             $this->error_code = $e->getCode();
             $this->error_message = $e->getMessage();
 
@@ -409,7 +459,7 @@ class Db
      *
      * @return mixed
      */
-    public function delete($table, $statement = '', $options)
+    public function delete($table, $statement = '', $options = null)
     {
         $sql = (!empty($statement) && !empty($options)) ?
             'WHERE '.$this->prepareStatement($statement, $options) : '';
@@ -736,7 +786,8 @@ class Db
      *
      * @param string $statement
      * @param array  $options
-     *                          return string
+     *
+     * @return string
      */
     public function prepareStatement($statement, array $options)
     {
@@ -776,11 +827,11 @@ class Db
      *
      * @return mixed
      */
-    public function fetch($type = \PDO::FETCH_ASSOC, $cursor = \PDO::FETCH_ORI_NEXT, $offset = 0)
+    public function fetch($type = PDO::FETCH_ASSOC, $cursor = PDO::FETCH_ORI_NEXT, $offset = 0)
     {
         try {
             $data = $this->statement->fetch($type, $cursor, $offset);
-        } catch (\PDOException $e) {
+        } catch (PDOException $e) {
             $this->error_code = $e->getCode();
             $this->error_message = $e->getMessage();
 
@@ -797,15 +848,15 @@ class Db
      *
      * @return mixed
      */
-    public function fetchAll($type = \PDO::FETCH_ASSOC, $columnIndex = 0)
+    public function fetchAll($type = PDO::FETCH_ASSOC, $columnIndex = 0)
     {
         try {
-            if ($type == \PDO::FETCH_COLUMN) {
+            if ($type == PDO::FETCH_COLUMN) {
                 $data = $this->statement->fetchAll($type, $columnIndex);
             } else {
                 $data = $this->statement->fetchAll($type);
             }
-        } catch (\PDOException $e) {
+        } catch (PDOException $e) {
             $this->error_code = $e->getCode();
             $this->error_message = $e->getMessage();
 
@@ -826,7 +877,7 @@ class Db
     {
         try {
             $data = $this->statement->fetchColumn($column_number);
-        } catch (\PDOException $e) {
+        } catch (PDOException $e) {
             $this->error_code = $e->getCode();
             $this->error_message = $e->getMessage();
 
@@ -849,11 +900,11 @@ class Db
         if (!is_null($force)) {
             $parameter_type = (int) $force;
         } elseif (is_null($value)) {
-            $parameter_type = \PDO::PARAM_NULL;
+            $parameter_type = PDO::PARAM_NULL;
         } elseif (preg_match('/^[0-9]+$/', $value)) {
-            $parameter_type = \PDO::PARAM_INT;
+            $parameter_type = PDO::PARAM_INT;
         } else {
-            $parameter_type = \PDO::PARAM_STR;
+            $parameter_type = PDO::PARAM_STR;
         }
         if (get_magic_quotes_gpc()) {
             $value = stripslashes($value);
@@ -897,7 +948,7 @@ class Db
             }
             $sql = "PRAGMA table_info($tableName)";
             if ($this->query($sql)) {
-                $result = $this->fetchAll(\PDO::FETCH_COLUMN, 1);
+                $result = $this->fetchAll(PDO::FETCH_COLUMN, 1);
             }
         } else {
             for ($i = 0; $i < $this->statement->columnCount(); ++$i) {
@@ -964,7 +1015,7 @@ class Db
             if ($this->handler->rollBack()) {
                 return true;
             }
-        } catch (\PDOException $e) {
+        } catch (PDOException $e) {
             $this->error_code = $e->getCode();
             $this->error_message = $e->getMessage();
         }
@@ -1002,8 +1053,8 @@ class Db
                 $this->query($sql);
             }
 
-            return $this->statement->fetchColumn();
-        } catch (\PDOException $e) {
+            return (int)$this->statement->fetchColumn();
+        } catch (PDOException $e) {
             $this->error_code = $e->getCode();
             $this->error_message = $e->getMessage();
         }
@@ -1020,7 +1071,7 @@ class Db
     {
         try {
             return $this->statement->rowCount();
-        } catch (\PDOException $e) {
+        } catch (PDOException $e) {
             $this->error_code = $e->getCode();
             $this->error_message = $e->getMessage();
         }

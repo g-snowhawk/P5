@@ -88,9 +88,9 @@ class Loader
      *
      * @return bool
      */
-    public static function register()
+    public static function register($prepend = false)
     {
-        return spl_autoload_register('self::autoLoad');
+        return spl_autoload_register('self::autoLoad', true, $prepend);
     }
 
     /**

@@ -2,7 +2,7 @@
 /**
  * This file is part of P5 Framework.
  *
- * Copyright (c)2016 PlusFive (https://www.plus-5.com)
+ * Copyright (c)2016-2019 PlusFive (https://www.plus-5.com)
  *
  * This software is released under the MIT License.
  * https://www.plus-5.com/licenses/mit-license
@@ -14,6 +14,7 @@ namespace P5\Html;
  * Methods for form management.
  *
  * @license  https://www.plus-5.com/licenses/mit-license  MIT License
+ * @copyright (c)2016-2019 PlusFive (https://www.plus-5.com)
  * @author   Taka Goto <www.plus-5.com>
  */
 class Format extends Tags
@@ -58,7 +59,11 @@ class Format extends Tags
         $this->level = 0;
         $this->source = preg_replace("/(\r\n|\r|\n)/", PHP_EOL, $source);
         while ($this->source) {
-            $this->parse();
+            if (false === $this->parse()) {
+                trigger_error('HTML format failed', E_USER_NOTICE);
+                $this->formatted = $source;
+                break;
+            }
         }
 
         return $this->formatted;
@@ -71,10 +76,12 @@ class Format extends Tags
      */
     private function parse()
     {
-        $pattern_comment = '/^([\s]*)(<!--.*?-->)([\s]*)/s';
-        $pattern_dtd = '/^[\s]*<!([^\s]+)([^>]*)>([\s]*)/s';
+        $pattern_comment = '/^(\s*)(<!--(((?'
+            . '>[^(<!--)(-->)]*)|(?2))*)-->)([\s]*)/s';
+        $pattern_dtd = '/^[\s]*<!([a-zA-Z]+)([^>]*)>([\s]*)/s';
         $pattern_end_tag = '/^[\s]*<\/([^\s>]+)([^>]*)>([\s]*)/s';
-        $pattern_start_tag = '/^[\s]*<([^\s>\/!]+)([^>]*)>([\s]*)/s';
+        $pattern_start_tag = '/^[\s]*(<(((?'.'>[^<>]+)|(?1))*)>)([\s]*)/s';
+        $pattern_other_tag = '/^[\s]*(<[^>]*>)([\s]*)/s';
         $pattern_text_node = '/^([\s]*)([^<>]+)/s';
 
         // Comment
@@ -88,6 +95,7 @@ class Format extends Tags
             $this->formatted .= $nl.$indent.$match[2];
             $this->type = 'comment';
             $this->source = preg_replace($pattern_comment, '', $this->source, 1);
+            $match[3] = $match[5];
         }
 
         // DTD
@@ -95,7 +103,7 @@ class Format extends Tags
             $this->formatted .= '<!'.strtoupper($match[1]).$match[2].'>';
             $this->type = 'dtd';
 
-            $this->nl = $this->checkTail($match[3]);
+            $this->nl = preg_match('/['.preg_quote(PHP_EOL, '/').']+[\t ]*$/s', $match[3]);
 
             $this->source = preg_replace($pattern_dtd, '', $this->source, 1);
         }
@@ -117,48 +125,6 @@ class Format extends Tags
             $this->text .= $substr;
             $this->type = 'source';
             $this->source = substr($this->source, $pos);
-        }
-
-        // Start tag
-        elseif (preg_match($pattern_start_tag, $this->source, $match)) {
-            $tag = strtolower($match[1]);
-            $nl = '';
-
-            // 常に改行するタグに指定されていれば改行する
-            if (isset($this->always_indention_start_tags[$tag])
-                || ($this->type === 'start' && isset($this->always_wrap_start_tags[$this->prev]))
-                || ($this->type === 'end' && isset($this->always_wrap_end_tags[$this->prev]))
-            ) {
-                $nl = PHP_EOL;
-            }
-            // ソースコードのままに...
-            elseif (isset($this->entrust_indention_by_source[$tag])) {
-                $nl = ($this->nl) ? PHP_EOL : '';
-            }
-
-            $this->wrappedStartTag($nl);
-
-            // omitting start tags
-            if ($match[2] || $this->startTagOmitting($tag) !== true) {
-                $indent = ($nl === PHP_EOL) ?  $indent = $this->indent() : '';
-                $this->formatted .= $nl.$indent.'<'.$tag.$match[2].'>';
-                if (!isset($this->empty_tags[$tag])) {
-                    $this->append($match[1].':'.$this->level);
-                    ++$this->level;
-                }
-            }
-
-            $this->setParent($tag, 'down');
-            $this->prev = $tag;
-            $this->type = 'start';
-
-            if (in_array($tag, ['script', 'style'])) {
-                $this->text .= $match[3];
-            }
-
-            $this->nl = $this->checkTail($match[3]);
-
-            $this->source = preg_replace($pattern_start_tag, '', $this->source);
         }
 
         // End tag
@@ -198,7 +164,13 @@ class Format extends Tags
             }
 
             $decrement = 1;
-            $parent = $this->getParent();
+            $get_parent = function()
+            {
+                if (count($this->parents) > 0) {
+                    return end($this->parents);
+                }
+            };
+            $parent = $get_parent();
             if (isset($this->valid_parents[$tag])) {
                 $myset = $this->valid_parents[$tag];
 
@@ -206,9 +178,21 @@ class Format extends Tags
                     $myset['html'] = 0;
                 }
 
+                $set_parent = function ($tag, $level)
+                {
+                    if (isset($this->empty_tags[$tag])) {
+                        return;
+                    }
+                    if ($level === 'down') {
+                        $this->parents[] = $tag;
+                    } elseif ($level === 'up') {
+                        array_pop($this->parents);
+                    }
+                };
+
                 while (!isset($myset[$parent]) && $tag !== $parent) {
-                    $this->setParent($parent, 'up');
-                    $parent = $this->getParent();
+                    $set_parent($parent, 'up');
+                    $parent = $get_parent();
                     ++$decrement;
                     if (!$parent) {
                         break;
@@ -245,9 +229,114 @@ class Format extends Tags
                 $this->remove($e);
             }
 
-            $this->nl = $this->checkTail($match[3]);
+            $this->nl = preg_match('/['.preg_quote(PHP_EOL, '/').']+[\t ]*$/s', $match[3]);
 
-            $this->source = preg_replace($pattern_end_tag, '', $this->source);
+            $this->source = preg_replace($pattern_end_tag, '', $this->source, 1);
+        }
+
+        // Start tag
+        elseif (preg_match($pattern_start_tag, $this->source, $outer)) {
+            preg_match('/<([^\s\/>]+)(.*)>/s', $outer[1], $match);
+            $tag = strtolower($match[1]);
+            $nl = '';
+
+            if (isset($this->always_indention_start_tags[$tag])
+                || ($this->type === 'start' && isset($this->always_wrap_start_tags[$this->prev]))
+                || ($this->type === 'end' && isset($this->always_wrap_end_tags[$this->prev]))
+            ) {
+                $nl = PHP_EOL;
+            } elseif (isset($this->entrust_indention_by_source[$tag])) {
+                $nl = ($this->nl) ? PHP_EOL : '';
+            }
+
+            if ($this->type === 'start' && $nl === PHP_EOL) {
+                end($this->levels);
+                $key = key($this->levels);
+                $this->levels[$key] = 1;
+            }
+
+            // omitting start tags
+            if ($match[2] || $this->startTagOmitting($tag) !== true) {
+                $indent = ($nl === PHP_EOL) ?  $indent = $this->indent() : '';
+                $this->formatted .= $nl.$indent.'<'.$tag.$match[2].'>';
+                if (!isset($this->empty_tags[$tag])) {
+                    $this->append($match[1].':'.$this->level);
+                    ++$this->level;
+                }
+            }
+
+            $this->setParent($tag, 'down');
+            $this->prev = $tag;
+            $this->type = 'start';
+
+            if (in_array($tag, ['script', 'style'])) {
+                $this->text .= $outer[4];
+            }
+
+            $this->nl = preg_match('/['.preg_quote(PHP_EOL, '/').']+[\t ]*$/s', $outer[4]);
+
+            $this->source = preg_replace($pattern_start_tag, '', $this->source, 1);
+        }
+
+        // Other tag
+        elseif (preg_match($pattern_other_tag, $this->source, $outer)) {
+            $source = $outer[1];
+            $op = substr_count($source, '<');
+            $cl = substr_count($source, '>');
+            $count = $op - $cl;
+            if ($count !== 0) {
+                --$count;
+                $this->source = preg_replace($pattern_other_tag, '', $this->source, 1);
+                $pattern = '/^('; 
+                while ($count !== 0) {
+                    $pattern .= '.*?>'; 
+                    --$count;
+                }
+                $pattern .= ')(\s*)/s'; 
+                preg_match($pattern, $this->source, $match);
+                $source .= $match[1];
+                $whitespace = $match[2];
+                $this->source = preg_replace($pattern, '', $this->source, 1);
+            }
+
+            preg_match('/<([^\s\/>]+)(.*)>/s', $source, $match);
+            $tag = strtolower($match[1]);
+            $nl = '';
+
+            if (isset($this->always_indention_start_tags[$tag])
+                || ($this->type === 'start' && isset($this->always_wrap_start_tags[$this->prev]))
+                || ($this->type === 'end' && isset($this->always_wrap_end_tags[$this->prev]))
+            ) {
+                $nl = PHP_EOL;
+            } elseif (isset($this->entrust_indention_by_source[$tag])) {
+                $nl = ($this->nl) ? PHP_EOL : '';
+            }
+
+            if ($this->type === 'start' && $nl === PHP_EOL) {
+                end($this->levels);
+                $key = key($this->levels);
+                $this->levels[$key] = 1;
+            }
+
+            // omitting start tags
+            if ($match[2] || $this->startTagOmitting($tag) !== true) {
+                $indent = ($nl === PHP_EOL) ?  $indent = $this->indent() : '';
+                $this->formatted .= $nl.$indent.'<'.$tag.$match[2].'>';
+                if (!isset($this->empty_tags[$tag])) {
+                    $this->append($match[1].':'.$this->level);
+                    ++$this->level;
+                }
+            }
+
+            $this->setParent($tag, 'down');
+            $this->prev = $tag;
+            $this->type = 'start';
+
+            if (in_array($tag, ['script', 'style'])) {
+                $this->text .= $whitespace;
+            }
+
+            $this->nl = preg_match('/['.preg_quote(PHP_EOL, '/').']+[\t ]*$/s', $whitespace);
         }
 
         // Text
@@ -260,7 +349,11 @@ class Format extends Tags
                 if (isset($this->always_wrap_start_tags[$this->prev])) {
                     $nl = PHP_EOL;
                 }
-                $this->wrappedStartTag($nl);
+                if ($this->type === 'start' && $nl === PHP_EOL) {
+                    end($this->levels);
+                    $key = key($this->levels);
+                    $this->levels[$key] = 1;
+                }
             }
             if (!in_array($this->type, ['start', 'end']) || !preg_match('/^[\s]+</', $this->source)) {
                 $indent = ($nl === PHP_EOL) ? $this->indent() : '';
@@ -268,9 +361,14 @@ class Format extends Tags
                 $this->type = 'textnode';
             }
 
-            $this->nl = $this->checkTail($match[2]);
+            $this->nl = preg_match('/['.preg_quote(PHP_EOL, '/').']+[\t ]*$/s', $match[2]);
 
             $this->source = preg_replace($pattern_text_node, '', $this->source);
+        }
+
+        // Failed format
+        else {
+            return false;
         }
     }
 
@@ -317,9 +415,6 @@ class Format extends Tags
     private function remove($value)
     {
         unset($this->levels[$value]);
-        //if (false !== $index = array_search($value, $this->levels)) {
-        //    $this->levels = array_splice($this->levels, $index, 1);
-        //}
     }
 
     /**
@@ -416,7 +511,7 @@ class Format extends Tags
          */
         elseif ($tag === 'body') {
             if (preg_match('/<\/body>[\s]*<!--.*?-->/is', $this->source)
-                || preg_match('/^[\s]*<(meta|link|script|style|template).*?>/is', $this->source)
+                || preg_match('/^[\s]*<(meta|link|script|style|template).*?'.'>/is', $this->source)
             ) {
                 return false;
             }
@@ -437,10 +532,10 @@ class Format extends Tags
          * (It can't be omitted if the element is empty.)
          */
         elseif ($tag === 'colgroup') {
-            if (preg_match('/^.+<(colgroup).*?>(((?!<\/\1>).)*)$/is', $this->formatted)) {
+            if (preg_match('/^.+<(colgroup).*?'.'>(((?!<\/\1>).)*)$/is', $this->formatted)) {
                 return false;
             }
-            if (preg_match('/^[\s]*<col.*?>/is', $this->source)) {
+            if (preg_match('/^[\s]*<col.*?'.'>/is', $this->source)) {
                 return true;
             }
         }
@@ -454,7 +549,7 @@ class Format extends Tags
          * (It can't be omitted if the element is empty.)
          */
         elseif ($tag === 'tbody') {
-            if (preg_match('/^.+<(tbody|thead|tfoot).*?>(((?!<\/\1>).)+)$/is', $this->formatted)) {
+            if (preg_match('/^.+<(tbody|thead|tfoot).*?'.'>(((?!<\/\1>).)+)$/is', $this->formatted)) {
                 return false;
             }
             if (preg_match('/^[\s]*<tr>/is', $this->source)) {
@@ -515,7 +610,7 @@ class Format extends Tags
                 return false;
             }
             if (preg_match('/^[\s]*<(address|article|aside|blockquote|div|dl|fieldset|footer|form|h[1-6]|header|hgroup|hr|main|nav|ol|p|pre|section|table|ul)[^>]*>/is', $this->source)
-                || preg_match('/^[\s]*<\/.+?>/s', $this->source)
+                || preg_match('/^[\s]*<\/.+?'.'>/s', $this->source)
             ) {
                 return true;
             }
@@ -527,7 +622,7 @@ class Format extends Tags
          * if there is no more content in the parent element.
          */
         elseif ($tag === 'li') {
-            if (preg_match('/^[\s]*<\/?(ul|ol|li).*?>/is', $this->source)) {
+            if (preg_match('/^[\s]*<\/?(ul|ol|li).*?'.'>/is', $this->source)) {
                 return true;
             }
         }
@@ -542,7 +637,7 @@ class Format extends Tags
          * a dt element, or if there is no more content in the parent element.
          */
         elseif (in_array($tag, ['dt', 'dd'])) {
-            if (preg_match('/^[\s]*<\/?(dl|d[dt]).*?>/is', $this->source)) {
+            if (preg_match('/^[\s]*<\/?(dl|d[dt]).*?'.'>/is', $this->source)) {
                 return true;
             }
         }
@@ -558,7 +653,7 @@ class Format extends Tags
          * if there is no more content in the parent element.
          */
         elseif (in_array($tag, ['thead', 'tbody'])) {
-            if (preg_match('/^[\s]*<(tfoot|tbody).*?>/is', $this->source)) {
+            if (preg_match('/^[\s]*<(tfoot|tbody).*?'.'>/is', $this->source)) {
                 return true;
             }
             if ($tag === 'tbody') {
@@ -594,7 +689,7 @@ class Format extends Tags
          * or if there is no more content in the parent element.
          */
         elseif ($tag === 'tr') {
-            if (preg_match('/^[\s]*<(tr|\/table|\/tbody|\/thead|\/tfoot).*?>/is', $this->source)) {
+            if (preg_match('/^[\s]*<(tr|\/table|\/tbody|\/thead|\/tfoot).*?'.'>/is', $this->source)) {
                 return true;
             }
         }
@@ -609,7 +704,7 @@ class Format extends Tags
          * or if there is no more content in the parent element.
          */
         elseif (in_array($tag, ['th', 'td'])) {
-            if (preg_match('/^[\s]*<\/?(t[dhr]|table|tbody|thead|tfoot).*?>/is', $this->source)) {
+            if (preg_match('/^[\s]*<\/?(t[dhr]|table|tbody|thead|tfoot).*?'.'>/is', $this->source)) {
                 return true;
             }
         }
@@ -620,7 +715,7 @@ class Format extends Tags
          * or if there is no more content in the parent element.
          */
         elseif ($tag === 'optgroup') {
-            if (preg_match('/^[\s]*<\/?(select|optgroup).*?>/is', $this->source)) {
+            if (preg_match('/^[\s]*<\/?(select|optgroup).*?'.'>/is', $this->source)) {
                 return true;
             }
         }
@@ -633,7 +728,7 @@ class Format extends Tags
          * if there is no more content in the parent element.
          */
         elseif ($tag === 'option') {
-            if (preg_match('/^[\s]*<\/?(select|optgroup|option).*?>/is', $this->source)) {
+            if (preg_match('/^[\s]*<\/?(select|optgroup|option).*?'.'>/is', $this->source)) {
                 return true;
             }
         }
@@ -655,7 +750,7 @@ class Format extends Tags
          * if there is no more content in the parent element.
          */
         elseif (in_array($tag, ['rb', 'rt', 'rtc', 'rp'])) {
-            if (preg_match('/^[\s]*<(rb|rt|rtc|rp|\/ruby).*?>/is', $this->source)) {
+            if (preg_match('/^[\s]*<(rb|rt|rtc|rp|\/ruby).*?'.'>/is', $this->source)) {
                 return true;
             }
         }
@@ -667,7 +762,7 @@ class Format extends Tags
          * if there is no more content in the parent element.
          */
         elseif ($tag === 'rtc') {
-            if (preg_match('/^[\s]*<(rb|rtc|rp|\/ruby).*?>/is', $this->source)) {
+            if (preg_match('/^[\s]*<(rb|rtc|rp|\/ruby).*?'.'>/is', $this->source)) {
                 return true;
             }
         }
@@ -683,7 +778,13 @@ class Format extends Tags
     private function shiftLevel($tag)
     {
         $shift_count = 0;
-        $parent = $this->getParent();
+        $get_parent = function()
+        {
+            if (count($this->parents) > 0) {
+                return end($this->parents);
+            }
+        };
+        $parent = $get_parent();
         if (isset($this->valid_parents[$tag])) {
             $myset = $this->valid_parents[$tag];
 
@@ -691,11 +792,23 @@ class Format extends Tags
                 $myset['html'] = 0;
             }
 
+            $set_parent = function ($tag, $level)
+            {
+                if (isset($this->empty_tags[$tag])) {
+                    return;
+                }
+                if ($level === 'down') {
+                    $this->parents[] = $tag;
+                } elseif ($level === 'up') {
+                    array_pop($this->parents);
+                }
+            };
+
             while (!isset($myset[$parent])) {
-                $this->setParent($parent, 'up');
+                $set_parent($parent, 'up');
                 $this->decrement();
                 $this->rtrim();
-                $parent = $this->getParent();
+                $parent = $get_parent();
                 ++$shift_count;
                 if (!$parent) {
                     break;

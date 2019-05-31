@@ -10,6 +10,8 @@
 
 namespace P5;
 
+use ErrorException;
+
 /**
  * Custom Error Handler.
  *
@@ -18,6 +20,8 @@ namespace P5;
  */
 class Error
 {
+    const MAX_LOG_SIZE = 2097152;
+    const MAX_LOG_FILES = 10;
     const FEEDBACK_INTERVAL = 10800;
 
     /**
@@ -46,7 +50,14 @@ class Error
      *
      * @var mixed
      */
-    protected $temporary_template;
+    protected static $temporary_template;
+
+    /**
+     * not feedback flag.
+     *
+     * @var bool
+     */
+    protected static $not_feedback = false;
 
     /**
      * Object Constructor.
@@ -64,7 +75,9 @@ class Error
         set_error_handler([$this, 'errorHandler']);
         set_exception_handler([$this, 'exceptionHandler']);
 
-        if (defined('ERROR_LOG_DESTINATION') && !self::isEmail(ERROR_LOG_DESTINATION)) {
+        if (defined('ERROR_LOG_DESTINATION')
+         && !self::isEmail(ERROR_LOG_DESTINATION)
+        ) {
             $dir = dirname(ERROR_LOG_DESTINATION);
             if (!empty($dir)) {
                 try {
@@ -74,8 +87,11 @@ class Error
                     if (!file_exists(ERROR_LOG_DESTINATION)) {
                         touch(ERROR_LOG_DESTINATION);
                     }
-                } catch (\ErrorException $e) {
-                    trigger_error(ERROR_LOG_DESTINATION.' is no such file', E_USER_ERROR);
+                } catch (ErrorException $e) {
+                    trigger_error(
+                        ERROR_LOG_DESTINATION . ' is no such file',
+                        E_USER_ERROR
+                    );
                 }
             }
             $this->logdir = $dir;
@@ -91,8 +107,13 @@ class Error
      * @param int    $errline
      * @param array  $errcontext
      */
-    public function errorHandler($errno, $errstr, $errfile, $errline, $errcontext)
-    {
+    public function errorHandler(
+        $errno,
+        $errstr,
+        $errfile,
+        $errline,
+        $errcontext
+    ) {
         if (error_reporting() === 0 && $this->debug_mode === 0) {
             return false;
         }
@@ -113,7 +134,7 @@ class Error
 
             return false;
         }
-        throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
+        throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
     }
 
     /**
@@ -123,7 +144,8 @@ class Error
      */
     public function exceptionHandler($ex)
     {
-        $errno = method_exists($ex, 'getSeverity') ? $ex->getSeverity() : $ex->getCode();
+        $errno = method_exists($ex, 'getSeverity')
+            ? $ex->getSeverity() : $ex->getCode();
         $errstr = $ex->getMessage();
         $errfile = $ex->getFile();
         $errline = $ex->getLine();
@@ -141,7 +163,8 @@ class Error
     {
         $err = error_get_last();
         if (!is_null($err)) {
-            $message = "{$err['message']} in {$err['file']} on line {$err['line']}.";
+            $message = "{$err['message']}"
+               . " in {$err['file']} on line {$err['line']}. ";
             $errno = $err['type'];
             self::feedback($message, $errno);
             self::log($message, $errno);
@@ -167,29 +190,50 @@ class Error
             exit($errno);
         }
 
-        $src = (is_null($this->template)) ? self::htmlSource()
-                                          : file_get_contents($this->template, FILE_USE_INCLUDE_PATH);
+        $src = (is_null($this->template))
+            ? self::htmlSource()
+            : file_get_contents($this->template, FILE_USE_INCLUDE_PATH);
         if (!empty($this->temporary_template)) {
-            $src = file_get_contents($this->temporary_template, FILE_USE_INCLUDE_PATH);
+            $src = file_get_contents(
+                $this->temporary_template,
+                FILE_USE_INCLUDE_PATH
+            );
             $this->temporary_template = null;
         }
-        $message = htmlspecialchars($message, ENT_COMPAT, mb_internal_encoding(), false);
+        $message = htmlspecialchars(
+            $message,
+            ENT_COMPAT,
+            mb_internal_encoding(),
+            false
+        );
         if ($this->debug_mode > 0) {
             $debugger = '';
             foreach ((array) $tracer as $trace) {
-                $debugger .= PHP_EOL.$trace['file'].' on line '.$trace['line'];
+                $debugger .= PHP_EOL . $trace['file']
+                    . ' on line '.$trace['line'];
             }
             $src = preg_replace(
                 '/<!--ERROR_DESCRIPTION-->/',
-                '<p id="P5-errormessage">'.
-                    nl2br(htmlentities($message, ENT_QUOTES, 'UTF-8', false).$debugger).
-                '</p>', $src
+                '<p id="P5-errormessage">'
+                . nl2br(
+                    htmlentities(
+                        $message,
+                        ENT_QUOTES,
+                        'UTF-8',
+                        false
+                    ) . $debugger
+                )
+                . '</p>',
+                $src
             );
         }
         if (defined('LINK_TO_HOMEPAGE')) {
             $src = preg_replace(
                 '/<!--LINK_TO_HOMEPAGE-->/',
-                '<a href="'.LINK_TO_HOMEPAGE.'" class="P5-errorhomelink">Back</a>', $src
+                '<a href="'
+                . LINK_TO_HOMEPAGE
+                . '" class="P5-errorhomelink">Back</a>',
+                $src
             );
         }
         header('HTTP/1.1 500 Internal Server Error');
@@ -208,7 +252,7 @@ class Error
      */
     public static function feedback($message, $errno)
     {
-        if (!defined('FEEDBACK_ADDR')) {
+        if (!defined('FEEDBACK_ADDR') || false === self::$not_feedback) {
             return;
         }
 
@@ -276,12 +320,20 @@ class Error
             if (self::isEmail(ERROR_LOG_DESTINATION)) {
                 error_log($message, 1, ERROR_LOG_DESTINATION);
             } elseif (!is_null($this->logdir)) {
-                $client = '['.filter_input(INPUT_SERVER, 'REMOTE_ADDR').'] ';
-                error_log(date('[Y-m-d H:i:s] ')."$client$message\n", 3, ERROR_LOG_DESTINATION);
+                $client = '['
+                    . filter_input(INPUT_SERVER, 'REMOTE_ADDR')
+                    . '] ';
+                error_log(
+                    date('[Y-m-d H:i:s] ') . $client . $message . PHP_EOL,
+                    3,
+                    ERROR_LOG_DESTINATION
+                );
             } else {
                 error_log($message, 0, ERROR_LOG_DESTINATION);
             }
         }
+
+        self::rotate();
     }
 
     /**
@@ -293,7 +345,39 @@ class Error
      */
     private static function isEmail($str)
     {
-        return (bool) filter_var($str, FILTER_VALIDATE_EMAIL);
+        return (bool)filter_var($str, FILTER_VALIDATE_EMAIL);
+    }
+
+    public static function rotate($force = false)
+    {
+        if (!file_exists(ERROR_LOG_DESTINATION)) {
+            return true;
+        }
+
+        $size = filesize(ERROR_LOG_DESTINATION);
+        if ($size === 0) {
+            return true;
+        }
+
+        $max_log_size = (defined('MAX_LOG_SIZE'))
+            ? MAX_LOG_SIZE : self::MAX_LOG_SIZE;
+        if (false === $force && $size < $max_log_size) {
+            return true;
+        }
+
+        $ext = date('.YmdHis');
+        if (!rename(ERROR_LOG_DESTINATION, ERROR_LOG_DESTINATION . $ext)) {
+            return false;
+        }
+
+        $max_log_files = (defined('MAX_LOG_FILES'))
+            ? MAX_LOG_FILES : self::MAX_LOG_FILES;
+        $files = glob(ERROR_LOG_DESTINATION . '.*');
+        if (count($files) <= $max_log_files) {
+            return true;
+        }
+
+        return unlink($files[0]);
     }
 
     /**
@@ -306,7 +390,7 @@ class Error
         $str = '';
         foreach (debug_backtrace() as $trace) {
             if (isset($trace['file'])) {
-                $str .= $trace['file'].' at '.$trace['line']."\n";
+                $str .= $trace['file'] . ' at ' . $trace['line'] . PHP_EOL;
             }
         }
 

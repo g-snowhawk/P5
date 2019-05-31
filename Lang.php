@@ -35,6 +35,26 @@ class Lang
     }
 
     /** 
+     * Getter method.
+     *
+     * @param string $name
+     *
+     * @return string
+     */
+    public function __isset($name)
+    {
+        if (false === property_exists($this, $name)
+            && false === property_exists(__CLASS__, $name)
+            && false === property_exists($this, "_$name")
+            && false === property_exists(__CLASS__, "_$name")
+        ) {
+            return false;
+        }
+
+        return $this->$key;
+    }
+
+    /** 
      * Translate Language.
      *
      * @param string $key
@@ -45,33 +65,36 @@ class Lang
      */
     public static function translate($key, $package = null, $locale = null)
     {
+        if (empty($locale)) {
+            if (false === ($locale = getenv('P5_LOCALE'))) {
+                $locale = 'En';
+            }
+        }
+        $package_suffix = '\\Lang\\'.$locale;
+
         if (is_null($package)) {
             $caller = debug_backtrace();
-            if (isset($caller[1]['object']) && is_object($caller[1]['object'])) {
-                $class = get_class($caller[1]['object']);
-            }
             $package = $caller[1]['class'];
         }
-        if (empty($locale)) {
-            $locale = ($_ENV{'P5_LOCALE'}) ? $_ENV{'P5_LOCALE'} : 'En';
-        }
+
         if (preg_match('/^.*\\\\Plugin\\\\(.+)$/', $package, $match)) {
             $name = $match[1];
-            $path = 'plugins/'.str_replace('\\', '/', $name).'/Lang/'.$locale.'.php';
-            $package = $package.'\\Lang\\'.$locale;
+            $package = $package . $package_suffix;
 
             return self::words($package, $key);
         }
-        while (strpos($package, '\\') !== false) {
-            if ($result = self::words($package.'\\Lang\\'.$locale, $key)) {
+
+        while ($package) {
+            if ($result = self::words($package . $package_suffix, $key)) {
                 return $result;
+            }
+            if(strpos($package, '\\') === false) {
+                $package = '';
             }
             $package = preg_replace('/\\\\[^\\\\]+$/', '', $package);
         }
-        $package = ($package !== '') ? '\\'.$package.'\\' : '';
-        $package = $package.'Lang\\'.$locale;
 
-        return self::words($package, $key);
+        return self::words($package . $package_suffix, $key);
     }
 
     /** 
@@ -82,12 +105,23 @@ class Lang
      *
      * @return string
      */
-    public static function words($package, $key)
+    private static function words($package, $key)
     {
         if (!class_exists($package, true)) {
             return false;
         }
+
+        if (defined("$package::$key")) {
+            return constant("$package::$key");
+        }
+
         $inst = new $package();
+
+        // Compatibility with older versions
+        if (property_exists($inst, "_$key")) {
+            $key = "_$key";
+            return $inst->$key;
+        }
 
         return (property_exists($inst, $key)) ? $inst->$key : '';
     }

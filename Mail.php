@@ -476,7 +476,7 @@ class Mail
             $basename = $this->encodeHeader($file['filename']);
             $encoded = chunk_split(base64_encode($file['contents']));
         } elseif (is_file($file)) {
-            $mime = P5_File::mime($file);
+            $mime = File::mime($file);
             $basename = $this->encodeHeader($file);
             $encoded = chunk_split(base64_encode(file_get_contents($file)));
         }

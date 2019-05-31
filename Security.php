@@ -207,7 +207,7 @@ class Security
      *
      * @return mixed
      */
-    public static function encrypt($plain, $secret, $method = self::DEFAULT_ENCRYPT_METHOD)
+    public static function encrypt($plain, $secret, $method = self::DEFAULT_ENCRYPT_METHOD, $fixed = false)
     {
         if (empty($plain)) {
             return $plain;
@@ -223,7 +223,8 @@ class Security
         $repeat = $salt_length * self::$repeat_count;
         $key_length = $repeat - $salt_length;
 
-        $salt = openssl_random_pseudo_bytes($salt_length);
+        $salt = (false === $fixed) ? openssl_random_pseudo_bytes($salt_length)
+                                   : $secret;
         $salty = '';
         $ext = '';
         while (strlen($salty) < $repeat) {
@@ -246,9 +247,10 @@ class Security
      *
      * @return mixed
      */
-    public static function decrypt($encrypted, $secret, $method = self::DEFAULT_ENCRYPT_METHOD)
+    public static function decrypt($encrypted, $secret, $method = self::DEFAULT_ENCRYPT_METHOD, $fixed = false)
     {
-        $salt_length = self::$salt_length;
+        $salt_length = (false === $fixed) ? self::$salt_length
+                                          : strlen($secret);
         $key_length = $salt_length * self::$repeat_count - $salt_length;
 
         $encrypted = base64_decode($encrypted);

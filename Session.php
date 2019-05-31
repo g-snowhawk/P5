@@ -197,14 +197,8 @@ class Session
             $this->session_name = session_name();
         }
         if ($this->usedb === true) {
-            $handler = new \P5\Session\Db();
-            session_set_save_handler([$handler, 'open'],
-                                     [$handler, 'close'],
-                                     [$handler, 'read'],
-                                     [$handler, 'write'],
-                                     [$handler, 'destroy'],
-                                     [$handler, 'gc']);
-            register_shutdown_function('session_write_close');
+            $handler = new \P5\Session\DbHandler();
+            session_set_save_handler($handler, false);
         }
 
         return $this->status = session_start();
@@ -243,6 +237,18 @@ class Session
         }
 
         return (array_key_exists($name, $_SESSION)) ? $_SESSION[$name] : null;
+    }
+
+    /**
+     * Check exists session data
+     *
+     * @param string $name
+     *
+     * @return bool
+     */
+    public function isset($name)
+    {
+        return (array_key_exists($name, $_SESSION));
     }
 
     /**

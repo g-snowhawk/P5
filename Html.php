@@ -32,7 +32,7 @@ class Html
             if (empty($tag)) {
                 continue;
             }
-            $str = preg_replace_callback("/&lt;($tag)(.*?)&gt;/i", 'P5_Html::retag', $str);
+            $str = preg_replace_callback("/&lt;($tag)(.*?)&gt;/i", '\\P5\\Html::retag', $str);
             $str = preg_replace("/&lt;\/$tag&gt;/i", "</$tag>", $str);
         }
 
@@ -135,7 +135,7 @@ class Html
                 $encTo = $enc;
                 break;
         }
-        $encTo = P5_Text::checkEncodings($encTo);
+        $encTo = Text::checkEncodings($encTo);
         $encFrom = mb_internal_encoding();
         if (strtolower($encTo) != $encFrom) {
             if (!empty($encTo)) {

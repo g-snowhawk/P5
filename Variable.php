@@ -27,7 +27,7 @@ class Variable
      */
     public static function isHash(&$var)
     {
-        if (is_null($var)) {
+        if (is_null($var) || !is_array($var)) {
             return false;
         }
 

@@ -150,6 +150,19 @@ class Form
     }
 
     /**
+     * Check exists request data
+     *
+     * @param mixed $name
+     *
+     * @return bool
+     */
+    public function isset($name)
+    {
+        $method = $this->method;
+        return (array_key_exists($name, $this->$method));
+    }
+
+    /**
      * make Pref selector.
      *
      * @param string $name
