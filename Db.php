@@ -153,18 +153,20 @@ class Db
             }
             if ($this->driver === 'mysql') {
                 $this->options[PDO::MYSQL_ATTR_LOCAL_INFILE] = true;
-                //$this->options[PDO::MYSQL_ATTR_INIT_COMMAND] = "SET SQL_MODE='ANSI_QUOTES';";
 
                 // SSL Options
                 if (defined('MYSQL_SSL_CA')) {
                     $this->options[PDO::MYSQL_ATTR_SSL_CA] = MYSQL_SSL_CA;
-                    $this->options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
                 }
                 if (defined('MYSQL_SSL_CERT')) {
                     $this->options[PDO::MYSQL_ATTR_SSL_CERT] = MYSQL_SSL_CERT;
                 }
                 if (defined('MYSQL_SSL_KEY')) {
                     $this->options[PDO::MYSQL_ATTR_SSL_KEY] = MYSQL_SSL_KEY;
+                }
+                if (defined('MYSQL_SSL_VERIFY_SERVER_CERT')) {
+                    $this->options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT]
+                        = MYSQL_SSL_VERIFY_SERVER_CERT;
                 }
             }
             $this->options[PDO::ATTR_ERRMODE] = PDO::ERRMODE_EXCEPTION;
