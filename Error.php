@@ -32,6 +32,13 @@ class Error
     private $debug_mode = 0;
 
     /**
+     * Error type
+     *
+     * @var int
+     */
+    private $error_type = E_ALL | E_STRICT;
+
+    /**
      * logfile save path.
      *
      * @var string
@@ -64,15 +71,19 @@ class Error
      *
      * @param string $template
      */
-    public function __construct($template = null)
+    public function __construct($template = null, $error_type = null)
     {
         $this->template = $template;
         if (defined('DEBUG_MODE')) {
             $this->debug_mode = DEBUG_MODE;
         }
 
+        if (is_int($error_type)) {
+            $this->error_type = $error_type;
+        }
+
         register_shutdown_function([$this, 'unloadHandler']);
-        set_error_handler([$this, 'errorHandler']);
+        set_error_handler([$this, 'errorHandler'], $this->error_type);
         set_exception_handler([$this, 'exceptionHandler']);
 
         if (defined('ERROR_LOG_DESTINATION')
@@ -114,7 +125,7 @@ class Error
         $errline,
         $errcontext
     ) {
-        if (error_reporting() === 0 && $this->debug_mode === 0) {
+        if ($this->error_type === 0 && $this->debug_mode === 0) {
             return false;
         }
 
