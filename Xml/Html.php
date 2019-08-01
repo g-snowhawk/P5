@@ -1366,6 +1366,8 @@ class HTMLElement extends DOMElement
                 }
             }
             $this->multiLineContent($last_line, false, true);
+        } else {
+            $this->multiLineContent($data);
         }
     }
 
