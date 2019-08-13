@@ -1430,10 +1430,21 @@ class HTMLElement extends DOMElement
 
         $scripts = $this->getElementsByTagName('script');
         if ($prepend && $scripts->length > 0) {
-            $this->insertBefore($node, $scripts->item(0));
-        } else {
-            $this->appendChild($node);
+            $refnode = null;
+            for ($i = 0, $max = $scripts->length; $i < $max; $i++) {
+                if ($this === $scripts->item($i)->parentNode) {
+                    $refnode = $scripts->item($i);
+                    break;
+                }
+            }
+
+            if (!is_null($refnode)) {
+                $this->insertBefore($node, $refnode);
+                return;
+            }
         }
+
+        $this->appendChild($node);
     }
 
     public function querySelector($query)
