@@ -94,6 +94,9 @@ class Session
      * @var bool
      */
     private $usedb = false;
+    private $db_user;
+    private $db_password;
+    private $db_encoding;
 
     /**
      * Object constructor.
@@ -175,7 +178,10 @@ class Session
     public function useDatabase($driver, $host, $source, $user, $password, $port = 3306, $encoding = '')
     {
         $this->usedb = true;
-        session_save_path("$driver/$host/$source/$user/$password/$port/$encoding");
+        $this->db_user = $user;
+        $this->db_password = $password;
+        $this->db_encoding = $encoding;
+        session_save_path("$driver/$host/$source/$port");
     }
 
     /**
@@ -197,7 +203,11 @@ class Session
             $this->session_name = session_name();
         }
         if ($this->usedb === true) {
-            $handler = new \P5\Session\DbHandler();
+            $handler = new \P5\Session\DbHandler(
+                $this->db_user,
+                $this->db_password,
+                $this->db_encoding
+            );
             session_set_save_handler($handler, false);
         }
 

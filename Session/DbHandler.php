@@ -20,7 +20,17 @@ use SessionHandlerInterface;
 class DbHandler implements SessionHandlerInterface
 {
     private $db;
+    private $user;
+    private $password;
+    private $encoding;
     private $session_name;
+
+    public function __construct($user, $password, $encoding)
+    {
+        $this->user = $user;
+        $this->password = $password;
+        $this->encoding = $encoding;
+    }
 
     public function open($save_path, $session_name): bool
     {
@@ -30,12 +40,20 @@ class DbHandler implements SessionHandlerInterface
         $driver = array_shift($dsn);
         $host = array_shift($dsn);
         $source = array_shift($dsn);
+        $port = array_shift($dsn);
+
         $user = array_shift($dsn);
         $password = array_shift($dsn);
-        $port = array_shift($dsn);
         $enc = implode('', $dsn);
+
         $this->db = new \P5\Db(
-            $driver, $host, $source, $user, $password, $port, $enc
+            $driver,
+            $host,
+            $source,
+            $this->user,
+            $this->password,
+            $port,
+            $this->encoding
         );
 
         return $this->db->open();
@@ -96,10 +114,4 @@ class DbHandler implements SessionHandlerInterface
 
         return $result === false ? false : true;
     }
-
-    //public function create_sid(): string
-    //{
-    //    //$this->db->open();
-    //    return session_create_id();
-    //}
 }
