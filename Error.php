@@ -263,7 +263,7 @@ class Error
      */
     public static function feedback($message, $errno)
     {
-        if (!defined('FEEDBACK_ADDR') || false === self::$not_feedback) {
+        if (!defined('FEEDBACK_ADDR') || false !== self::$not_feedback) {
             return;
         }
 
