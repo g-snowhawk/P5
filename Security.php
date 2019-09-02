@@ -173,11 +173,15 @@ class Security
      *
      * @return string
      */
-    public static function createPassword($figure = 8, $nums = 0, $chrs = 0)
-    {
+    public static function createPassword(
+        $figure = 8,
+        $nums = 0,
+        $chrs = 0,
+        $chars_seed = '!#%&()+,-/:;<=>?@[]^_{|}~'
+    ) {
         $alpha = array_merge(range('a', 'z'), range('A', 'Z'));
         $numeric = range(0, 9);
-        $chars = str_split('!#$%&()+,-/:;<=>?@[]^_{|}~');
+        $chars = str_split($chars_seed);
         $str = '';
         $count = $figure - $nums - $chrs;
         for ($i = 0; $i < $count; ++$i) {
