@@ -923,7 +923,7 @@ class Html extends Dom
         }
         $source = preg_replace("/[\/]+>/", '/>', $source);
 
-        $pattern = "/(<.+?\s+)(async|checked|disabled|readonly|required|reversed|seamless|selected|loop|hidden|open|scoped|multiple|defer|ismap)((?!\s*=).*?".">)/";
+        $pattern = "/(<[^<>]+\s+)(async|checked|disabled|readonly|required|reversed|seamless|selected|loop|hidden|open|scoped|multiple|defer|ismap)((?!\s*=).*?".">)/";
         while (preg_match($pattern, $source, $match)) {
             $source = preg_replace($pattern, "$1$2=\"$2\"$3", $source);
         }
