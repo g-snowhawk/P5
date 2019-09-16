@@ -48,7 +48,7 @@ class NodeList implements \Iterator
             $this->items = array_values(array_filter($this->items, array($this, 'itemFilter')));
         }
 
-        return $this->items[$index];
+        return (isset($this->items[$index])) ? $this->items[$index] : null;
     }
 
     private function itemFilter($value)
