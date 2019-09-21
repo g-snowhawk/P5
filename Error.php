@@ -204,12 +204,12 @@ class Error
         $src = (is_null($this->template))
             ? self::htmlSource()
             : file_get_contents($this->template, FILE_USE_INCLUDE_PATH);
-        if (!empty($this->temporary_template)) {
+        if (!empty(self::$temporary_template)) {
             $src = file_get_contents(
-                $this->temporary_template,
+                self::$temporary_template,
                 FILE_USE_INCLUDE_PATH
             );
-            $this->temporary_template = null;
+            self::$temporary_template = null;
         }
         $message = htmlspecialchars(
             $message,
