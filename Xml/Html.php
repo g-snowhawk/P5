@@ -27,6 +27,15 @@ class Html extends Dom
     const NAMESPACE_URI = 'http://www.plus-5.com/xml';
 
     /**
+     * Boolean Attributes
+     */
+    const BOOLEAN_ATTRIBUTES = array(
+        'async', 'autofocus', 'checked', 'defer', 'disabled', 'draggable',
+        'hidden', 'ismap', 'loop', 'multiple', 'novalidate', 'open',
+        'readonly', 'required', 'reversed', 'scoped', 'seamless', 'selected',
+    );
+
+    /**
      * Empty tag list.
      *
      * @var array
@@ -923,10 +932,22 @@ class Html extends Dom
         }
         $source = preg_replace("/[\/]+>/", '/>', $source);
 
-        $pattern = "/(<[^<>]+\s+)(async|checked|disabled|readonly|required|reversed|seamless|selected|loop|hidden|open|scoped|multiple|defer|ismap)((?!\s*=).*?".">)/";
-        while (preg_match($pattern, $source, $match)) {
-            $source = preg_replace($pattern, "$1$2=\"$2\"$3", $source);
-        }
+        $attrs = self::BOOLEAN_ATTRIBUTES;
+        $args = array_fill(0, count($attrs), '/');
+        $pattern = '/(<[^<>]+\s+)('
+            . implode('|', array_map('preg_quote', $attrs, $args))
+            . ')((?!\s*=).*?'
+            . '>)/';
+        $source = preg_replace_callback(
+            $pattern,
+            function ($m) {
+                return (
+                    substr_count($m[1], '"') % 2 !== 0
+                    || substr_count($m[3], '"') % 2 !== 0
+                ) ? $m[0] : "{$m[1]}{$m[2]}=\"{$m[2]}\"{$m[3]}";
+            },
+            $source
+        );
 
         return $source;
     }
