@@ -323,7 +323,7 @@ class Error
     public function log($message, $errno)
     {
         if ($this->debug_mode === 0) {
-            if (in_array($errno, [8, 1024, 2048])) {
+            if (in_array($errno, [0])) {
                 return;
             }
         }
