@@ -102,7 +102,11 @@ class Environment
         } elseif (preg_match("/Linux .+; rv:([0-9\.]+);/", $user_agent, $match)) {
             $name = 'Linux';
             $version = $match[1];
+        } else {
+            $name = 'Unknown';
+            $version = 'Unknown';
         }
+
         return array($name, $version);
     }
 
