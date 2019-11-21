@@ -39,10 +39,10 @@ class P5_Html_Form_Input
         } elseif ($type === 'File') {
             P5_Html_Form_File::setValue($fmObj, $html, $element, $name, $value, $sec);
         } elseif ($type === 'date') {
-            $value = date('Y-m-d', strtotime($value));
+            $value = (empty($value)) ? null : date('Y-m-d', strtotime($value));
             P5_Html_Form_Text::setValue($fmObj, $html, $element, $name, $value, $sec);
         } elseif ($type === 'datetime') {
-            $value = date('Y-m-d\TH:i:s', strtotime($value));
+            $value = (empty($value)) ? null : date('Y-m-d\TH:i:s', strtotime($value));
             P5_Html_Form_Text::setValue($fmObj, $html, $element, $name, $value, $sec);
         } else {
             P5_Html_Form_Text::setValue($fmObj, $html, $element, $name, $value, $sec);
