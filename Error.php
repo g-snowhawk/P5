@@ -26,6 +26,8 @@ require_once 'P5/Environment.php';
  */
 class P5_Error
 {
+    const MAX_LOG_SIZE = 2097152;
+    const MAX_LOG_FILES = 10;
     const FEEDBACK_INTERVAL = 10800;
 
     /**
@@ -302,6 +304,8 @@ class P5_Error
                 error_log($msg, 0, ERROR_LOG_DESTINATION);
             }
         }
+
+        self::rotate();
     }
 
     /**
@@ -321,6 +325,38 @@ class P5_Error
                    '(?:\[(?:\\\S|[\x21-\x5a\x5e-\x7e])*\])))$';
 
         return preg_match("/$pattern/", $str);
+    }
+
+    public static function rotate($force = false)
+    {
+        if (!file_exists(ERROR_LOG_DESTINATION)) {
+            return true;
+        }
+
+        $size = filesize(ERROR_LOG_DESTINATION);
+        if ($size === 0) {
+            return true;
+        }
+
+        $max_log_size = (defined('MAX_LOG_SIZE'))
+            ? MAX_LOG_SIZE : self::MAX_LOG_SIZE;
+        if (false === $force && $size < $max_log_size) {
+            return true;
+        }
+
+        $ext = date('.YmdHis');
+        if (!rename(ERROR_LOG_DESTINATION, ERROR_LOG_DESTINATION . $ext)) {
+            return false;
+        }
+
+        $max_log_files = (defined('MAX_LOG_FILES'))
+            ? MAX_LOG_FILES : self::MAX_LOG_FILES;
+        $files = glob(ERROR_LOG_DESTINATION . '.*');
+        if (count($files) <= $max_log_files) {
+            return true;
+        }
+
+        return unlink($files[0]);
     }
 
     /**
