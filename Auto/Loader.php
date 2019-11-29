@@ -101,11 +101,11 @@ class P5_Auto_Loader
             $dirs = explode(PATH_SEPARATOR, ini_get('include_path'));
             foreach ($dirs as $dir) {
                 $file = $dir.DIRECTORY_SEPARATOR.$path;
-                if (file_exists($file)) {
+                if (self::isLoadable($file)) {
                     return $file;
                 }
                 $file = preg_replace('/\.php$/', '.class.php', $file);
-                if (file_exists($file)) {
+                if (self::isLoadable($file)) {
                     return $file;
                 }
             }
@@ -114,5 +114,30 @@ class P5_Auto_Loader
         }
 
         return $path;
+    }
+
+    /**
+     * Check existing file.
+     *
+     * @param string $path
+     *
+     * @return bool
+     */
+    public static function isLoadable($path)
+    {
+        $allowed_paths = ini_get('open_basedir');
+        if (empty($allowed_paths)) {
+            return file_exists($path);
+        }
+
+        $allowed_paths = explode(PATH_SEPARATOR, $allowed_paths);
+        foreach ($allowed_paths as $allowed_path) {
+            $pattern = '/^' . preg_quote($allowed_path, '/') . '/i';
+            if (preg_match($pattern, $path)) {
+                return file_exists($path);
+            }
+        }
+
+        return false;
     }
 }

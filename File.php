@@ -299,6 +299,15 @@ class P5_File
         return (empty($mime)) ? 'application/octet-stream' : $mime;
     }
 
+    public static function isDir($path)
+    {
+        if (false === self::fileExists($path)) {
+            return false;
+        }
+
+        return is_dir($path);
+    } 
+
     /**
      * Check existing file.
      *
