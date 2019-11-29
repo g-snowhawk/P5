@@ -92,7 +92,16 @@ class P5_Xml_Dom
         clearstatcache();
         $dom = new DOMDocument();
         $dom->preserveWhiteSpace = !$this->skipWhiteSpace;
-        $source = (is_file($template)) ? file_get_contents($template) : $template;
+        try {
+            $source = (is_file($template)) ? file_get_contents($template) : $template;
+        } catch(ErrorException $e) {
+            $error_message = $e->getMessage();
+            if (false !== stripos($error_message, 'the maximum allowed path length on this platform')) {
+                $source = $template;
+            } else {
+                trigger_error($error_message, E_USER_ERROR);
+            }
+        }
         if (!empty($source) || $source === '0') {
             $firstline_format = '';
             if (preg_match("/^([\r\n]+)/", $source, $match)) {

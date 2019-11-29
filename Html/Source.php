@@ -63,7 +63,16 @@ class P5_Html_Source extends P5_Xml_Dom
      */
     public function __construct($template, $ishtml = false)
     {
-        $source = (is_file($template)) ? file_get_contents($template) : $template;
+        try {
+            $source = (is_file($template)) ? file_get_contents($template) : $template;
+        } catch(ErrorException $e) {
+            $error_message = $e->getMessage();
+            if (false !== stripos($error_message, 'the maximum allowed path length on this platform')) {
+                $source = $template;
+            } else {
+                trigger_error($error_message, E_USER_ERROR);
+            }
+        }
 
         // Append Namespace for P5 tags.
         if (preg_match('/<P5:[^>]+>/', $source)) {
