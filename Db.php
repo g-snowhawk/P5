@@ -920,9 +920,6 @@ class Db
         } else {
             $parameter_type = PDO::PARAM_STR;
         }
-        if (get_magic_quotes_gpc()) {
-            $value = stripslashes($value);
-        }
 
         return $this->handler->quote($value, $parameter_type);
     }
