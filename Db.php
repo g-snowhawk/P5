@@ -621,6 +621,49 @@ class Db
         return $this->ecount;
     }
 
+    public function merge($table_name, array $data, array $skip = [], $key_name = 'PRIMARY')
+    {
+        if ($this->driver != 'mysql') {
+            throw new ErrorException('This function supports only for MySQL');
+        }
+
+        if (false === self::query(
+            "show keys from {$table_name} where Key_name = ?",
+            [$key_name]
+        )) {
+            return false;
+        }
+
+        $uniques = [];
+        while ($unit = self::fetch()) {
+            $uniques[$unit['Seq_in_index']] = $unit['Column_name'];
+        }
+
+        $replaces = [];
+        $columns = [];
+        $updates = [];
+        foreach ($data as $key => $value) {
+            $columns[] = "`{$key}`";
+            $replaces[] = $value;
+            if (!in_array($key, $uniques)) {
+                $updates[$key] = $value;
+            }
+        }
+        $ph1 = implode(',', array_fill(0, count($replaces), '?'));
+
+        $col = implode(',', $columns);
+        $columns = [];
+        foreach ($updates as $key => $value) {
+            $columns[] = "`{$key}` = ?";
+            $replaces[] = $value;
+        }
+        $ph2 = implode(',', $columns);
+        $sql = "INSERT INTO {$table_name} ({$col}) VALUES ({$ph1})
+                    ON DUPLICATE KEY UPDATE {$ph2}";
+
+        return self::query($sql, $replaces);
+    }
+
     /**
      * Select.
      *
