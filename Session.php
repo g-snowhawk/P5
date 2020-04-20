@@ -246,7 +246,7 @@ class Session
             $_SESSION[$name] = $value;
         }
 
-        return (array_key_exists($name, $_SESSION)) ? $_SESSION[$name] : null;
+        return (isset($_SESSION[$name])) ? $_SESSION[$name] : null;
     }
 
     /**
@@ -258,7 +258,7 @@ class Session
      */
     public function isset($name)
     {
-        return (array_key_exists($name, $_SESSION));
+        return (isset($_SESSION[$name]));
     }
 
     /**
@@ -348,7 +348,7 @@ class Session
      */
     public function clear($key = null)
     {
-        if (array_key_exists($key, $_SESSION)) {
+        if (isset($_SESSION[$key])) {
             unset($_SESSION[$key]);
         }
     }

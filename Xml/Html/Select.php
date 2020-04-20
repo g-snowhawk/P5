@@ -27,7 +27,7 @@ class Select
     {
         if (is_array($value)) {
             if (preg_match("/.+\[([a-zA-Z0-9_\-]+)\]/", $name, $match)) {
-                if (array_key_exists($match[1], $value)) {
+                if (isset($value[$match[1]])) {
                     $value = $value[$match[1]];
                 } else {
                     return;

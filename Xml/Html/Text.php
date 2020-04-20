@@ -39,7 +39,7 @@ class Text
             if (preg_match("/.+\[([a-zA-Z0-9\-_]+)\]/", $name, $match)) {
                 $sec = $match[1];
             }
-            if (array_key_exists($sec, $value)) {
+            if (isset($value[$sec])) {
                 $value = $value[$sec];
             } else {
                 return;

@@ -37,6 +37,7 @@ class Validator
         if (is_array($value) && isset($chk['subkey'])) {
             $value = $value[$chk['subkey']];
         }
+        $method = '_' . strtoupper(filter_input(INPUT_SERVER, 'REQUEST_METHOD'));
 
         switch ($type) {
             case 'mail' :
@@ -111,11 +112,9 @@ class Validator
                 }
                 break;
             case 'retype' :
-                eval('
-                    if (array_key_exists($stype, $_'.strtoupper(filter_input(INPUT_SERVER, 'REQUEST_METHOD')).')) {
-                        $condition = $_'.strtoupper(filter_input(INPUT_SERVER, 'REQUEST_METHOD')).'[$stype];
-                    }
-                ');
+                if (isset($$method[$stype])) {
+                    $condition = $$method[$stype];
+                }
                 if ($condition === $value) {
                     $result = true;
                 }
@@ -123,17 +122,16 @@ class Validator
             case 'if' :
                 $result = true;
                 $condition = '';
-                eval('
-                    if (array_key_exists($stype, $_'.strtoupper(filter_input(INPUT_SERVER, 'REQUEST_METHOD')).')) {
-                        $condition = $_'.strtoupper(filter_input(INPUT_SERVER, 'REQUEST_METHOD')).'[$stype];
-                    }
-                ');
+                if (isset($$method[$stype])) {
+                    $condition = $$method[$stype];
+                }
                 if ($condition === $svalue) {
                     $result = !empty($value);
                 }
                 break;
             default :
                 $result = !empty($value);
+                break;
         }
 
         return $result;

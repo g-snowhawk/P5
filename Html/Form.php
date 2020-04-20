@@ -84,7 +84,7 @@ class Form
             $this->post[$name] = $value;
         }
 
-        return (array_key_exists($name, $this->post)) ? $this->post[$name] : null;
+        return (isset($this->post[$name])) ? $this->post[$name] : null;
     }
 
     /**
@@ -111,7 +111,7 @@ class Form
             $this->get[$name] = $value;
         }
 
-        return (array_key_exists($name, $this->get)) ? $this->get[$name] : null;
+        return (isset($this->get[$name])) ? $this->get[$name] : null;
     }
 
     /**
@@ -127,7 +127,7 @@ class Form
             return $_FILES;
         }
 
-        return (array_key_exists($name, $_FILES)) ? $_FILES[$name] : null;
+        return (isset($_FILES[$name])) ? $_FILES[$name] : null;
     }
 
     /**
@@ -159,7 +159,7 @@ class Form
     public function isset($name)
     {
         $method = $this->method;
-        return (array_key_exists($name, $this->$method));
+        return (isset($this->$method[$name]));
     }
 
     /**
@@ -209,10 +209,10 @@ class Form
     public function keyExists($key, $method = 'post')
     {
         if (strtolower($method) !== 'post') {
-            return array_key_exists($key, $_GET);
+            return isset($_GET[$key]);
         }
 
-        return array_key_exists($key, $_POST);
+        return isset($_POST[$key]);
     }
 
     /**
