@@ -280,7 +280,9 @@ class Db
             return false;
         }
 
-        $this->addSQLMode(array_merge(array('ANSI_QUOTES'), $optional_modes));
+        if ($this->driver === 'mysql') {
+            $this->addSQLMode(array_merge(array('ANSI_QUOTES'), $optional_modes));
+        }
 
         return true;
     }
