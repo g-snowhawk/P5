@@ -115,7 +115,7 @@ class Text
         }
 
         $defaultSetting = mb_detect_order();
-        mb_detect_order('ASCII, JIS, UTF-16BE, UTF-16LE, UTF-16, UTF-8, EUC-JP, SJIS');
+        mb_detect_order('ASCII, JIS, UTF-16BE, UTF-16LE, UTF-16, UTF-8, CP932, EUC-JP, SJIS');
         $encoding = mb_detect_encoding($str, mb_detect_order(), true);
         // rewind setting
         mb_detect_order($defaultSetting);
