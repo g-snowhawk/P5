@@ -67,7 +67,16 @@ class Parser
             $this->configurations[$block_name][$key] = $value;
         }
 
+        if (empty($key)) {
+            return (isset($this->configurations[$block_name])) ? $this->configurations[$block_name] : null;
+        }
+
         return (isset($this->configurations[$block_name]) && isset($this->configurations[$block_name][$key])) ? $this->configurations[$block_name][$key] : null;
+    }
+
+    public function merge($more) 
+    {
+        $this->configurations = array_merge($this->configurations, $more);
     }
 
     /**
