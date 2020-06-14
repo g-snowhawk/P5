@@ -74,7 +74,11 @@ class Text
         } else {
             if (is_null($encodingFrom)) {
                 $encodingFrom = preg_replace('/BOM$/', '', self::detectEncoding($str));
+            } elseif (strtoupper($encodingFrom) === "UTF-8BOM") {
+                $encodingFrom = "UTF-8";
+                $str = str_replace(UTF8_BOM, '', $str);
             }
+
             if (!empty($encodingTo) && !empty($encodingFrom) && $encodingTo != $encodingFrom) {
                 $str = mb_convert_encoding($str, $encodingTo, $encodingFrom);
             }
