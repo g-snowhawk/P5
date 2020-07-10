@@ -12,6 +12,7 @@ namespace P5\Xml {
 use DOMElement;
 use DOMNode;
 use DOMXPath;
+use ErrorException;
 
 /**
  * HTML source to DOM class.
@@ -98,8 +99,17 @@ class Html extends Dom
      */
     public function __construct($template, $ishtml = false)
     {
-        $source = (is_file($template)) ? file_get_contents($template) : $template;
-
+        try {
+            $source = (is_file($template)) ? file_get_contents($template) : $template;
+        } catch (ErrorException $e) {
+            $message = $e->getMessage();
+            if (stripos($message, "File name is longer than the maximum allowed path length on this platform") !== false) {
+                $source = $template;
+            } else {
+                throw new ErrorException($message);
+            }
+        }
+        
         // Append Namespace for P5 tags.
         if (preg_match('/<P5:[^>]+>/', $source)) {
             $ns = self::NAMESPACE_URI;

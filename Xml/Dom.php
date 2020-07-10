@@ -9,7 +9,9 @@
  */
 
 namespace P5\Xml;
+
 use DOMDocument;
+use ErrorException;
 
 /**
  * XML DOM class.
@@ -96,7 +98,18 @@ class Dom
         clearstatcache();
         $dom = new DOMDocument();
         $dom->preserveWhiteSpace = !$this->skipWhiteSpace;
-        $source = (is_file($template)) ? file_get_contents($template) : $template;
+
+        try {
+            $source = (is_file($template)) ? file_get_contents($template) : $template;
+        } catch (ErrorException $e) {
+            $message = $e->getMessage();
+            if (stripos($message, "File name is longer than the maximum allowed path length on this platform") !== false) {
+                $source = $template;
+            } else {
+                throw new ErrorException($message);
+            }
+        }
+
         if (!empty($source) || $source === '0') {
             $firstline_format = '';
             if (preg_match("/^([\r\n]+)/", $source, $match)) {
