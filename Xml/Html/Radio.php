@@ -59,7 +59,7 @@ class Radio
         $id = $element->getAttribute('id');
         $parent = $html->getElementById($name);
 
-        $node = P5_Xml_Dom::getParentNode($element, 'label');
+        $node = \P5\Xml\Dom::getParentNode($element, 'label');
         $label = '';
         if (!empty($value)) {
             if (!is_object($node)) {

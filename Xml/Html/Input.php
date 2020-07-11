@@ -10,6 +10,8 @@
 
 namespace P5\Xml\Html;
 
+use P5\Xml\Html\Text;
+
 /**
  * HTML form input class.
  *
@@ -38,10 +40,10 @@ class Input
             File::setValue($fmObj, $html, $element, $name, $value, $sec);
         } elseif ($type === 'date') {
             $value = (empty($value)) ? null : date('Y-m-d', strtotime($value));
-            P5_Html_Form_Text::setValue($fmObj, $html, $element, $name, $value, $sec);
+            Text::setValue($fmObj, $html, $element, $name, $value, $sec);
         } elseif ($type === 'datetime') {
             $value = (empty($value)) ? null : date('Y-m-d\TH:i:s', strtotime($value));
-            P5_Html_Form_Text::setValue($fmObj, $html, $element, $name, $value, $sec);
+            Text::setValue($fmObj, $html, $element, $name, $value, $sec);
         } else {
             Text::setValue($fmObj, $html, $element, $name, $value, $sec);
         }
