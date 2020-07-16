@@ -246,6 +246,12 @@ class Html extends Dom
 
     public function querySelectorAll($query, $parent = null)
     {
+        if (preg_match('/^(.*)#(.+)/', $query, $match)) {
+            $tag = (empty($match[1])) ? '*' : $match[1];
+            $selector = $match[2];
+            $query = "//{$tag}[@id=\"{$selector}\"]";
+        }
+
         $xpath = new DOMXPath($this->dom);
 
         if (empty($parent)) {
@@ -1487,6 +1493,12 @@ class HTMLElement extends DOMElement
 
     public function querySelectorAll($query)
     {
+        if (preg_match('/^(.*)#(.+)$/', $query, $match)) {
+            $tag = (empty($match[1])) ? '*' : $match[1];
+            $selector = $match[2];
+            $query = "//{$tag}[@id=\"{$selector}\"]";
+        }
+
         $xpath = new DOMXPath($this->ownerDocument);
 
         return $xpath->query($query, $this);
