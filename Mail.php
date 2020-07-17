@@ -234,6 +234,11 @@ class Mail
         return (!empty($default)) ? $default : 25;
     }
 
+    public function useTLS($use = true)
+    {
+        $this->tls = $use;
+    }
+
     /**
      * SET Encoding.
      *
@@ -448,6 +453,7 @@ class Mail
         foreach ($this->head as $key => $value) {
             $header .= "$key: $value".$dlm;
         }
+        $header .= 'Date: ' . date(DATE_RFC822) . $dlm;
         $header .= 'Mime-Version: 1.0'.$dlm;
         if (empty($this->attachment) && empty($this->html)) {
             $header .= "Content-Type: text/plain; charset=$cs".$dlm;
@@ -563,6 +569,10 @@ class Mail
 
             return mail($to, $this->subject, $message, $header, $envfrom);
         } else {
+            if (!empty($this->envfrom)) {
+                $header .= "RETURN-PATH: {$this->envfrom}{$this->delimiter}";
+            }
+
             return $this->mail($to, $this->subject, $message, $header);
         }
     }
@@ -741,6 +751,11 @@ class Mail
     {
         $server = $this->smtp;
         $port = $this->port;
+
+        if ((int)$port === 465) {
+            $server = "tls://{$server}";
+        }
+
         if (false === $this->socket = fsockopen($server, $port, $errno, $errstr, 5)) {
             echo $errno.':'.$errstr;
             exit;
