@@ -565,12 +565,12 @@ class Mail
         $message = $this->createMessage($boundary);
 
         if ($this->smtp === 'localhost') {
-            $envfrom = (filter_var($this->envfrom, FILTER_VALIDATE_EMAIL) !== false)
+            $envfrom = (false !== filter_var($this->envfrom, FILTER_VALIDATE_EMAIL))
                 ? '-f'.$this->envfrom : null;
 
             return mail($to, $this->subject, $message, $header, $envfrom);
         } else {
-            if (!empty($this->envfrom)) {
+            if (false !== filter_var($this->envfrom, FILTER_VALIDATE_EMAIL)) {
                 $header .= "RETURN-PATH: {$this->envfrom}{$this->delimiter}";
             }
 
