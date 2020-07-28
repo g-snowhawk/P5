@@ -103,7 +103,9 @@ class Html extends Dom
             $source = (is_file($template)) ? file_get_contents($template) : $template;
         } catch (ErrorException $e) {
             $message = $e->getMessage();
-            if (stripos($message, "File name is longer than the maximum allowed path length on this platform") !== false) {
+            if (stripos($message, "File name is longer than the maximum allowed path length on this platform") !== false
+                || stripos($message, "open_basedir restriction in effect.") !== false
+            ) {
                 $source = $template;
             } else {
                 throw new ErrorException($message);
