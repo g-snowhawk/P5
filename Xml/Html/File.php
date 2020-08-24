@@ -8,7 +8,7 @@
  * http://www.plus-5.com/licenses/mit-license
  */
 
-namespace P5\Xml\Html
+namespace P5\Xml\Html;
 
 /**
  * HTML form file class.
