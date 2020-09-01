@@ -231,7 +231,8 @@ class Format extends Tags
 
             $this->nl = preg_match('/['.preg_quote(PHP_EOL, '/').']+[\t ]*$/s', $match[3]);
 
-            $this->source = preg_replace($pattern_end_tag, '', $this->source, 1);
+            $r = ($match[3] === ' ') ? ' ' : '';
+            $this->source = preg_replace($pattern_end_tag, $r, $this->source, 1);
         }
 
         // Start tag
@@ -275,7 +276,8 @@ class Format extends Tags
 
             $this->nl = preg_match('/['.preg_quote(PHP_EOL, '/').']+[\t ]*$/s', $outer[4]);
 
-            $this->source = preg_replace($pattern_start_tag, '', $this->source, 1);
+            $r = ($outer[4] === ' ') ? ' ' : '';
+            $this->source = preg_replace($pattern_start_tag, $r, $this->source, 1);
         }
 
         // Other tag
@@ -289,7 +291,7 @@ class Format extends Tags
                 $this->source = preg_replace($pattern_other_tag, '', $this->source, 1);
                 $pattern = '/^('; 
                 while ($count !== 0) {
-                    $pattern .= '.*?>'; 
+                    $pattern .= '.*?' . '>'; 
                     --$count;
                 }
                 $pattern .= ')(\s*)/s'; 
@@ -357,7 +359,10 @@ class Format extends Tags
             }
             if (!in_array($this->type, ['start', 'end']) || !preg_match('/^[\s]+</', $this->source)) {
                 $indent = ($nl === PHP_EOL) ? $this->indent() : '';
-                $this->formatted .= $nl.$indent.$match[2];
+
+                $space = ($match[1] === ' ') ? ' ' : '';
+
+                $this->formatted .= $nl.$indent.$space.$match[2];
                 $this->type = 'textnode';
             }
 
