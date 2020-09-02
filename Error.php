@@ -86,9 +86,7 @@ class Error
         set_error_handler([$this, 'errorHandler'], $this->error_type);
         set_exception_handler([$this, 'exceptionHandler']);
 
-        if (defined('ERROR_LOG_DESTINATION')
-         && !self::isEmail(ERROR_LOG_DESTINATION)
-        ) {
+        if (defined('ERROR_LOG_DESTINATION') && !self::isEmail(ERROR_LOG_DESTINATION)) {
             $dir = dirname(ERROR_LOG_DESTINATION);
             if (!empty($dir)) {
                 try {
@@ -97,6 +95,7 @@ class Error
                     }
                     if (!file_exists(ERROR_LOG_DESTINATION)) {
                         touch(ERROR_LOG_DESTINATION);
+                        chmod(ERROR_LOG_DESTINATION, 0666);
                     }
                 } catch (ErrorException $e) {
                     trigger_error(
@@ -105,6 +104,23 @@ class Error
                     );
                 }
             }
+
+            if (defined('ERROR_LOGDIR_MODE')) {
+                try {
+                    chmod($dir, ERROR_LOGDIR_MODE);
+                } catch (ErrorException $e) {
+                    // Do nothing
+                }
+            }
+
+            if (defined('ERROR_LOGFILE_MODE')) {
+                try {
+                    chmod(ERROR_LOG_DESTINATION, ERROR_LOGFILE_MODE);
+                } catch (ErrorException $e) {
+                    // Do nothing
+                }
+            }
+
             $this->logdir = $dir;
         }
     }
