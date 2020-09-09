@@ -130,11 +130,14 @@ class P5_Auto_Loader
             return file_exists($path);
         }
 
-        $allowed_paths = explode(PATH_SEPARATOR, $allowed_paths);
-        foreach ($allowed_paths as $allowed_path) {
-            $pattern = '/^' . preg_quote($allowed_path, '/') . '/i';
-            if (preg_match($pattern, $path)) {
-                return file_exists($path);
+        if (file_exists($path)) {
+            $path = realpath($path);
+            $allowed_paths = explode(PATH_SEPARATOR, $allowed_paths);
+            foreach ($allowed_paths as $allowed_path) {
+                $pattern = '/^' . preg_quote($allowed_path, '/') . '/i';
+                if (preg_match($pattern, $path)) {
+                    return true;
+                }
             }
         }
 
