@@ -67,7 +67,9 @@ class P5_Html_Source extends P5_Xml_Dom
             $source = (is_file($template)) ? file_get_contents($template) : $template;
         } catch(ErrorException $e) {
             $error_message = $e->getMessage();
-            if (false !== stripos($error_message, 'the maximum allowed path length on this platform')) {
+            if (false !== stripos($error_message, 'the maximum allowed path length on this platform')
+                || stripos($error_message, "open_basedir restriction in effect.") !== false
+            ) {
                 $source = $template;
             } else {
                 trigger_error($error_message, E_USER_ERROR);
