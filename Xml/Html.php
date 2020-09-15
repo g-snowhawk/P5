@@ -105,6 +105,7 @@ class Html extends Dom
             $message = $e->getMessage();
             if (stripos($message, "File name is longer than the maximum allowed path length on this platform") !== false
                 || stripos($message, "open_basedir restriction in effect.") !== false
+                || stripos($message, "Unable to find the wrapper") !== false
             ) {
                 $source = $template;
             } else {
