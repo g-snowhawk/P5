@@ -34,18 +34,23 @@ class P5_File
         if (!is_writable(dirname($file))) {
             return false;
         }
-        if (false !== $fh = fopen($file, $mode)) {
-            if (false !== rewind($fh)) {
-                if (false !== fwrite($fh, $source)) {
-                    fflush($fh);
-                    ftruncate($fh, ftell($fh));
 
-                    return fclose($fh);
+        $return_value = false;
+        if (false !== $fh = fopen($file, $mode)) {
+            if (false !== flock($fh, LOCK_EX)) {
+                if (false !== rewind($fh)) {
+                    if (false !== fwrite($fh, $source)) {
+                        fflush($fh);
+                        ftruncate($fh, ftell($fh));
+                        $return_value = true;
+                    }
                 }
+                flock($fh, LOCK_UN);
             }
+            fclose($fh);
         }
 
-        return false;
+        return $return_value;
     }
 
     /**
