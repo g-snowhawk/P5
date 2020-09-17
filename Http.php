@@ -71,7 +71,7 @@ class P5_Http
      */
     public static function getMethod()
     {
-        return (strtolower($_SERVER{'REQUEST_METHOD'}) == 'post') ? 'POST' : 'GET';
+        return (strtolower($_SERVER['REQUEST_METHOD']) === 'post') ? 'POST' : 'GET';
     }
 
     /**

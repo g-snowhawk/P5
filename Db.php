@@ -866,9 +866,6 @@ class P5_Db
         if ($value === '0') {
             return "'0'";
         }
-        if (get_magic_quotes_gpc()) {
-            $value = stripslashes($value);
-        }
 
         // TODO: Do I really need this?
         if (empty($value)) {
