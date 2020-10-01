@@ -346,6 +346,21 @@ class File
         return round($byte / pow(2, 80), $dp).' YiB';
     }
 
+    public static function strToBytes($str)
+    {
+        if (stripos($str, 'K')) {
+            $result = (int)$str * 1024;
+        } elseif (stripos($str, 'M')) {
+            $result = (int)$str * 1048576;
+        } elseif (stripos($str, 'G')) {
+            $result = (int)$str * 1073741824;
+        } else {
+            $result = (int)$str;
+        }
+
+        return $result;
+    }
+
     /**
      * Getting MIME Type.
      *
