@@ -265,6 +265,7 @@ class Tags
         'p' => 0,
         'hr' => 0,
         'optgroup' => 0, 'option' => 0,
+        'script' => 0, 'noscript' => 0,
     ];
     protected $always_wrap_start_tags = [
         'html' => 0,
@@ -286,6 +287,7 @@ class Tags
     protected $always_wrap_end_tags = [
         'html' => 0,
         'head' => 0, 'body' => 0,
+        'main' => 0,
         'header' => 0, 'footer' => 0,
         'table' => 0, 'caption' => 0, 'thead' => 0, 'tbody' => 0, 'tfoot' => 0, 'tr' => 0, 'th' => 0, 'td' => 0,
         'h1' => 0, 'h2' => 0, 'h3' => 0, 'h4' => 0, 'h5' => 0, 'h6' => 0,
@@ -295,6 +297,7 @@ class Tags
 
     protected $entrust_indention_by_source = [
         'div' => 0, 'span' => 0,
+        'main' => 0,
         'a' => 0,
         'label' => 0,
         'input' => 0, 'textarea' => 0,

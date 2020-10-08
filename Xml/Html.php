@@ -699,6 +699,36 @@ class Html extends Dom
 
         return $hidden;
     }
+    public function prependHidden($formID, $name, $value = '', $lf = '')
+    {
+        $form = $this->getElementById($formID);
+        if (!is_object($form)) {
+            return;
+        }
+
+        $hidden = null;
+        $inputs = $form->getElementsByTagName('input');
+        foreach ($inputs as $input) {
+            if ($input->getAttribute('name') === $name
+                && false === strpos($name, '[]')
+            ) {
+                $hidden = $input;
+                break;
+            }
+        }
+        if (!is_null($hidden)) {
+            $hidden->setAttribute('value', $value);
+        } else {
+            $src = $lf.'<input type="hidden" name="'.$name.'" value="'.$value.'" />';
+            if ($form->firstChild) {
+                $hidden = $this->insertBefore($src, $form->firstChild);
+            } else {
+                $hidden = $this->appendChild($src, $form);
+            }
+        }
+
+        return $hidden;
+    }
 
     /**
      * Move Head Element in Body.
@@ -1103,6 +1133,9 @@ class Html extends Dom
         $nodelist = $form->getElementsByTagName('input');
         for ($i = 0; $i < $nodelist->length; ++$i) {
             $element = $nodelist->item($i);
+            if ($element->getAttribute('data-static') === '1') {
+                continue;
+            }
 
             // Getting Type
             $type = $element->getAttribute('type');
@@ -1133,6 +1166,9 @@ class Html extends Dom
         $nodelist = $form->getElementsByTagName('textarea');
         for ($i = 0; $i < $nodelist->length; ++$i) {
             $element = $nodelist->item($i);
+            if ($element->getAttribute('data-static') === '1') {
+                continue;
+            }
 
             // Getting Name
             $name = $element->getAttribute('name');
@@ -1150,6 +1186,9 @@ class Html extends Dom
         $nodelist = $form->getElementsByTagName('select');
         for ($i = 0; $i < $nodelist->length; ++$i) {
             $element = $nodelist->item($i);
+            if ($element->getAttribute('data-static') === '1') {
+                continue;
+            }
 
             // Getting Name
             $name = $element->getAttribute('name');
