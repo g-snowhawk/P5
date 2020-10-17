@@ -289,9 +289,11 @@ class Mail
             $this->$prop = [];
         } elseif (is_array($to)) {
             foreach ($to as $value) {
-                $this->{$prop}[] = $this->normalizeAddress($value);
+                if (!empty($value)) {
+                    $this->{$prop}[] = $this->normalizeAddress($value);
+                }
             }
-        } else {
+        } elseif (!empty($to)) {
             $this->{$prop}[] = $this->normalizeAddress($to);
         }
     }
