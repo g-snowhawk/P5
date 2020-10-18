@@ -191,6 +191,8 @@ class Mail
         $this->user = $user;
         $this->passwd = $passwd;
         $this->encoding = $encoding;
+
+        $this->from = self::noreplyAt();
     }
 
     /**
@@ -816,5 +818,19 @@ class Mail
     public function getCharset()
     {
         return $this->charset[$this->encoding];
+    }
+
+    public static function noreplyAt($user_name = 'no-reply') 
+    {
+        $host = filter_var($_SERVER['HTTP_HOST'], FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_HIGH);
+        $host = preg_replace('/:[0-9]+$/', '', $host);
+        if (preg_match('/^[0-9:\.]+$/', $host)) {
+            $host = gethostbyaddr($host);
+        }
+        if (empty($host) || preg_match('/^[0-9\.]+$/', $host)) {
+            $host = 'localhost';
+        }
+
+        return "{$user_name}@{$host}";
     }
 }
