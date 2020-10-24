@@ -77,7 +77,7 @@ class Lang
             $package = $caller[1]['class'];
         }
 
-        if (preg_match('/^.*\\\\Plugin\\\\(.+)$/', $package, $match)) {
+        if (preg_match('/^(.*\\\\)?[Pp]lugins?\\\\(.+)$/', $package, $match)) {
             $name = $match[1];
             $package = $package . $package_suffix;
 
