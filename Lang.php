@@ -77,13 +77,6 @@ class Lang
             $package = $caller[1]['class'];
         }
 
-        if (preg_match('/^(.*\\\\)?[Pp]lugins?\\\\(.+)$/', $package, $match)) {
-            $name = $match[1];
-            $package = $package . $package_suffix;
-
-            return self::words($package, $key);
-        }
-
         while ($package) {
             if ($result = self::words($package . $package_suffix, $key)) {
                 return $result;
