@@ -324,6 +324,11 @@ class Error
             $message .= PHP_EOL.'User: '.Environment::server('remote_addr');
             $message .= PHP_EOL.'Host: '.Environment::server('server_name');
             $message .= PHP_EOL.'Time: '.date('Y-m-d H:i:s');
+            $user_agent = Environment::server('http_user_agent');
+            if (!empty($user_agent)) {
+                $message .= PHP_EOL;
+                $message .= PHP_EOL.'User-Agent: '.$user_agent;
+            }
             foreach ($feedbacks as $to) {
                 error_log($message, 1, $to);
             }
