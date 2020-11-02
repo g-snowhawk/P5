@@ -72,7 +72,7 @@ class Environment
 
     public static function osFromUserAgent($user_agent)
     {
-        if (preg_match("/(iPod|iPad|iPhone); .+ OS ([0-9_]+) like Mac OS X; .+$/", $user_agent, $match)) {
+        if (preg_match("/(iPod|iPad|iPhone); .+ OS ([0-9_]+) like Mac OS X[;\)] .+$/", $user_agent, $match)) {
             $name = 'iOS';
             $version = strtr($match[2], '_', '.');
         } elseif (preg_match("/Android ([0-9\.]+);/", $user_agent, $match)) {
@@ -81,7 +81,7 @@ class Environment
         } elseif (preg_match("/Windows Phone(OS )? ([0-9\.]+);/", $user_agent, $match)) {
             $name = 'Windows Phone';
             $version = $match[2];
-        } elseif (preg_match("/Windows NT ([0-9\.]+);/", $user_agent, $match)) {
+        } elseif (preg_match("/Windows NT ([0-9\.]+)[;\)]/", $user_agent, $match)) {
             $name = 'Windows';
             if ($match[1] < 5.1) {
                 $version = 'Legacy';
@@ -99,12 +99,12 @@ class Environment
         } elseif (preg_match("/Mac OS X ([0-9\._]+)[;\)]/", $user_agent, $match)) {
             $name = 'macOS';
             $version = strtr($match[1], '_', '.');
-        } elseif (preg_match("/Linux .+; rv:([0-9\.]+);/", $user_agent, $match)) {
+        } elseif (preg_match("/Linux .+; rv:([0-9\.]+)[;\)]/", $user_agent, $match)) {
             $name = 'Linux';
             $version = $match[1];
         } else {
             $name = 'Unknown';
-            $version = 'Unknown';
+            $version = '-';
         }
 
         return array($name, $version);
@@ -132,7 +132,7 @@ class Environment
             $version = $match[1];
         } elseif (preg_match("/Trident\/([0-9\.]+)/", $user_agent, $match)) {
             $name = 'Internet Explorer';
-            if ($match[1] < 7) {
+            if ($match[1] < 11) {
                 $version = 'unsupported';
             } else {
                 $version = '11';
@@ -142,7 +142,7 @@ class Environment
             $version = 'unsupported';
         } else {
             $name = 'Unknown';
-            $version = 'Unknown';
+            $version = '-';
         }
         return array($name, $version);
     }
