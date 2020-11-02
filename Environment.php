@@ -140,6 +140,9 @@ class Environment
         } elseif (preg_match("/MSIE ([567][0-9\.]+);/", $user_agent, $match)) {
             $name = 'Internet Explorer';
             $version = 'unsupported';
+        } else {
+            $name = 'Unknown';
+            $version = 'Unknown';
         }
         return array($name, $version);
     }
