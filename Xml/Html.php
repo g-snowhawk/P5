@@ -1495,6 +1495,10 @@ class HTMLElement extends DOMElement
         }
     }
 
+    public function prependScript($src, array $options = []) {
+        $this->appendScript($src, $options, true);
+    }
+
     public function appendScript(
         $src,
         array $options = array(),
