@@ -325,12 +325,20 @@ class Mail
      *
      * @param mixed $attachment
      */
-    public function attachment($attachment = null)
+    public function attachment($attachment = null, $filename = null)
     {
         if (is_null($attachment)) {
             $this->attachment = [];
         } else {
-            $this->attachment[] = $attachment;
+            if (is_null($filename)) {
+                $this->attachment[] = $attachment;
+            } else {
+                $this->attachment[] = [
+                    'mimetype' => File::mime($attachment),
+                    'filename' => $filename,
+                    'contents' => file_get_contents($attachment),
+                ];
+            }
         }
     }
 
