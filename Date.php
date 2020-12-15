@@ -42,10 +42,11 @@ class Date
      *
      * @param string $format
      * @param int $timestamp
+     * @param bool $gannen
      *
      * @return string
      */
-    public static function wareki($format, $timestamp = null)
+    public static function wareki($format, $timestamp = null, $gannen = false)
     {
         if (is_null($timestamp)) {
             $timestamp = time();
@@ -91,7 +92,13 @@ class Date
 
         $wareki = str_replace(['Y','y'], ['Q','q'], $format);
         $datestr = date($wareki, $timestamp);
-        return str_replace(['Q','q'], ["$gengo$year","$gengo_short$year"], $datestr);
+
+        $full_gengo = "$gengo$year";
+        if ($gannen !== false && $year === 1) {
+            $full_gengo = $gengo.mb_convert_encoding('&#20803;', 'UTF-8', 'HTML-ENTITIES');;
+        }
+
+        return str_replace(['Q','q'], [$full_gengo,"$gengo_short$year"], $datestr);
     }
 
     public static function quote($format)
