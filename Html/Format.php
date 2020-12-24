@@ -235,6 +235,10 @@ class P5_Html_Format extends P5_Html
         $this->_emptyTags = parent::$emptyTags;
 
         $this->_orgSource = $source;
+        $tags = implode('|', array_keys($this->_emptyTags));
+        $this->_orgSource = str_replace(array('<br>','<hr>'), array('<br/>','<hr/>'), $this->_orgSource);
+        $this->_orgSource = preg_replace("/<($tags)([^>]+)([^\/])>/i", "<$1$2$3/>", $this->_orgSource);
+
         $this->_pi = $pi;
         $this->_dtd = $dtd;
 
