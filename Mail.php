@@ -830,7 +830,7 @@ class Mail
 
     public static function noreplyAt($user_name = 'no-reply') 
     {
-        $host = filter_var($_SERVER['HTTP_HOST'], FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_HIGH);
+        $host = filter_var(($_SERVER['HTTP_HOST'] ?? null), FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_HIGH);
         $host = preg_replace('/:[0-9]+$/', '', $host);
         if (preg_match('/^[0-9:\.]+$/', $host)) {
             $host = gethostbyaddr($host);
