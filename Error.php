@@ -139,7 +139,7 @@ class Error
         $errstr,
         $errfile,
         $errline,
-        $errcontext
+        $errcontext = null
     ) {
         if ($this->error_type === 0 && $this->debug_mode === 0) {
             return false;
