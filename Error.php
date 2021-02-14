@@ -141,6 +141,11 @@ class Error
         $errline,
         $errcontext = null
     ) {
+        // Do nothing with the `@' operator
+        if (error_reporting() === 0) {
+            return;
+        }
+
         if ($this->error_type === 0 && $this->debug_mode === 0) {
             return false;
         }
