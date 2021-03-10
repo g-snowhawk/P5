@@ -1555,7 +1555,7 @@ class HTMLElement extends DOMElement
         return $this->querySelectorAll('.//*[@name="'.$name.'"]');
     }
 
-    public function getElementsByClassName($class)
+    public function getElementsByClassName($class, $parent = null)
     {
         $query = sprintf('.//*[contains(@class,"%s")]',$class);
         $tmp = $this->querySelectorAll($query, $parent);
