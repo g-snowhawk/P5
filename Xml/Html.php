@@ -738,8 +738,8 @@ class Html extends Dom
     public function moveHeaderElements()
     {
         $tags = array('style', 'link', 'meta', 'title', 'script');
-        $body = $this->dom->getElementsByTagName('body')->item(0);
-        $head = $this->dom->getElementsByTagName('head')->item(0);
+        $body = $this->body();
+        $head = $this->head();
         foreach ($tags as $tag) {
             $elements = $body->getElementsByTagName($tag);
             $exists = $head->getElementsByTagName($tag);
@@ -751,6 +751,10 @@ class Html extends Dom
                     }
                 }
                 if (is_object($exists) && $exists->length > 0) {
+                    if ($tag === 'title') {
+                        $head->replaceChild($element, $exists->item(0));
+                        continue;
+                    }
                     $last = $exists->item(($exists->length - 1))->nextSibling;
                     if (is_object($last)) {
                         $head->insertBefore($element, $last);

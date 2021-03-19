@@ -10,10 +10,12 @@
 
 namespace P5;
 
+use PDOException;
+use ErrorException;
+
 class Logger
 {
     private $db;
-    private $statement;
     private $path;
     private $format;
 
@@ -22,7 +24,7 @@ class Logger
         $this->format = $format;
         if (is_object($source) && is_a($source, 'Db')) {
             $this->db = clone $source;
-            $this->statement = $this->db->prepare($format);
+            $this->format = $this->db->prepare($format);
         } elseif (file_exists($source)) {
             $this->path = $source;
         } else {
@@ -44,8 +46,10 @@ class Logger
     private function toDatabase(array $log)
     {
         try {
-            $this->statement->execute(array_values($log));
-        } catch (\ErrorException $e) {
+            $this->format->execute(array_values($log));
+        } catch (PDOException $e) {
+            trigger_error($e->getMessage());
+        } catch (ErrorException $e) {
             trigger_error($e->getMessage());
         }
     }
