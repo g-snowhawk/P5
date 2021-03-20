@@ -10,6 +10,8 @@
 
 namespace P5;
 
+use PDO;
+
 define('UTF32_BIG_ENDIAN_BOM', chr(0x00).chr(0x00).chr(0xFE).chr(0xFF));
 define('UTF32_LITTLE_ENDIAN_BOM', chr(0xFF).chr(0xFE).chr(0x00).chr(0x00));
 define('UTF16_BIG_ENDIAN_BOM', chr(0xFE).chr(0xFF));
@@ -270,5 +272,30 @@ class Text
         $text = preg_replace('/[ ]+/', ' ', $text);
 
         return strtotime(trim($text));
+    }
+
+    public static function formatPhonenumber($value, $separator = '-')
+    {
+        if (empty($value)) {
+            return '';
+        }
+        $source = __DIR__ . '/areacode';
+        $db = new PDO("sqlite:$source");
+        $stat = $db->prepare('SELECT * FROM phone WHERE areacode = ?');
+
+        $number = preg_replace('/[^0-9]+/', '', $value);
+
+        for ($i = 5; $i > 0; $i--) {
+            $areacode = substr($number, 0, $i);
+            $stat->execute([$areacode]);
+            while ($unit = $stat->fetch(PDO::FETCH_ASSOC)) {
+                $len = strlen($unit['digits']);
+                $local = substr($number, $i, $len);
+                $phone = substr($number, $i + $len);
+                $value = implode($separator, [$areacode, $local, $phone]);
+            }
+        }
+
+        return $value;
     }
 }
