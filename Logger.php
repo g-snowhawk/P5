@@ -34,6 +34,9 @@ class Logger
 
     public function log(array $log)
     {
+        $log = array_map(function($value) {
+            return (is_array($value)) ? implode(',', $value) : $value;
+        }, $log);
         if (!empty($this->db)) {
             $this->toDatabase($log);
         } elseif (!empty($this->path)) {
