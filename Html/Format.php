@@ -241,6 +241,13 @@ class Format extends Tags
             $tag = strtolower($match[1]);
             $nl = '';
 
+            if ($tag === 'meta'
+                && preg_match('/http-equiv="content-type"/i', $match[2])
+                && preg_match('/content="text\/html;\s+charset=(.+)/i', $match[2], $cs)
+            ) {
+                $match[2] = ' charset="' . str_replace(['"',"'"], '', $cs[1]) . '"';
+            }
+
             if (isset($this->always_indention_start_tags[$tag])
                 || ($this->type === 'start' && isset($this->always_wrap_start_tags[$this->prev]))
                 || ($this->type === 'end' && isset($this->always_wrap_end_tags[$this->prev]))

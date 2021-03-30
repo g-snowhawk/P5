@@ -135,6 +135,16 @@ class Html extends Dom
 
         self::setIdAttrs($this->dom);
 
+        $meta = $this->dom->getElementsByTagName('meta');
+        foreach ($meta as $node) {
+            if ($node->hasAttribute('charset')) {
+                $element = $this->dom->createElement('meta');
+                $element->setAttribute('http-equiv', 'Content-Type');
+                $element->setAttribute('content', "text/html; charset={$this->charset}");
+                $node->parentNode->replaceChild($element, $node);
+            }
+        }
+
         $this->dom->registerNodeClass('DOMElement', 'HTMLElement');
     }
 
@@ -587,11 +597,28 @@ class Html extends Dom
     public function setCharset($source)
     {
         $this->charset = '';
+
         $pattern = "/<meta ([^>]*)http-equiv\s*=\s*[\"']?content-type[\"']?([^>]*)(\/?)>/i";
         $replace = '<meta http-equiv="Content-type" content="text/html;charset=UTF-8"$3>';
         if (preg_match($pattern, $source, $match)) {
             foreach ($match as $reg) {
                 if (preg_match("/charset\s*=\s*([0-9a-z_-]+)/i", $reg, $cs)) {
+                    if (strtolower($cs[1]) !== 'utf-8' && strtolower($cs[1]) !== 'utf') {
+                        $this->charset = $cs[1];
+                        $source = preg_replace($pattern, $replace, $source);
+                        break;
+                    } else {
+                        $this->charset = 'UTF-8';
+                    }
+                }
+            }
+        }
+
+        $pattern = "/<meta(\s+)charset\s*=\s*[\"']?([^>]*)[\"']?(\/?)>/i";
+        $replace = '<meta charset="UTF-8"$3>';
+        if (preg_match($pattern, $source, $match)) {
+            foreach ($match as $reg) {
+                if (preg_match("/charset\s*=\s*[\"']?([0-9a-z_-]+)[\"']?/i", $reg, $cs)) {
                     if (strtolower($cs[1]) !== 'utf-8' && strtolower($cs[1]) !== 'utf') {
                         $this->charset = $cs[1];
                         $source = preg_replace($pattern, $replace, $source);
@@ -621,6 +648,11 @@ class Html extends Dom
                 $attr = ($charset !== '') ? "; charset={$charset}" : '';
                 $node->setAttribute('content', "text/html{$attr}");
                 $this->charset = $charset;
+            } elseif ($node->hasAttribute('charset')) {
+                $element = $this->dom->createElement('meta');
+                $element->setAttribute('http-equiv', 'Content-Type');
+                $element->setAttribute('content', "text/html; charset={$charset}");
+                $node->parentNode->replaceChild($element, $node);
             }
         }
     }
@@ -693,8 +725,14 @@ class Html extends Dom
         if (!is_null($hidden)) {
             $hidden->setAttribute('value', $value);
         } else {
-            $src = '<input type="hidden" name="'.$name.'" value="'.$value.'" />';
-            $hidden = $this->appendChild($src, $form);
+            $src = '<input type="hidden" name="'.$name.'" value="'.$value.'" />'.PHP_EOL;
+
+            $fc = $form->firstChild;
+            if ($fc) {
+                $hidden = $this->insertBefore($src, $fc);
+            } else {
+                $hidden = $this->appendChild($src, $form);
+            }
         }
 
         return $hidden;
@@ -1601,6 +1639,11 @@ class HTMLElement extends DOMElement
         $hidden->setAttribute('value', $value);
         foreach ($options as $key => $data) {
             $hidden->setAttribute($key, $data);
+        }
+
+        $fc = $form->firstChild;
+        if ($fc) {
+            return $form-insertBefore($hidden, $fc);
         }
 
         return $form->appendChild($hidden);
