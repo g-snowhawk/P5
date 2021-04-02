@@ -65,10 +65,10 @@ class Pagination
         }
         $this->total_pages = ceil($total / $rows);
         $this->max_per_pages = $rows;
-        $this->link_count = $link_count;
+        $this->link_count = $link_count ?? $this->total_pages;
         $this->current_page = 1;
-        $this->link_start = $this->start();
-        $this->link_end = $this->end();
+        $this->link_start = $this->current_page;
+        $this->link_end = $this->current_page + $this->link_count;
         $this->inited = true;
     }
 
@@ -101,7 +101,11 @@ class Pagination
      */
     public function setCurrentPage($page_number)
     {
-        return $this->current_page = $page_number;
+        $this->current_page = $page_number;
+        $this->link_start = $this->start();
+        $this->link_end = $this->end();
+
+        return $this->current_page;
     }
 
     /**
@@ -175,13 +179,8 @@ class Pagination
     {
         $start = 1;
         if ($this->link_count > 0) {
-            $start = $this->current_page - floor($this->link_count / 2);
-            $end = $this->end();
-            if ($end - $start < $this->link_count) {
-                $start = $end - $this->link_count + 1;
-            }
-            if ($start < 1) {
-                $start = 1;
+            if ($this->current_page >= $this->link_count) {
+                $start = $this->current_page - 1;
             }
         }
 
@@ -197,9 +196,11 @@ class Pagination
     {
         $end = $this->total_pages;
         if ($this->link_count > 0) {
-            $end = $this->start() + $col - 1;
+            $start = $this->start();
+            $end = $start + $this->link_count - 1;
             if ($end > $this->total_pages) {
                 $end = $this->total_pages;
+                $this->link_start = $end - $this->link_count + 1;
             }
         }
 

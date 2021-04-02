@@ -459,7 +459,7 @@ class Db
             }
         }
         $sql = 'SET '.implode(',', $pair);
-        if (!empty($statement) && !empty($options)) {
+        if (!empty($statement)) {
             $sql .= ' WHERE '.$this->prepareStatement($statement, $options);
         }
 
@@ -470,17 +470,18 @@ class Db
      * exec delete SQL.
      *
      * @param string $table
-     * @param string $statement
+     * @param string $where_clause
      * @param array  $options
      *
      * @return mixed
      */
-    public function delete($table, $statement = '', $options = null)
+    public function delete($table, $where_clause = '', $options = [])
     {
-        $sql = (!empty($statement) && !empty($options)) ?
-            'WHERE '.$this->prepareStatement($statement, $options) : '';
+        $this->prepare(
+            "DELETE FROM `{$table}`" . self::optimizeWhereClause($where_clause)
+        );
 
-        return $this->exec("DELETE FROM \"$table\" $sql");
+        return $this->execute($options);
     }
 
     /**
@@ -680,7 +681,7 @@ class Db
     {
         $columns = self::verifyColumns($columns);
         $sql = "SELECT $columns FROM $table";
-        if (!empty($statement) && is_array($options)) {
+        if (!empty($statement)) {
             $sql .= ' '.$this->prepareStatement($statement, $options);
         }
         if ($this->query($sql)) {
@@ -702,7 +703,7 @@ class Db
     public function exists($table, $statement = '', $options = [])
     {
         $sql = "SELECT COUNT(*) AS cnt FROM $table";
-        if (!empty($statement) && !empty($options)) {
+        if (!empty($statement)) {
             $sql .= ' WHERE '.$this->prepareStatement($statement, $options);
         }
         if ($this->query($sql)) {
@@ -726,7 +727,7 @@ class Db
     public function count($table, $statement = '', $options = [])
     {
         $sql = "SELECT COUNT(*) AS cnt FROM $table";
-        if (!empty($statement) && !empty($options)) {
+        if (!empty($statement)) {
             $sql .= ' WHERE '.$this->prepareStatement($statement, $options);
         }
 
@@ -747,7 +748,7 @@ class Db
     {
         $column = self::verifyColumns($column);
         $sql = "SELECT $column FROM $table";
-        if (!empty($statement) && !empty($options)) {
+        if (!empty($statement)) {
             $sql .= ' WHERE '.$this->prepareStatement($statement, $options);
         }
         if (false === $this->query($sql)) {
@@ -776,7 +777,7 @@ class Db
     public function min($column, $table, $statement = '', $options = [])
     {
         $sql = "SELECT MIN($column) FROM \"$table\"";
-        if (!empty($statement) && !empty($options)) {
+        if (!empty($statement)) {
             $sql .= ' WHERE '.$this->prepareStatement($statement, $options);
         }
         if ($this->query($sql)) {
@@ -800,7 +801,7 @@ class Db
     {
         $sql = "SELECT MAX($column)
                   FROM \"$table\"";
-        if (!empty($statement) && !empty($options)) {
+        if (!empty($statement)) {
             $sql .= ' WHERE '.$this->prepareStatement($statement, $options);
         }
         if ($this->query($sql)) {
@@ -1455,5 +1456,18 @@ class Db
         }
 
         return $quote . str_replace($quote, '', $column) . $quote;
+    }
+
+    private static function optimizeWhereClause($clause): string
+    {
+        if (preg_match('/^\s*$/', $clause)) {
+            return '';
+        }
+
+        if (preg_match('/^\s*(where|order\s+by|limit\s+[0-9])\s+/i', $clause)) {
+            return $clause;
+        }
+
+        return " WHERE {$clause}";
     }
 }
