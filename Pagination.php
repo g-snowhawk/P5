@@ -25,14 +25,22 @@ class Pagination
     private $link_format;
     private $link_start;
     private $link_end;
+    private $link_prev;
+    private $link_next;
     private $suffix_separator = '';
     private $inited = false;
 
     /**
      * Object constructor.
      */
-    public function __construct()
+    public function __construct($total, $rows, $link_count = null)
     {
+        $this->total_pages = intval(ceil($total / $rows));
+        $this->max_per_pages = $rows;
+        $this->link_count = $link_count ?? $this->total_pages;
+        $this->current_page = 1;
+        $this->link_start = 1;
+        $this->link_end = $this->link_start + $this->link_count;
     }
 
     /**
@@ -63,7 +71,7 @@ class Pagination
         if ($this->inited === true) {
             return;
         }
-        $this->total_pages = ceil($total / $rows);
+        $this->total_pages = intval(ceil($total / $rows));
         $this->max_per_pages = $rows;
         $this->link_count = $link_count ?? $this->total_pages;
         $this->current_page = 1;
@@ -118,6 +126,21 @@ class Pagination
     public function setLinkFormat($format)
     {
         return $this->link_format = $format;
+    }
+
+    public function setLinkPrev($page)
+    {
+        return $this->link_prev = $page;
+    }
+
+    public function setLinkNext($page)
+    {
+        return $this->link_next = $page;
+    }
+
+    public function setLinkCount($count)
+    {
+        return $this->link_count = $count;
     }
 
     /**
@@ -178,10 +201,17 @@ class Pagination
     public function start()
     {
         $start = 1;
-        if ($this->link_count > 0) {
-            if ($this->current_page >= $this->link_count) {
-                $start = $this->current_page - 1;
-            }
+        if (!empty($this->link_prev)) {
+            $start = $this->link_prev - 1;
+        }
+        if (!empty($this->link_next)) {
+            $start = $this->link_next - $this->link_count + 2;
+        }
+        if ($start + $this->link_count > $this->total_pages) {
+            $start = $this->total_pages - $this->link_count + 1;
+        }
+        if ($start < 1) {
+            $start = 1;
         }
 
         return $start;
@@ -194,14 +224,9 @@ class Pagination
      */
     public function end()
     {
-        $end = $this->total_pages;
-        if ($this->link_count > 0) {
-            $start = $this->start();
-            $end = $start + $this->link_count - 1;
-            if ($end > $this->total_pages) {
-                $end = $this->total_pages;
-                $this->link_start = $end - $this->link_count + 1;
-            }
+        $end = $this->start() + $this->link_count;
+        if ($end > $this->total_pages) {
+            $end = $this->total_pages + 1;
         }
 
         return $end;
@@ -214,7 +239,7 @@ class Pagination
      */
     public function range()
     {
-        return range($this->link_start, $this->link_end);
+        return range($this->start(), $this->end());
     }
 
     public function reset($total)
