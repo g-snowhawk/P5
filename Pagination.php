@@ -35,7 +35,7 @@ class Pagination
      */
     public function __construct($total, $rows, $link_count = null)
     {
-        $this->total_pages = intval(ceil($total / $rows));
+        $this->total_pages = ($rows > 0) ? intval(ceil($total / $rows)) : 0;
         $this->max_per_pages = $rows;
         $this->link_count = $link_count ?? $this->total_pages;
         $this->current_page = 1;
