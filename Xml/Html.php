@@ -458,9 +458,11 @@ class Html extends Dom
             }
             $i = (int) $refNode->length - 1;
             $lastChild = $refNode->item($i);
-            $refNode = $lastChild->nextSibling;
-            if (is_object($refNode)) {
-                return $head->insertBefore($link, $refNode);
+            if (is_object($lastChild)) {
+                $refNode = $lastChild->nextSibling;
+                if (is_object($refNode)) {
+                    return $head->insertBefore($link, $refNode);
+                }
             }
         }
 
