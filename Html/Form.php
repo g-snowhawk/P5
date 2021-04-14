@@ -163,6 +163,23 @@ class Form
     }
 
     /**
+     * Clear request data
+     *
+     * @param mixed $name
+     *
+     * @return bool
+     */
+    public function clear(...$names)
+    {
+        $method = $this->method;
+        foreach ($names as $name) {
+            if (isset($this->$method[$name])) {
+                unset($this->$method[$name]);
+            }
+        }
+    }
+
+    /**
      * make Pref selector.
      *
      * @param string $name
