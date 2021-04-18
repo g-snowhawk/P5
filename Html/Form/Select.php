@@ -89,7 +89,7 @@ class P5_Html_Form_Select
         $label = $value;
         foreach ($opts as $opt) {
             $oVal = $opt->getAttribute('value');
-            if (!empty($oVal) && $oVal == $value) {
+            if ((!empty($oVal) || $oVal === '0') && $oVal == $value) {
                 $label = $opt->firstChild->nodeValue;
                 break;
             }
@@ -97,7 +97,7 @@ class P5_Html_Form_Select
         $parent = $element->parentNode;
         // replace
         $src = '<input type="hidden" '.'name="'.$name.'" />';
-        $node = $fmObj->insertElement($html, $element, $src);
+        $node = $fmObj->insertElement($html, $element, $src, null, true);
         if (is_array($node)) {
             $node[0]->setAttribute('value', $value);
         } else {
@@ -107,7 +107,7 @@ class P5_Html_Form_Select
         }
         //$src = '<em class="textfield">' . $value . '</em>';
         $src = '<em class="textfield">'.$label.'</em>';
-        $fmObj->insertElement($html, $element, $src);
+        $fmObj->insertElement($html, $element, $src, null, true);
         $parent->removeChild($element);
     }
 }
