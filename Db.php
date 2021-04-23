@@ -139,18 +139,6 @@ class Db
         $this->encoding = $enc;
         if ($this->driver != 'sqlite' && $this->driver != 'sqlite2') {
             $this->dsn = "$driver:host=$host;port=$port;dbname=$source";
-            if ($enc !== '') {
-                if (file_exists($enc)) {
-                    $this->options[PDO::MYSQL_ATTR_READ_DEFAULT_FILE] = $enc;
-                    $content = str_replace('#', ';', file_get_contents($enc));
-                    $init = parse_ini_string($content, true);
-                    if (isset($init['client']['default-character-set'])) {
-                        $this->encoding = $init['client']['default-character-set'];
-                    }
-                } else {
-                    $this->dsn .= ";charset=$enc";
-                }
-            }
             if ($this->driver === 'mysql') {
                 $this->options[PDO::MYSQL_ATTR_LOCAL_INFILE] = true;
 
@@ -167,6 +155,23 @@ class Db
                 if (defined('MYSQL_SSL_VERIFY_SERVER_CERT')) {
                     $this->options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT]
                         = MYSQL_SSL_VERIFY_SERVER_CERT;
+                }
+
+                if (strpos($host, 'unix_socket:') === 0) {
+                    $socket = str_replace('unix_socket:', '', $host);
+                    $this->dsn = "$driver:unix_socket=$socket;dbname=$source";
+                }
+            }
+            if ($enc !== '') {
+                if (file_exists($enc)) {
+                    $this->options[PDO::MYSQL_ATTR_READ_DEFAULT_FILE] = $enc;
+                    $content = str_replace('#', ';', file_get_contents($enc));
+                    $init = parse_ini_string($content, true);
+                    if (isset($init['client']['default-character-set'])) {
+                        $this->encoding = $init['client']['default-character-set'];
+                    }
+                } else {
+                    $this->dsn .= ";charset=$enc";
                 }
             }
             $this->options[PDO::ATTR_ERRMODE] = PDO::ERRMODE_EXCEPTION;
