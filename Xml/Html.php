@@ -1654,12 +1654,13 @@ class HTMLElement extends DOMElement
     public function innerHtml($source = null)
     {
         $container_id = bin2hex(random_bytes(6));
-        $tmp = new DOMDocument();
-        $tmp->loadHTML(
-            '<?xml encoding="UTF-8">'
-            . "<div id='{$container_id}'>{$source}</div>"
-        );
-        if (false === $tmp) {
+        try {
+            $tmp = new DOMDocument();
+            $tmp->loadHTML(
+                '<?xml encoding="UTF-8">'
+                . "<div id='{$container_id}'>{$source}</div>"
+            );
+        } catch (ErrorException $e) {
             return false;
         }
         // dirty fix
@@ -1681,6 +1682,8 @@ class HTMLElement extends DOMElement
                 $this->appendChild($node);
             }
         }
+
+        return $this->childNodes;
     }
 }
 
