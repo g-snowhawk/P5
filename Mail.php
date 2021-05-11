@@ -580,8 +580,11 @@ class Mail
         $message = $this->createMessage($boundary);
 
         if ($this->smtp === 'localhost') {
-            $envfrom = (false !== filter_var($this->envfrom, FILTER_VALIDATE_EMAIL))
-                ? '-f'.$this->envfrom : null;
+            $envfrom = (
+                false !== filter_var($this->envfrom, FILTER_VALIDATE_EMAIL)
+                && !empty(ini_get('sendmail_path'))
+            ) ? '-f'.$this->envfrom : '';
+
 
             return mail($to, $this->subject, $message, $header, $envfrom);
         } else {
