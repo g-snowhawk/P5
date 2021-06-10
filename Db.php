@@ -1100,7 +1100,7 @@ class Db
      *
      * @return int
      */
-    public function recordCount($sql = '', $options = null)
+    public function recordCount($sql = '', array $options = null)
     {
         if (empty($sql)) {
             $sql = $this->sql;

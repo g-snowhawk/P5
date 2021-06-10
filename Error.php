@@ -24,12 +24,20 @@ class Error
     const MAX_LOG_FILES = 10;
     const FEEDBACK_INTERVAL = 10800;
 
+    const ERROR_HEADER = [
+        400 => 'HTTP/1.1 400 Bad Request',
+        401 => 'HTTP/1.1 401 Unauthorized',
+        403 => 'HTTP/1.1 403 Forbidden',
+        404 => 'HTTP/1.1 404 Not Found',
+        500 => 'HTTP/1.1 500 Internal Server Error',
+    ];
+
     /**
      * Debug mode.
      *
      * @var int
      */
-    private $debug_mode = 0;
+    protected $debug_mode = 0;
 
     /**
      * Error type
@@ -65,6 +73,13 @@ class Error
      * @var bool
      */
     protected static $not_feedback = false;
+
+    /**
+     * HTTP status
+     *
+     * @var int
+     */
+    protected static $http_status = 500;
 
     /**
      * Object Constructor.
@@ -161,7 +176,7 @@ class Error
             }
             self::log($message, $errno);
             if ($errno === E_USER_ERROR) {
-                self::displayError($message, $errno);
+                $this->displayError($message, $errno);
             }
 
             return false;
@@ -185,7 +200,7 @@ class Error
         self::feedback($message, $errno);
         self::log($message, $errno, $errfile, $errline);
         $message .= PHP_EOL.$ex->getTraceAsString();
-        self::displayError($message, $errno);
+        $this->displayError($message, $errno);
     }
 
     /**
@@ -200,7 +215,7 @@ class Error
             $errno = $err['type'];
             self::feedback($message, $errno);
             self::log($message, $errno);
-            self::displayError($message, $errno);
+            $this->displayError($message, $errno);
         }
     }
 
@@ -268,7 +283,11 @@ class Error
                 $src
             );
         }
-        header('HTTP/1.1 500 Internal Server Error');
+
+        $status = self::ERROR_HEADER[self::$http_status];
+        if (!empty($status)) {
+            header($status);
+        }
         echo $src;
         exit($errno);
     }
@@ -439,7 +458,7 @@ class Error
      *
      * @return string
      */
-    private function htmlSource()
+    protected function htmlSource()
     {
         return <<<_HERE_
 <html>
