@@ -46,6 +46,8 @@ class DbHandler implements SessionHandlerInterface
         $password = array_shift($dsn);
         $enc = implode('', $dsn);
 
+        $host = urldecode($host);
+
         $this->db = new \P5\Db(
             $driver,
             $host,

@@ -181,6 +181,9 @@ class Session
         $this->db_user = $user;
         $this->db_password = $password;
         $this->db_encoding = $encoding;
+
+        $host = urlencode($host);
+
         session_save_path("$driver/$host/$source/$port");
     }
 
