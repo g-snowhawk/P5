@@ -109,7 +109,7 @@ class DbHandler implements SessionHandlerInterface
 
         $lifetime = time() - $maxlifetime;
         $result = $this->db->delete(
-            $this->session_name, 'session_update < ?', [$lifetime]
+            $this->session_name, 'session_updated < ?', [$lifetime]
         );
 
         date_default_timezone_set($default_timezone);
