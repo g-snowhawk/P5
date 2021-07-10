@@ -510,17 +510,22 @@ class Db
             $update = $unit;
             $where = [];
             foreach ($unique as $key) {
-                $where[] = $unit[$key];
-                $arr[] = "{$key} = ?";
+                if (is_null($update[$key])) {
+                    $arr[] = "{$key} IS NULL";
+                } else {
+                    $arr[] = "{$key} = ?";
+                    $where[] = $update[$key];
+                }
                 if (in_array($key, $keys)) {
                     unset($update[$key]);
                 }
             }
             $statement = implode(' AND ', $arr);
+
             if (false === $ret = self::update($table, $update, $statement, $where, $raws)) {
                 return false;
             }
-            if ($ret === 0 && !self::exists($table, $statement, $where)) {
+            if ($ret === 0 && false === self::exists($table, $statement, $where)) {
                 if (false === $ret = self::insert($table, $unit, $raws)) {
                     return false;
                 }
@@ -567,7 +572,11 @@ class Db
                     self::is_number($fields[$key]['Type'])) ? true : false;
                 $vals[] = (is_null($value)) ? 'NULL' : $this->quote($value, $fZero);
                 if (!in_array($key, $unique)) {
-                    $dest[] = "\"$key\" = ".$this->quote($value, $fZero);
+                    if (is_null($value)) {
+                        $dest[] = "\"$key\" IS NULL";
+                    } else {
+                        $dest[] = "\"$key\" = ".$this->quote($value, $fZero);
+                    }
                 }
             }
             foreach ($raws as $key => $value) {
