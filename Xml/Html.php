@@ -1543,17 +1543,21 @@ class HTMLElement extends DOMElement
         $this->appendScript($src, $options, true);
     }
 
-    public function appendScript(
-        $src,
-        array $options = array(),
-        $prepend = false
-    ) {
+    public function appendScript($src, array $options = [], $prepend = false) {
         $doc = $this->ownerDocument;
-        $node = $this->appendChild($doc->createElement('script'));
-        $node->setAttribute('src', $src);
+        $root_node = $doc->getElementsByTagName('html');
+        $html = ($root_node) ? $root_node->item(0) : $this;
+        $append = false;
+        $node = $html->querySelector('//script[@src="'.$src.'"]');
+        if (!$node) {
+            $node = $doc->createElement('script');
+            $node->setAttribute('src', $src);
+            $append = true;
+        }
         foreach ($options as $name => $value) {
             $node->setAttribute($name, $value);
         }
+        if ($append === false) return;
 
         $scripts = $this->getElementsByTagName('script');
         if ($prepend && $scripts->length > 0) {
